@@ -76,7 +76,6 @@ module.exports = {
   ],
   currentAi: "default", // 当前活动的AI配置名称
   maxIterations: 10, // 代理工作流的最大迭代次数
-  outputAiResult: false, // 是否输出AI结果
   extensions: [], // 扩展文件路径列表
   file: {
     encoding: "utf8", // 文件编码

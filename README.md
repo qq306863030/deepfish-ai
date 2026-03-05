@@ -76,7 +76,6 @@ module.exports = {
   ],
   currentAi: "default", // Current active AI configuration name
   maxIterations: 10, // Maximum iterations for agent workflow
-  outputAiResult: false, // Whether to output AI result
   extensions: [], // List of extension file paths
   file: {
     encoding: "utf8", // File encoding

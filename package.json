@@ -1,6 +1,6 @@
 {
   "name": "ai-cmd-tool",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "An AI command-line tool that processes operating system commands and manipulates files through natural language processing, supporting Ollama, DeepSeek, and OpenAI.",
   "main": "src/index.js",
   "bin": {

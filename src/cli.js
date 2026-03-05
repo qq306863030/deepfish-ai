@@ -7,23 +7,14 @@ const os = require("os");
 const AICLI = require("./core/AICLI");
 const { logSuccess, logError } = require("./core/utils");
 const userConfigPath = path.join(os.homedir(), ".ai-cmd.config.js");
+const DefaultConfig = require("./core/DefaultConfig");
 
 async function handleMissingConfig() {
   logError("Configuration file not initialized");
   
   // Create new configuration file with empty ai array
   console.log("Creating new configuration file:", userConfigPath);
-  const newConfig = {
-    ai: [],
-    currentAi: "",
-    outputAiResult: false,
-    plugins: [],
-    extensions: [],
-    file: {
-      encoding: "utf8",
-    },
-  };
-  const configContent = `module.exports = ${JSON.stringify(newConfig, null, 2)}`;
+  const configContent = `module.exports = ${JSON.stringify(DefaultConfig(), null, 2)}`;
   fs.writeFileSync(userConfigPath, configContent);
   console.log("Configuration file created with empty AI configurations.");
 }
@@ -43,7 +34,7 @@ async function runSetupCommand(isAdd = false) {
       );
     }
   } else {
-    currentConfig = require("./core/DefaultConfig");
+    currentConfig = DefaultConfig();
   }
 
   const questions = [
@@ -234,16 +225,7 @@ async function runSetupCommand(isAdd = false) {
 
   if (isAdd) {
     // Add new AI configuration
-    const existingConfig = fs.existsSync(userConfigPath) ? require(userConfigPath) : {
-      ai: [],
-      currentAi: "",
-      outputAiResult: false,
-      plugins: [],
-      extensions: [],
-      file: {
-        encoding: "utf8",
-      },
-    };
+    const existingConfig = fs.existsSync(userConfigPath) ? require(userConfigPath) : DefaultConfig();
     
     // Check if configuration with the same name already exists
     const existingIndex = existingConfig.ai.findIndex(config => config.name === aiConfig.name);
@@ -259,16 +241,7 @@ async function runSetupCommand(isAdd = false) {
     logSuccess(`AI configuration "${aiConfig.name}" added successfully!`);
   } else {
     // Update default configuration
-    const existingConfig = fs.existsSync(userConfigPath) ? require(userConfigPath) : {
-      ai: [],
-      currentAi: "",
-      outputAiResult: false,
-      plugins: [],
-      extensions: [],
-      file: {
-        encoding: "utf8",
-      },
-    };
+    const existingConfig = fs.existsSync(userConfigPath) ? require(userConfigPath) : DefaultConfig();
     
     // Add the new configuration to the array
     existingConfig.ai.push(aiConfig);
@@ -339,16 +312,7 @@ configCommand
       if (createConfig) {
         // Create new configuration file with empty ai array
         console.log("Creating new configuration file:", userConfigPath);
-        const newConfig = {
-          ai: [],
-          currentAi: "",
-          outputAiResult: false,
-          plugins: [],
-          extensions: [],
-          file: {
-            encoding: "utf8",
-          },
-        };
+        const newConfig = DefaultConfig();
         const configContent = `module.exports = ${JSON.stringify(newConfig, null, 2)}`;
         fs.writeFileSync(userConfigPath, configContent);
         console.log("Configuration file created with empty AI configurations.");
@@ -400,8 +364,7 @@ configCommand
       if (confirm) {
         console.log("Resetting configuration file:", userConfigPath);
         // Create new default configuration and overwrite existing file
-        const defaultConfig = require("./core/DefaultConfig");
-        const configContent = `module.exports = ${JSON.stringify(defaultConfig, null, 2)}`;
+        const configContent = `module.exports = ${JSON.stringify(DefaultConfig(), null, 2)}`;
         fs.writeFileSync(userConfigPath, configContent);
         console.log("Configuration file has been reset to default settings.");
       } else {
@@ -410,16 +373,7 @@ configCommand
       }
     } else {
       // Create new configuration file with empty ai array
-      const newConfig = {
-        ai: [],
-        currentAi: "",
-        outputAiResult: false,
-        plugins: [],
-        extensions: [],
-        file: {
-          encoding: "utf8",
-        },
-      };
+      const newConfig = DefaultConfig();
       const configContent = `module.exports = ${JSON.stringify(newConfig, null, 2)}`;
       fs.writeFileSync(userConfigPath, configContent);
       console.log("Configuration file created with empty AI configurations.");
@@ -551,16 +505,7 @@ configCommand
       if (createConfig) {
         // Create new configuration file with empty ai array
         console.log("Creating new configuration file:", userConfigPath);
-        const newConfig = {
-          ai: [],
-          currentAi: "",
-          outputAiResult: false,
-          plugins: [],
-          extensions: [],
-          file: {
-            encoding: "utf8",
-          },
-        };
+        const newConfig = DefaultConfig();
         const configContent = `module.exports = ${JSON.stringify(newConfig, null, 2)}`;
         fs.writeFileSync(userConfigPath, configContent);
         console.log("Configuration file created with empty AI configurations.");
@@ -580,6 +525,12 @@ configCommand
           return;
         }
       } else {
+        // 检查ai列表是否为空
+        if (!currentConfig.ai || !Array.isArray(currentConfig.ai) || currentConfig.ai.length === 0) {
+          logError("No AI configurations found.");
+          logError("Please use 'ai config add' to add a new AI configuration.");
+          return;
+        }
         // View current configuration
         const currentName = currentConfig.currentAi;
         if (!currentName || currentName.trim() === "") {
@@ -613,6 +564,7 @@ configCommand
       console.log(`Max Tokens: ${aiConfig.maxTokens}`);
       console.log(`Streaming Output: ${aiConfig.stream ? 'Enabled' : 'Disabled'}`);
       console.log(`Is Current: ${currentConfig.currentAi === aiConfig.name ? 'Yes' : 'No'}`);
+      console.log(`File Path: ${userConfigPath}`);
       console.log("=".repeat(50));
     } catch (error) {
       logError("Error loading configuration:", error.message);
@@ -624,7 +576,6 @@ async function main() {
     if (program.args && program.args[0] === "config") {
       return;
     }
-
     const options = program.opts();
     let prompt;
 
@@ -642,6 +593,18 @@ async function main() {
       return;
     }
     const config = require(userConfigPath);
+    // 判断当前列表是否为空
+    if (!config.ai || !Array.isArray(config.ai) || config.ai.length === 0) {
+      logError("No AI configurations found.");
+      logError("Please use 'ai config add' to add a new AI configuration.");
+      return;
+    }
+    // 判断当前是否有设置当前配置
+    if (!config.currentAi || config.currentAi.trim() === "") {
+      logError("No current AI configuration set.");
+      logError("Please use 'ai config use <name>' to set a current configuration.");
+      return;
+    }
     const cli = new AICLI(config);
     if (options.interactive) {
       cli.startInteractive();
