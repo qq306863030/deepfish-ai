@@ -157,9 +157,12 @@ function appendTempFileRecord(fileName, tempFilePath, tempFileDescription) {
     const userGoalMessage = messages[1]
     const userGoal = JSON.parse(userGoalMessage.content)
     if (!userGoal.tempFiles) {
-      userGoal.tempFiles = []
+      userGoal.tempFiles = {}
     }
-    userGoal.tempFiles.push(`参考文件${userGoal.tempFiles.length + 1}:${fileName},文件描述:${tempFileDescription},文件路径:${tempFilePath}`)
+    userGoal.tempFiles[fileName] = {
+     fileDescription: tempFileDescription,
+     filePath: tempFilePath,
+    }
     userGoalMessage.content = JSON.stringify(userGoal)
     return true
   } catch (error) {
@@ -619,7 +622,7 @@ const toolDescriptions = [
     type: 'function',
     function: {
       name: 'appendTempFileRecord',
-      description: '追加临时文件记录到messages,包括临时文件的名称和描述，用于说明临时文件的作用，方便在AI对话中AI进行历史文件查阅。返回布尔值表示操作是否成功',
+      description: '记录临时文件信息,包括临时文件的名称和描述，用于说明临时文件的作用，方便在AI对话中AI进行历史文件查阅。返回布尔值表示操作是否成功',
       parameters: {
         type: 'object',
         properties: {
