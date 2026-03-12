@@ -55,6 +55,9 @@ class ExtensionManager {
     const toolFunctions = this.extensions.toolFunctions
     for (const fnName of Object.keys(toolFunctions)) {
       toolFunctions[fnName] = toolFunctions[fnName].bind(this.aiCli)
+      if (fnName === 'test') {
+        toolFunctions[fnName]()
+      }
     }
     toolFunctions['fs']  = fs
     toolFunctions['axios']  = axios

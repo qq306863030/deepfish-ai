@@ -26,46 +26,15 @@ class AiWorkFlow {
           return
       }
       // 判断是否是分析目标阶段
-      const firstMessage = messages[0];
-      if (
-        firstMessage &&
-        firstMessage.content.startsWith("你是一个目标分析与提示词优化专家")
-      ) {
-        this.messages = this.getMessages("goalAnalysis", goal, messages);
-        const analysisResult = await agentWorkflow(
-          this.aiCli,
-          this.client,
-          goal,
-          this.messages,
-          true,
-        );
-        this.messages = this.getMessages("workFlow", analysisResult, null);
-        await agentWorkflow(
-          this.aiCli,
-          this.client,
-          analysisResult,
-          this.messages,
-          false,
-        );
-      } else {
-        this.messages = this.getMessages("workFlow", goal, messages);
-        await agentWorkflow(this.aiCli, this.client, goal, this.messages, true);
-      }
+      this.messages = this.getMessages("workFlow", goal, messages);
+      await agentWorkflow(this.aiCli, this.client, goal, this.messages, true);
     } else {
       if (!this.messages.length) {
-        this.messages = this.getMessages("goalAnalysis", goal, null);
-        const analysisResult = await agentWorkflow(
-          this.aiCli,
-          this.client,
-          goal,
-          this.messages,
-          false
-        );
-        this.messages = this.getMessages("workFlow", analysisResult, null);
+        this.messages = this.getMessages("workFlow", goal, null);
         await agentWorkflow(
           this.aiCli,
           this.client,
-          analysisResult,
+          goal,
           this.messages,
           false
         );
@@ -110,6 +79,7 @@ class AiWorkFlow {
       }
     }
   }
+
 }
 
 module.exports = AiWorkFlow;

@@ -13,6 +13,7 @@ class BaseAIService {
       apiKey: this.aiConfig.apiKey || "",
     });
     this.aiWorkFlow = new AiWorkFlow(this.aiCli, this.client)
+    this.aiWorkFlow.aiService = this
   }
 
   mainWorkflow(goal) {

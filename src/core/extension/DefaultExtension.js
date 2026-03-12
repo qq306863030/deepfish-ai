@@ -95,7 +95,7 @@ async function executeJSCode(code) {
 // 生成一个扩展函数文件
 async function getExtensionFileRule(goal) {
   const newGoal = `
-    创建一个js文件或一个包含主文件的node项目，使用逻辑清晰的nodejs代码完成用户目标: ${goal}。主函数输出两个字段：toolDescriptions(openai能识别的函数描述)和toolFunctions(一个key为函数名称，value为方法体的对象。注意：函数体的参数必须与toolDescriptions中描述的参数一致。),如下所示：
+    创建一个js文件或一个包含主文件的node项目，使用逻辑清晰的nodejs代码完成用户目标: ${goal}。主函数输出两个字段：toolDescriptions(openai能识别的函数描述)和toolFunctions(key为函数名称，value为方法体的对象。注意：函数体的参数必须与toolDescriptions中描述的参数一致，可以包含一个或多个可以被AI工作流调用的函数。),如下所示：
     “”“
     const toolDescriptions = []
     const toolFunctions = {}
@@ -155,7 +155,11 @@ function appendTempFileRecord(fileName, tempFilePath, tempFileDescription) {
   try {
     const messages = this.aiService.aiWorkFlow.messages
     const userGoalMessage = messages[1]
-    const userGoal = JSON.parse(userGoalMessage.content)
+    let goalContent = userGoalMessage.content.trim()
+    if (goalContent.startsWith('```json')) {
+      goalContent = goalContent.slice(7, -3).trim()
+    }
+    const userGoal = JSON.parse(goalContent)
     if (!userGoal.tempFiles) {
       userGoal.tempFiles = {}
     }
@@ -608,7 +612,7 @@ const toolDescriptions = [
     type: 'function',
     function: {
       name: 'getExtensionFileRule',
-      description: '如果用户需要为本程序ai工作流生成一个可以调用的扩展工具，则需要先调用此函数获取生成扩展文件的规则',
+      description: '如果用户需要为本程序ai工作流生成一个或多个工具函数作为一个工作流执行过程中调用的扩展工具，则需要先调用此函数获取生成扩展文件的规则',
       parameters: {
         type: 'object',
         properties: {

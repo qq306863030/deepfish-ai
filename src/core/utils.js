@@ -66,9 +66,6 @@ function log(msg, color) {
   } else {
     console.log(chalk.hex(color)(msg));
   }
-  if (GlobalVariable.isLog) {
-    GlobalVariable.aiCli.recorder.log(msg);
-  }
 }
 
 // 添加扩展

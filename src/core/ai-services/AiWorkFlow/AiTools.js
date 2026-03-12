@@ -37,7 +37,7 @@ async function summarizeMessages(aiConfig, aiClient, goal, lastTwoMessages, mess
   1. 删除不需要的信息，如程序报错、冗余表述、语气词、闲聊等信息
   2. 关注当前进度和状态
   3. 总结后续任务所需的重要背景信息并以及所需要的内容
-保持摘要简短但足够全面，保证后续任务有效进行。.
+结果只保留对上下文有用的内容，保持摘要简短且全面，保证后续任务有效进行。.
 
 Conversation history:
 ${messages
@@ -74,7 +74,8 @@ ${messages
   }
 }
 
-async function manageMessages(aiConfig, aiClient, messages) {
+async function manageMessages(aiCli, aiConfig, aiClient, messages) {
+  const aiRecorder = aiCli.recorder;
   messages = cloneDeep(messages);
   const currentLength = calculateMessagesLength(messages);
   const currentCount = messages.length;
@@ -110,6 +111,10 @@ async function manageMessages(aiConfig, aiClient, messages) {
       logInfo(
         `Messages compressed: ${messages.length} -> ${newMessages.length}`,
       );
+      aiRecorder.log([{
+          role: "user",
+          content: `[CONVERSATION SUMMARY]: ${summary}`,
+        }]);
       return newMessages;
     }
   }
@@ -149,6 +154,7 @@ async function executeBuiltInFunction(
               }),
             });
             await aiRecorder.record(goal, messages);
+            aiRecorder.log(messages);
             continue;
           }
         }
@@ -182,6 +188,7 @@ async function executeBuiltInFunction(
           content: toolContent,
         });
         await aiRecorder.record(goal, messages);
+        aiRecorder.log(messages);
       } catch (error) {
         messages.push({
           role: "tool",
@@ -189,6 +196,7 @@ async function executeBuiltInFunction(
           content: JSON.stringify({ error: error.message }),
         });
         await aiRecorder.record(goal, messages);
+        aiRecorder.log(messages);
       }
       logInfo(`Tool ${toolCall.function.name} finished.`);
     } else {
@@ -199,22 +207,36 @@ async function executeBuiltInFunction(
         content: JSON.stringify({ error: `Tool ${name} not found` }),
       });
       await aiRecorder.record(goal, messages);
+      aiRecorder.log(messages);
     }
   }
 }
 
 const currentDir = process.cwd();
 const osType = process.platform;
-// 目标工作流提示词
-const workFlowPrompt = `你是一名能够使用工具完成任务的 AI 助手。当前工作目录为 ${currentDir}，操作系统为 ${osType}。请使用可用工具达成用户目标。
-提示：你可以使用 executeJSCode 运行 Node.js 代码处理复杂逻辑，使用 executeCommand 运行系统已安装的命令行工具（如 git、npm 等系统工具），这些工具可帮你快速达成目标。
-重要：你稍微有点健忘，因为在对话中系统可能会压缩部分内容，因此对于复杂的问题需要进行临时记录，并查阅用户目标中的tempFiles中记录的文件而不是依赖在对话中查找。处理复杂的任务可以在当前目录下创建临时目录ai-temp，用于创建临时文件来存储中间结果。处理完成后将创建的临时目录删除。
-重要：临时文件创建或更新完成后<必须>执行appendTempFileRecord函数，用于记录临时文件的描述，方便AI对话中进行历史文件查阅。
-重要：处理大文件（如长篇小说、长文档）时，使用分块处理方式：
-1.先检查文件大小与结构
-2.以可控块大小处理（如每块 5KB–10KB）
-3.翻译、总结类任务逐块处理,最后合并结果
-核心原则：始终以最少的步骤完成用户任务。在开始执行前，先规划最优路径，避免不必要的操作和重复工作。`;
+// 系统限制提示词
+const workFlowPrompt = `
+你是一个严格按规则执行任务的智能体，不能违反任何系统限制。
+### 基础环境信息
+当前工作目录：${currentDir}
+操作系统类型：${osType}
+
+### 工具使用规则
+优先使用工具完成任务：可调用 executeJSCode 运行 Node.js 代码处理复杂逻辑；可调用 executeCommand 运行系统命令行工具（如 git、npm 等），工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
+
+### 大文件处理规则（分步执行）
+处理长文档等大文件（单文件＞5KB）时，必须按以下步骤分块处理：
+1. 预处理：先执行文件大小/结构检查（如通过命令行/JS 代码获取文件大小、判断文件格式），输出检查结果；
+2. 分块规则：按 5KB–10KB/块拆分文件，拆分后每个块生成独立临时文件（命名格式：{原文件名}_chunk{序号}.tmp）；
+3. 处理逻辑：翻译/总结/分析类任务逐块处理，每块处理完成后记录结果，最后合并所有块的结果生成最终文件；
+4. 合并校验：合并后需校验结果完整性（如总字符数匹配、无内容缺失），确保分块处理无遗漏。
+
+### 核心执行原则
+1. 最优路径优先：执行前必须先规划最少步骤的操作路径，明确「先做什么、再做什么、哪些可省略」，避免重复操作和无效步骤；
+2. 异常反馈：操作失败（如命令执行报错、文件不存在）时，需明确说明「失败原因+可尝试的解决方案」，而非仅提示“操作失败”；
+3. 结果校验：任务完成后，需简单校验结果是否符合用户目标（如文件是否生成、内容是否完整），并向用户反馈校验结果。
+`
+
 // 目标分析提示词
 const goalAnalysisPrompt = `你是一个目标分析与提示词优化专家。请分析用户的目标，不需要完成该目标只需要分析、优化用户目标为ai更便于理解的提示词即可。当前工作目录为 ${currentDir}，操作系统为 ${osType}。
 ## 任务要求
@@ -288,7 +310,7 @@ async function agentWorkflow(
   }
   try {
     while (maxIterations-- > 0) {
-      const newMessages = await manageMessages(aiConfig, client, messages);
+      const newMessages = await manageMessages(aiCli, aiConfig, client, messages);
       messages.splice(0, messages.length, ...newMessages);
       loadingStop = loading("Thinking...");
       const response = await client.chat.completions.create({
@@ -303,6 +325,7 @@ async function agentWorkflow(
       const message = response.choices[0].message;
       messages.push(message);
       await aiRecorder.record(goal, messages);
+      aiRecorder.log(messages);
       loadingStop(`${name} have finished thinking.`);
       loadingStop = null;
       logInfo(message.content);
