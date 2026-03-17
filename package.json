@@ -1,6 +1,6 @@
 {
   "name": "deepfish-ai",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "An AI command-line tool that converts natural language instructions into operating system commands and file operations, supporting Ollama, DeepSeek, and other models compatible with the OpenAI API specification.",
   "main": "src/index.js",
   "bin": {

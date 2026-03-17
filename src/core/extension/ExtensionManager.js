@@ -8,6 +8,7 @@ const shelljs = require('shelljs')
 const iconv = require('iconv-lite') // 用于编码转换
 const os = require('os') // 用于判断系统类型
 const { logError } = require('../utils')
+const { getGlobalNodeModulesPath } = require('../utils/node-root')
 
 class ExtensionManager {
   constructor(aiCli) {
@@ -76,7 +77,7 @@ class ExtensionManager {
     // 扫描本程序所在目录下node_modules目录
     const nodeModulesPath1 = path.resolve(__dirname, '../../../node_modules')
     // 扫描根node_modules目录
-    const nodeModulesPath2 = this._executeCommand('npm root -g')
+    const nodeModulesPath2 = getGlobalNodeModulesPath()
     // 扫描命令执行目录下node_modules目录
     const nodeModulesPath3 = path.resolve(process.cwd(), 'node_modules')
     // 扫描命令执行目录
@@ -87,6 +88,9 @@ class ExtensionManager {
       nodeModulesPath3,
       nodeModulesPath4,
     ]) {
+      if (!dirPath) {
+        continue
+      }
       if (!fs.existsSync(dirPath)) {
         continue
       }
@@ -95,28 +99,23 @@ class ExtensionManager {
         // 如果是目录且目录名称前缀是"deepfish-"，则认为是扩展模块
         const extensionDir = path.resolve(dirPath, fileName)
         if (
-          fileName.startsWith('deepfish-') && fileName !== 'deepfish-ai' && 
+          fileName.startsWith('deepfish-') &&
+          fileName !== 'deepfish-ai' &&
           fs.statSync(extensionDir).isDirectory()
         ) {
           const subDirNames = fs.readdirSync(extensionDir)
-          for (const subDirName of subDirNames) {
-            const subDirPath = path.resolve(extensionDir, subDirName)
-            if (fs.statSync(subDirPath).isDirectory()) {
-              const extNames = fs.readdirSync(subDirPath)
-              const jsFiles = extNames.filter(
-                (file) => file.endsWith('.js') || file.endsWith('.cjs'),
-              )
-              jsFiles.forEach((jsFile) => {
-                const jsFilePath = path.resolve(subDirPath, jsFile)
-                // 读取文件，查询文件内是否存在‘descriptions’和‘functions’
-                const fileContent = fs.readFileSync(jsFilePath, 'utf-8')
-                if (
-                  fileContent.includes('descriptions') &&
-                  fileContent.includes('functions')
-                ) {
-                  result.push(jsFilePath)
-                }
-              })
+          const jsFiles = subDirNames.filter(
+            (file) => file.endsWith('.js') || file.endsWith('.cjs'),
+          )
+          for (const jsFile of jsFiles) {
+            const jsFilePath = path.resolve(extensionDir, jsFile)
+            // 读取文件，查询文件内是否存在‘descriptions’和‘functions’
+            const fileContent = fs.readFileSync(jsFilePath, 'utf-8')
+            if (
+              fileContent.includes('descriptions') &&
+              fileContent.includes('functions')
+            ) {
+              result.push(jsFilePath)
             }
           }
         }
