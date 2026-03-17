@@ -1,6 +1,5 @@
 <div align="center" style="display:flex;align-items: center;justify-content: center;">
-  <img src="./images/logo2.png" alt="DeepFish" style="width:55px;" />
-  <span style="font-size: 30px;font-weight: bold;color:#3386FE">DeepFish</span>
+  <img src="./images/title-img.png" alt="DeepFish" style="width:300px;" />
 </div>
 
 ---
