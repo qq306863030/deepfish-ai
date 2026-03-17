@@ -2,8 +2,8 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-17 10:22:46
- * @FilePath: \cmd\src\core\ai-services\AiWorker\index.js
+ * @LastEditTime: 2026-03-17 17:03:16
+ * @FilePath: \deepfish\src\core\ai-services\AiWorker\index.js
  * @Description: 工作流类
  * @
  */
@@ -40,18 +40,18 @@ class AiWorker {
       }
       this.messages = messages
       this.aiAgent.aiMessageManager.reLinkMsgs(this.messages)
-      this._recoverHistory(goal, this.messages)
+      await this._recoverHistory(goal, this.messages)
     } else {
       if (!this.messages.length) {
         this.messages = getInitialMessages(goal)
-        this.aiAgent.work(this.messages)
+        await this.aiAgent.work(this.messages)
       } else {
         this.aiAgent.aiMessageManager.reLinkMsgs(this.messages)
         this.aiAgent.aiMessageManager.addMsg({
           role: 'user',
           content: goal,
         })
-        this.aiAgent.work(this.messages)
+        await this.aiAgent.work(this.messages)
       }
     }
     // this.aiRecorder.clear()

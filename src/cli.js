@@ -3,9 +3,9 @@ const { program } = require("commander");
 const inquirer = require("inquirer");
 const fs = require("fs");
 const AICLI = require("./core/AICLI");
-const { logSuccess, logError, addExtensionToConfig, removeExtensionFromConfig, viewExtensionsFromConfig, getConfigPath } = require("./core/utils");
+const { logSuccess, logError } = require("./core/utils");
+const { getDefaultConfig, addExtensionToConfig, removeExtensionFromConfig, viewExtensionsFromConfig, getConfigPath } = require("./core/config");
 const userConfigPath = getConfigPath()
-const getDefaultConfig = require("./core/DefaultConfig");
 
 async function handleMissingConfig() {
   logError("Configuration file not initialized");

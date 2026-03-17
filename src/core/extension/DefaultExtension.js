@@ -103,7 +103,7 @@ async function executeJSCode(code) {
     const Func = new Function(
       "Tools",
       "require",
-      "return (async () => { " + code + " })()",
+      `return (async () => { this.logMessages = [];const originalLog = console.log;const newLog = function(){ originalLog.apply(console, arguments); this.logMessages.push(Array.from(arguments).join(" "))};console.log = newLog.bind(this);${code };return this.logMessages.join('\\n'); })()`,
     );
     const originalRequire = require;
     const newRequire = (modulePath) => {
@@ -113,7 +113,14 @@ async function executeJSCode(code) {
       }
       return originalRequire(modulePath);
     };
+
+    const newLog = function () {
+      console.log.apply(console, arguments);
+      this.logMessages.push(Array.from(arguments).join(" "))
+    }
+    
     const result = await Func(functions, newRequire);
+    
     return result || "";
   } catch (error) {
     logError(`Error executing code: ${error.stack}`);
@@ -419,7 +426,7 @@ const descriptions = [
     function: {
       name: "executeJSCode",
       description:
-        '执行JavaScript代码，返回代码执行结果。代码中可通过Tools命名空间直接调用其他工具函数（如await Tools.createFile(),注意：不需要使用require引入）,Tools中引入了一些常用库可直接调用（Tools.fs="fs-extra", Tool.dayjs="dayjs", Tool.axios="axios", Tool.lodash="lodash"），支持引入自定义模块（需使用绝对路径）。注意：1.代码中不要使用__dirname获取当前目录，请使用path.resolve(".")来获取当前目录。2.console.log打印的结果不能被程序捕获，代码体需要使用return来返回结果，不能通过控制台中打印捕获结果。3.执行失败时会抛出错误，成功时返回代码执行结果或空字符串。',
+        '执行JavaScript代码，返回代码执行结果。代码中可通过Tools命名空间直接调用其他工具函数（如await Tools.createFile(),注意：不需要使用require引入）,Tools中引入了一些常用库可直接调用（Tools.fs="fs-extra", Tools.dayjs="dayjs", Tools.axios="axios", Tools.lodash="lodash"），支持引入自定义模块（需使用绝对路径）。注意：1.代码中不要使用__dirname获取当前目录，请使用path.resolve(".")来获取当前目录。2.执行失败时会抛出错误，成功时返回代码执行结果或空字符串。',
       parameters: {
         type: "object",
         properties: {

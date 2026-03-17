@@ -2,8 +2,8 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 09:12:22
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-17 10:27:12
- * @FilePath: \cmd\src\core\ai-services\AiWorker\AiPrompt.js
+ * @LastEditTime: 2026-03-17 17:04:43
+ * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiPrompt.js
  * @Description: AI请求提示词
  * @
  */
@@ -19,7 +19,7 @@ const AiAgentSystemPrompt = `
 ### 工具使用规则
 优先使用工具完成任务：可调用 executeJSCode 运行 Node.js 代码处理复杂逻辑；可调用 executeCommand 运行系统命令行工具（如 git、npm 等），工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
 
-### 大文件处理规则（分步执行）
+### 大文本文件处理规则（分步执行）
 处理长文档等大文件（单文件＞20KB）时，必须按以下步骤分块处理：
 1. 预处理：先执行文件大小/结构检查（如通过命令行/JS 代码获取文件大小、判断文件格式），输出检查结果；
 2. 分块规则：按5KB-10KB/块拆分文件，拆分后每个块生成独立临时文件（命名格式：{原文件名}_chunk{序号}.tmp）；
