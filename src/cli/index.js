@@ -2,10 +2,16 @@
 const { program } = require("commander");
 const inquirer = require("inquirer");
 const fs = require("fs");
-const AICLI = require("./core/AICLI");
-const { logSuccess, logError } = require("./core/utils");
-const { getDefaultConfig, addExtensionToConfig, removeExtensionFromConfig, viewExtensionsFromConfig, getConfigPath } = require("./core/config");
+const AICLI = require("../core/AICLI");
+const { logSuccess, logError } = require("../core/utils");
+const { getDefaultConfig, addExtensionToConfig, removeExtensionFromConfig, viewExtensionsFromConfig, getConfigPath } = require("./configTools");
 const userConfigPath = getConfigPath()
+
+// ai config 相关命令
+
+// ai ext 相关命令
+
+// ai 相关命令
 
 async function handleMissingConfig() {
   logError("Configuration file not initialized");
