@@ -1,9 +1,9 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 09:12:22
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-17 10:03:21
- * @FilePath: \src\core\ai-services\AiWorker\AiTools.js
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-03-19 16:03:56
+ * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiTools.js
  * @Description: 对话初始化、对话请求
  * @
  */
@@ -183,6 +183,7 @@ async function _streamToNonStream(stream) {
             const toolCall = toolCallBuffers.get(id)
             if (toolCall && toolCallChunk.function?.arguments) {
               toolCall.function.arguments += toolCallChunk.function.arguments
+              streamOutput(toolCallChunk.function.arguments)
             }
           }
         })

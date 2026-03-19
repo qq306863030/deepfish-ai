@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-17 19:33:24
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-03-19 16:15:35
  * @FilePath: \deepfish\src\core\extension\DefaultExtension.js
  * @Description: 默认扩展函数
  * @
@@ -139,7 +139,7 @@ async function executeJSCode(code) {
 // 生成一个扩展函数文件 关键字：内置函数、扩展工具
 async function getExtensionFileRule(goal) {
   const newGoal = `
-    创建一个js文件或一个包含主文件的node项目，使用逻辑清晰的nodejs代码完成用户目标: ${goal}。主函数输出两个字段：descriptions(openai能识别的函数描述)和functions(key为函数名称，value为方法体的对象)。注意：1.函数体的参数必须与descriptions中描述的参数一致，可以包含一个或多个可以被AI工作流调用的函数。2.函数名称开头增加"领域用途+分隔符"作为命名空间，函数描述的开头使用统一的自然语言”领域用途+分隔符“来描述。3.函数中可以直接调用requestAI、executeCommand和其他内置文件处理类函数，程序运行中将内置函数自动注入到this.Tools中，如this.Tools.requestAI(systemDescription, prompt, temperature)、this.Tools.readFile(filePath),如下所示：
+    创建一个新目录作为npm项目目录，目录名称为项目功能名称，package.json中的name名称为"@deepfish-ai/项目功能名称"，主文件为index.js，使用逻辑清晰的nodejs代码完成用户目标: ${goal}。主文件输出两个字段：descriptions(openai能识别的函数描述)和functions(key为函数名称，value为方法体的对象)。注意：1.函数体的参数必须与descriptions中描述的参数一致，可以包含一个或多个可以被AI工作流调用的函数。2.函数名称开头增加"领域用途+分隔符"作为命名空间，函数描述的开头使用统一的自然语言”领域用途+分隔符“来描述。3.函数中可以直接调用requestAI、executeCommand和其他内置文件处理类函数，程序运行中将内置函数自动注入到this.Tools中，如this.Tools.requestAI(systemDescription, prompt, temperature)、this.Tools.readFile(filePath),如下所示：
     “”“
     const descriptions = []
     const functions = {}

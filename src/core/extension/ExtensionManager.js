@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-17 19:33:39
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-03-19 15:58:03
  * @FilePath: \deepfish\src\core\extension\ExtensionManager.js
  * @Description: 扩展函数管理
  * @

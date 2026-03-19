@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 09:12:22
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-17 17:04:43
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-03-19 15:47:31
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiPrompt.js
  * @Description: AI请求提示词
  * @
@@ -15,6 +15,7 @@ const AiAgentSystemPrompt = `
 ### 基础环境信息
 当前工作目录：${currentDir}
 操作系统类型：${osType}
+语言类型: 与用户输入语言一致
 
 ### 工具使用规则
 优先使用工具完成任务：可调用 executeJSCode 运行 Node.js 代码处理复杂逻辑；可调用 executeCommand 运行系统命令行工具（如 git、npm 等），工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
