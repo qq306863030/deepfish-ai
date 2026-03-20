@@ -167,23 +167,23 @@ class ConfigManager {
       logError('AI configuration not found. Please check the name and try again.')
       return
     }
-    console.log('AI Configuration Details')
-    console.log('='.repeat(50))
-    console.log(`Name: ${aiConfig.name}`)
-    console.log(`Type: ${aiConfig.type}`)
-    console.log(`API Base URL: ${aiConfig.baseUrl}`)
-    console.log(`Model: ${aiConfig.model}`)
+    logSuccess('AI Configuration Details')
+    logSuccess('='.repeat(50))
+    logInfo(`Name: ${aiConfig.name}`)
+    logInfo(`Type: ${aiConfig.type}`)
+    logInfo(`API Base URL: ${aiConfig.baseUrl}`)
+    logInfo(`Model: ${aiConfig.model}`)
     if (aiConfig.apiKey) {
-      console.log(`API Key: ${aiConfig.apiKey}`)
+      logInfo(`API Key: ${aiConfig.apiKey}`)
     }
-    console.log(`Temperature: ${aiConfig.temperature}`)
-    console.log(`Max Tokens: ${aiConfig.maxTokens}`)
-    console.log(`Streaming Output: ${aiConfig.stream ? 'Enabled' : 'Disabled'}`)
-    console.log(
+    logInfo(`Temperature: ${aiConfig.temperature}`)
+    logInfo(`Max Tokens: ${aiConfig.maxTokens}`)
+    logInfo(`Streaming Output: ${aiConfig.stream ? 'Enabled' : 'Disabled'}`)
+    logInfo(
       `Is Current: ${this.config.currentAi === aiConfig.name ? 'Yes' : 'No'}`,
     )
-    console.log(`File Path: ${this.configPath}`)
-    console.log('='.repeat(50))
+    logInfo(`File Path: ${this.configPath}`)
+    logSuccess('='.repeat(50))
   }
 
   // 更新扩展
