@@ -25,12 +25,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/qq306863030/deepfish.git"
+    "url": "https://github.com/qq306863030/deepfish-ai.git"
   },
   "bugs": {
-    "url": "https://github.com/qq306863030/deepfish/issues"
+    "url": "https://github.com/qq306863030/deepfish-ai/issues"
   },
-  "homepage": "https://github.com/qq306863030/deepfish#readme",
+  "homepage": "https://github.com/qq306863030/deepfish-ai#readme",
   "dependencies": {
     "axios": "^1.13.5",
     "chalk": "^4.1.0",

@@ -96,7 +96,7 @@ npm install -g deepfish-ai
 ### Installation from Source
 
 ```bash
-git clone https://github.com/qq306863030/deepfish.git
+git clone https://github.com/qq306863030/deepfish-ai.git
 cd deepfish
 npm install
 npm link
@@ -314,11 +314,18 @@ module.exports = {
 
 **Method 3: Automatic Scanning**
 
-The program automatically scans the following directories for directories starting with "deepfish-" on startup.
-1. The npm global node_modules directory (extensions can be installed via `npm install -g deepfish-xxx`)
-2. The node_modules directory in the current working directory
-3. The current working directory
+Rules for automatic scanning of extension modules upon program startup:
 
+1. Scanning locations:
+   - node_modules in the root directory
+   - node_modules in the command execution directory
+   - the command execution directory itself
+
+2. Scanned files:
+   - Extension packages under the @deepfish-ai directory
+   - Extension packages starting with "deepfish-"
+   - JavaScript extension files in the command execution directory, which are automatically loaded if they contain the strings 'module.exports', 'descriptions', and 'functions'
+  
 ## 7. Recommendations
 
 ### AI Service Selection

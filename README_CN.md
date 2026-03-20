@@ -94,7 +94,7 @@ npm install -g deepfish-ai
 ### 从源码安装
 
 ```bash
-git clone https://github.com/qq306863030/deepfish.git
+git clone https://github.com/qq306863030/deepfish-ai.git
 cd deepfish
 npm install
 npm link
@@ -312,10 +312,15 @@ module.exports = {
 
 **方法3：自动扫描**
 
-程序启动时会自动扫描以下目录中以“deepfish-”开头的目录。
-1.程序npm全局node_modules目录(扩展可通过"npm install -g deepfish-xxx" 安装)
-2.当前工作目录中的node_modules目录
-3.当前工作目录
+程序启动时自动扫描扩展模块的规则:
+1. 扫描位置:
+    - 根目录的node_modules
+    - 命令执行目录的node_modules
+    - 命令执行目录
+2. 扫描文件:
+    - @deepfish-ai目录下的扩展包
+    - deepfish-开头的扩展包
+    - 命令执行目录的js扩展文件，js文件内包含'module.exports'、'descriptions'和'functions'字符串则视为扩展文件自动加载
 
 ## 7. 建议
 

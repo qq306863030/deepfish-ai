@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-20 14:41:07
+ * @LastEditTime: 2026-03-20 15:33:28
  * @FilePath: \deepfish\src\core\extension\DefaultExtension.js
  * @Description: 默认扩展函数
  * @
@@ -209,7 +209,7 @@ module.exports = {
 
 ### 第三步：README文档规范
 #### 3.1 通用要求
-- 两个文档需包含「中英文切换标签」（如文档顶部标注「English | 中文」/「中文 | English」）
+- 两个文档需在标题下方包含「中英文切换标签」（如文档顶部标注「English | 中文」/「中文 | English」）
 - 结构保持一致，仅语言不同，核心模块顺序不可调整
 - 文件名称README_CN.md（中文）、README.md（英文）
 
