@@ -8,17 +8,12 @@ const AIService = require('./ai-services/AIService')
 class AICLI {
   constructor(config) {
     this.config = config
+    this.aiConfig = GlobalVariable.configManager.getCurrentAiConfig()
     // 初始化扩展
     this.extensionManager = new ExtensionManager(this)
     this.Tools = this.extensionManager.extensions.functions
     this.aiRecorder = new AiRecorder(this);
-    const currentName = this.config.currentAi || 'default'
-    const currentAiConfig = this.config.ai.find(
-      (cfg) => cfg.name === currentName,
-    )
-    this.aiConfig = currentAiConfig || this.config.ai[0]
-    const serviceType = this.aiConfig?.type || 'ollama'
-    this.aiService = new AIService(serviceType, this)
+    this.aiService = new AIService(this.aiConfig.type, this)
     GlobalVariable.aiCli = this
     GlobalVariable.aiRecorder = this.aiRecorder
     GlobalVariable.isRecordHistory = this.config.isRecordHistory || false

@@ -1,271 +1,10 @@
 #!/usr/bin/env node
 const { program } = require("commander");
-const inquirer = require("inquirer");
-const fs = require("fs");
 const AICLI = require("../core/AICLI");
-const { logSuccess, logError } = require("../core/utils/log");
-const { getDefaultConfig, addExtensionToConfig, removeExtensionFromConfig, viewExtensionsFromConfig, getConfigPath } = require("./configTools");
-const userConfigPath = getConfigPath()
-
-
-// ai 相关命令
-
-async function handleMissingConfig() {
-  logError("Configuration file not initialized");
-  // Create new configuration file with empty ai array
-  console.log("Creating new configuration file:", userConfigPath);
-  writeConfig();
-  console.log("Configuration file created with empty AI configurations.");
-}
-
-async function runSetupCommand(isAdd = false) {
-  console.log("AI Service Configuration");
-  console.log("=".repeat(50));
-
-  let currentConfig = {};
-  if (fs.existsSync(userConfigPath)) {
-    try {
-      currentConfig = require(userConfigPath);
-    } catch (error) {
-      logError(
-        "Warning: Could not load existing configuration:",
-        error.message,
-      );
-    }
-  } else {
-    currentConfig = getDefaultConfig();
-  }
-
-  const questions = [
-    {
-      type: "input",
-      name: "name",
-      message: "Enter AI configuration name:",
-      when: () => isAdd,
-      validate: (value) => {
-        if (value.trim() === "") {
-          return "Configuration name cannot be empty";
-        }
-        // Check if configuration with the same name already exists
-        if (fs.existsSync(userConfigPath)) {
-          try {
-            const existingConfig = require(userConfigPath);
-            if (existingConfig.ai && Array.isArray(existingConfig.ai)) {
-              const existingIndex = existingConfig.ai.findIndex(config => config.name === value.trim());
-              if (existingIndex !== -1) {
-                return "Configuration with this name already exists. Please enter a different name.";
-              }
-            }
-          } catch (error) {
-            // Ignore error if config file cannot be loaded
-          }
-        }
-        return true;
-      },
-    },
-    {
-      type: "list",
-      name: "type",
-      message: "Select AI service type:",
-      choices: [
-        { name: "Ollama (Local)", value: "ollama" },
-        { name: "DeepSeek (Online)", value: "deepseek" },
-        { name: "OpenAI (Online)", value: "openai" },
-      ],
-      default: currentConfig.ai?.[0]?.type || "ollama",
-    },
-    {
-      type: "input",
-      name: "otherType",
-      message: "Enter custom AI service type:",
-      when: (answers) => answers.type === "other",
-      default: currentConfig.ai?.[0]?.type || "custom",
-    },
-    {
-      type: "input",
-      name: "baseUrl",
-      message: "Enter API base URL:",
-      when: (answers) => answers.type !== "other",
-      default: (answers) => {
-        switch (answers.type) {
-          case "ollama":
-            return "http://localhost:11434/v1";
-          case "deepseek":
-            return "https://api.deepseek.com";
-          case "openai":
-            return "https://api.openai.com/v1";
-          default:
-            return currentConfig.ai?.[0]?.baseUrl || "";
-        }
-      },
-    },
-    {
-      type: "input",
-      name: "otherBaseUrl",
-      message: "Enter API base URL:",
-      when: (answers) => answers.type === "other",
-      default: currentConfig.ai?.[0]?.baseUrl || "",
-    },
-    {
-      type: "list",
-      name: "model",
-      message: "Select DeepSeek model:",
-      when: (answers) => answers.type === "deepseek",
-      choices: [
-        { name: "deepseek-chat", value: "deepseek-chat" },
-        { name: "deepseek-reasoner", value: "deepseek-reasoner" },
-        { name: "Other", value: "other" },
-      ],
-      default: "deepseek-reasoner",
-    },
-    {
-      type: "input",
-      name: "model",
-      message: "Enter model name:",
-      when: (answers) => answers.type !== "other" && answers.type !== "deepseek",
-      default: (answers) => {
-        switch (answers.type) {
-          case "ollama":
-            return "deepseek-v3.2:cloud";
-          case "openai":
-            return "gpt-4";
-          default:
-            return currentConfig.ai?.[0]?.model || "";
-        }
-      },
-    },
-    {
-      type: "input",
-      name: "deepseekOtherModel",
-      message: "Enter DeepSeek model name:",
-      when: (answers) => answers.type === "deepseek" && answers.model === "other",
-      default: currentConfig.ai?.[0]?.model || "",
-    },
-    {
-      type: "input",
-      name: "otherModel",
-      message: "Enter model name:",
-      when: (answers) => answers.type === "other",
-      default: currentConfig.ai?.[0]?.model || "",
-    },
-    {
-      type: "input",
-      name: "apiKey",
-      message: "Enter API key:",
-      when: (answers) =>
-        answers.type === "deepseek" || answers.type === "openai",
-      default: "",
-    },
-    {
-      type: "input",
-      name: "otherApiKey",
-      message: "Enter API key:",
-      when: (answers) => answers.type === "other",
-      default: currentConfig.ai?.[0]?.apiKey || "",
-    },
-    {
-      type: "number",
-      name: "temperature",
-      message: "Enter temperature (0-2):",
-      default: 0.7,
-      validate: (value) =>
-        (value >= 0 && value <= 2) || "Temperature must be between 0 and 2",
-    },
-    {
-      type: "number",
-      name: "maxTokens",
-      message: "Enter max tokens:",
-      default: 8192,
-      validate: (value) => value > 0 || "Max tokens must be greater than 0",
-    },
-    {
-      type: "confirm",
-      name: "stream",
-      message: "Enable streaming output:",
-      default: true,
-    },
-  ];
-
-  const answers = await inquirer.default.prompt(questions);
-  
-  // Check if name is empty when adding new configuration
-  if (isAdd && (!answers.name || answers.name.trim() === "")) {
-    console.log("Configuration name cannot be empty");
-    process.exit(1);
-  }
-  
-  // Check if configuration with the same name already exists
-  if (isAdd && fs.existsSync(userConfigPath)) {
-    try {
-      const existingConfig = require(userConfigPath);
-      if (existingConfig.ai && Array.isArray(existingConfig.ai)) {
-        const existingIndex = existingConfig.ai.findIndex(config => config.name === answers.name.trim());
-        if (existingIndex !== -1) {
-          console.log(`Configuration with name "${answers.name}" already exists. Please enter a different name.`);
-          await runSetupCommand(isAdd);
-          return;
-        }
-      }
-    } catch (error) {
-      // Ignore error if config file cannot be loaded
-    }
-  }
-  
-  const aiConfig = {
-    name: answers.name || "default",
-    type: answers.type === "other" ? answers.otherType : answers.type,
-    baseUrl: answers.type === "other" ? answers.otherBaseUrl : answers.baseUrl,
-    model: answers.type === "other" ? answers.otherModel : (answers.type === "deepseek" && answers.model === "other" ? answers.deepseekOtherModel : answers.model),
-    apiKey: answers.type === "ollama" ? 'ollama' : answers.apiKey,
-    temperature: answers.temperature,
-    maxTokens: answers.maxTokens,
-    stream: answers.stream,
-  };
-
-  if (isAdd) {
-    // Add new AI configuration
-    const existingConfig = fs.existsSync(userConfigPath) ? require(userConfigPath) : getDefaultConfig();
-    
-    // Check if configuration with the same name already exists
-    const existingIndex = existingConfig.ai.findIndex(config => config.name === aiConfig.name);
-    if (existingIndex !== -1) {
-      logError(`Configuration with name "${aiConfig.name}" already exists.`);
-      return;
-    }
-    
-    existingConfig.ai.push(aiConfig);
-    const configContent = `module.exports = ${JSON.stringify(existingConfig, null, 2)}`;
-    fs.writeFileSync(userConfigPath, configContent);
-    
-    logSuccess(`AI configuration "${aiConfig.name}" added successfully!`);
-  } else {
-    // Update default configuration
-    const existingConfig = fs.existsSync(userConfigPath) ? require(userConfigPath) : getDefaultConfig();
-    
-    // Add the new configuration to the array
-    existingConfig.ai.push(aiConfig);
-    existingConfig.currentAi = aiConfig.name;
-    
-    const configContent = `module.exports = ${JSON.stringify(existingConfig, null, 2)}`;
-    fs.writeFileSync(userConfigPath, configContent);
-    
-    logSuccess("\nConfiguration saved successfully to:", userConfigPath);
-  }
-
-  console.log("=".repeat(50));
-  console.log("AI configuration details:");
-  console.log(`Name: ${aiConfig.name}`);
-  console.log(`Type: ${aiConfig.type}`);
-  console.log(`API Base URL: ${aiConfig.baseUrl}`);
-  console.log(`Model: ${aiConfig.model}`);
-  if (aiConfig.apiKey) {
-    console.log(`API Key: ${aiConfig.apiKey.substring(0, 8)}...`);
-  }
-  console.log(`Temperature: ${aiConfig.temperature}`);
-  console.log(`Max Tokens: ${aiConfig.maxTokens}`);
-  console.log(`Streaming Output: ${aiConfig.stream ? 'Enabled' : 'Disabled'}`);
-  console.log("=".repeat(50));
-}
+const { logError } = require("../core/utils/log");
+const { GlobalVariable } = require("../core/globalVariable.js");
+require("./ai-config.js");
+require("./ai-ext.js");
 
 program
   .version("1.0.0")
@@ -296,24 +35,21 @@ async function main() {
     } else {
       prompt = program.args.join(" ");
     }
-    if (!fs.existsSync(userConfigPath)) {
-      await handleMissingConfig();
-      return;
-    }
-    const config = require(userConfigPath);
+    const configManager = GlobalVariable.configManager
     // 判断当前列表是否为空
-    if (!config.ai || !Array.isArray(config.ai) || config.ai.length === 0) {
+    if (configManager.isAiListEmpty()) {
       logError("No AI configurations found.");
       logError("Please use 'ai config add' to add a new AI configuration.");
       return;
     }
+    const currentAi = configManager.getCurrentAi();
     // 判断当前是否有设置当前配置
-    if (!config.currentAi || config.currentAi.trim() === "") {
+    if (!currentAi || currentAi.trim() === "") {
       logError("No current AI configuration set.");
       logError("Please use 'ai config use <name>' to set a current configuration.");
       return;
     }
-    const cli = new AICLI(config);
+    const cli = new AICLI(configManager.config);
     if (options.interactive) {
       cli.startInteractive();
       return;
