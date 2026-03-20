@@ -7,7 +7,7 @@
  * @Description: 工作流类
  * @
  */
-const { logInfo } = require('../../utils')
+const { logInfo } = require('../../utils/log')
 const AiAgent = require('./AiAgent')
 const { getInitialMessages } = require('./AiTools')
 

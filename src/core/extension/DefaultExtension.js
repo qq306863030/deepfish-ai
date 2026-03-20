@@ -8,7 +8,7 @@
  * @
  */
 const path = require("path");
-const { logError, logSuccess, logInfo, getConfigPath } = require("../utils");
+const { logError, logSuccess, logInfo, getConfigPath } = require("../utils/log");
 const fs = require("fs-extra");
 const shelljs = require("shelljs");
 const iconv = require("iconv-lite"); // 用于编码转换

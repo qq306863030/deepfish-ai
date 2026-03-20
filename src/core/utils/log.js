@@ -1,4 +1,5 @@
 const chalk = require('chalk')
+const { default: inquirer } = require('inquirer')
 
 
 // 日志相关工具函数
@@ -36,21 +37,6 @@ async function streamLineBreak() {
   process.stdout.write('\n')
 }
 
-function objStrToObj(str) {
-  try {
-    if (typeof str === 'string') {
-      return eval(`(${str})`)
-    } else {
-      return str
-    }
-  } catch (error) {
-    throw new Error(`对象转换失败：${error.message}`)
-  }
-}
-
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
 
 function loading(label = 'Thinking...') {
   let animationInterval
@@ -78,6 +64,72 @@ function log(msg, color) {
   }
 }
 
+// 判断问答
+async function askConfirm(name, message, defaultVal = true, opt = {}) {
+  const questions = [
+    {
+      type: 'confirm',
+      name,
+      message,
+      default: defaultVal,
+      ...opt
+    }
+  ]
+  const answers = await inquirer.prompt(questions)
+  return answers[name]
+}
+
+// 选择问答
+function askList(name, message, choices, defaultVal = 0, opt = {}) {
+  const questions = [
+    {
+      type: 'list',
+      name,
+      message,
+      choices,
+      default: defaultVal,
+      ...opt
+    }
+  ]
+  return inquirer.prompt(questions)
+}
+
+// 输入问答
+async function askInput(name, message, defaultVal = '', opt = {}) {
+  const questions = [
+    {
+      type: 'input',
+      name,
+      message,
+      default: defaultVal,
+      ...opt
+    },
+  ]
+  const answers = await inquirer.prompt(questions)
+  return answers[name]
+}
+
+// 输入数字
+async function askNumber(name, message, defaultVal = 0, opt = {}) {
+  const questions = [
+    {
+      type: 'number',
+      name,
+      message,
+      default: defaultVal,
+      ...opt
+    },
+  ]
+  const answers = await inquirer.prompt(questions)
+  return answers[name]
+}
+
+// 输入任何
+function askAny(questions) {
+  return inquirer.prompt(questions)
+}
+
+
 module.exports = {
   logInfo,
   logSuccess,
@@ -86,6 +138,9 @@ module.exports = {
   writeLine,
   streamOutput,
   streamLineBreak,
-  objStrToObj,
-  delay,
+  askAny,
+  askConfirm,
+  askList,
+  askInput,
+  askNumber
 }

@@ -9,7 +9,7 @@
  */
 const { OpenAI } = require('openai')
 const { AiAgentSystemPrompt } = require('./AiPrompt')
-const { streamOutput, streamLineBreak, objStrToObj } = require('../../utils')
+const { streamOutput, streamLineBreak } = require('../../utils/log')
 
 // 创建client
 function createOpenAiClient(aiConfig) {

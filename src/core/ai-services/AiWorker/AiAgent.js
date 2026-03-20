@@ -8,7 +8,7 @@
  * @
  */
 
-const { logError, logInfo, loading } = require('../../utils')
+const { logError, logInfo, loading } = require('../../utils/log')
 const AIMessageManager = require('./AIMessageManager')
 const { AiAgentSystemPrompt } = require('./AiPrompt')
 const { aiRequestByTools } = require('./AiTools')

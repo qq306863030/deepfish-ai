@@ -16,7 +16,7 @@ const lodash = require('lodash')
 const shelljs = require('shelljs')
 const iconv = require('iconv-lite') // 用于编码转换
 const os = require('os') // 用于判断系统类型
-const { logError } = require('../utils')
+const { logError } = require('../utils/log')
 const { getGlobalNodeModulesPath } = require('../utils/node-root')
 
 class ExtensionManager {

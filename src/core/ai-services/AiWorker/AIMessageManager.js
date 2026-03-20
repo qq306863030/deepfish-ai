@@ -8,7 +8,7 @@
  * @
  */
 const { cloneDeep } = require('lodash')
-const { logError, logInfo } = require('../../utils')
+const { logError, logInfo } = require('../../utils/log')
 const { aiRequestSingle } = require('./AiTools')
 const { GlobalVariable } = require('../../GlobalVariable')
 
