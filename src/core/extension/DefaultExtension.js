@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-03-19 16:15:35
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-03-20 09:27:29
  * @FilePath: \deepfish\src\core\extension\DefaultExtension.js
  * @Description: 默认扩展函数
  * @
@@ -112,7 +112,18 @@ async function executeJSCode(code) {
     const Func = new Function(
       "Tools",
       "require",
-      `return (async () => { this.logMessages = [];const originalLog = console.log;const newLog = function(){ originalLog.apply(console, arguments); this.logMessages.push(Array.from(arguments).join(" "))};console.log = newLog.bind(this);${code };return this.logMessages.join('\\n'); })()`,
+      `return (async () => {
+          this.logMessages = []
+          const originalLog = console.log
+          const newLog = function () {
+            originalLog.apply(console, arguments)
+            this.logMessages.push(Array.from(arguments).join(' '))
+          }
+          console.log = newLog.bind(this)
+          ${code}
+          console.log = originalLog
+          return this.logMessages.join('\\n')
+        })()`,
     );
     const originalRequire = require;
     const newRequire = (modulePath) => {
@@ -123,11 +134,6 @@ async function executeJSCode(code) {
       return originalRequire(modulePath);
     };
 
-    const newLog = function () {
-      console.log.apply(console, arguments);
-      this.logMessages.push(Array.from(arguments).join(" "))
-    }
-    
     const result = await Func(functions, newRequire);
     
     return result || "";
