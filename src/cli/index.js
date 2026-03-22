@@ -3,6 +3,7 @@ const { program } = require("commander");
 const AICLI = require("../core/AICLI");
 const { logError } = require("../core/utils/log");
 const { GlobalVariable } = require("../core/globalVariable.js");
+const ConfigManager = require("./ConfigManager.js");
 require("./ai-config.js");
 require("./ai-ext.js");
 
@@ -48,6 +49,9 @@ async function main() {
       logError("No current AI configuration set.");
       logError("Please use 'ai config use <name>' to set a current configuration.");
       return;
+    }
+    if (!GlobalVariable.configManager) {
+      GlobalVariable.configManager = new ConfigManager();
     }
     const cli = new AICLI(configManager.config);
     if (options.interactive) {

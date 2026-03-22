@@ -1,6 +1,6 @@
 {
   "name": "deepfish-ai",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "This is an AI-driven command-line tool built on Node.js, equipped with AI agent and workflow capabilities. It is compatible with a wide range of AI models, can convert natural language into cross-system terminal and file operation commands, and features high extensibility. It supports complex tasks such as translation, content creation, and format conversion, while allowing custom extensions to be automatically generated via AI.",
   "main": "src/index.js",
   "bin": {

@@ -11,7 +11,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const inquirer = require("inquirer");
 const dayjs = require("dayjs");
-const { GlobalVariable } = require("../../GlobalVariable");
+const { GlobalVariable } = require("../../globalVariable");
 
 class AiRecorder {
   constructor(aiCli) {

@@ -1,7 +1,7 @@
 const ExtensionManager = require('./extension/ExtensionManager')
 const readline = require('readline')
 const { logError } = require('./utils/log')
-const { GlobalVariable } = require('./GlobalVariable')
+const { GlobalVariable } = require('./globalVariable')
 const AiRecorder = require('./ai-services/AiWorker/AiRecorder')
 const AIService = require('./ai-services/AIService')
 
