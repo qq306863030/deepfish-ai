@@ -150,7 +150,7 @@ ai ext ls # 列出所有扩展工具
 
 ### 配置文件结构
 
-配置文件 (`~/.ai-cmd.config.js`) 具有以下结构：
+配置文件 (`~/.deepfish-ai/config.js`) 具有以下结构：
 
 ```javascript
 module.exports = {
