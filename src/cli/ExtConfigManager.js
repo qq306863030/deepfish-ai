@@ -2,7 +2,7 @@ const path = require("path");
 const fs = require("fs-extra");
 const { GlobalVariable } = require('../core/globalVariable')
 const { logError, logSuccess } = require('../core/utils/log');
-const { traverseFiles } = require("./configTools");
+const { traverseFiles } = require("../core/utils/normal");
 
 class ExtConfigManager {
   constructor() {
@@ -81,7 +81,7 @@ class ExtConfigManager {
       }
       console.log('='.repeat(50))
     } else {
-      logSuccess(`No extensions in config.`)
+      logError(`No extensions in config.`)
     }
   }
 

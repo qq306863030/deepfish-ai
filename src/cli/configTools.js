@@ -1,6 +1,3 @@
-const path = require("path");
-const fs = require("fs-extra");
-
 const defaultConfig = {
   ai: [],
   currentAi: "",
@@ -52,40 +49,9 @@ const aiCliConfig = {
   },
 };
 
-// 遍历目录和子目录下所有文件
-function traverseFiles() {
-  try {
-    const currentDir = process.cwd();
-    const allFiles = [];
-    const currentItems = fs.readdirSync(currentDir, { withFileTypes: true });
-    for (const item of currentItems) {
-      const itemPath = path.join(currentDir, item.name);
-      if (item.isFile()) {
-        allFiles.push(itemPath);
-        continue;
-      }
-      if (item.isDirectory()) {
-        try {
-          const subItems = fs.readdirSync(itemPath, { withFileTypes: true });
-          for (const subItem of subItems) {
-            if (subItem.isFile()) {
-              allFiles.push(path.join(itemPath, subItem.name));
-            }
-          }
-        } catch (subErr) {
-          console.warn(`读取子目录失败 ${itemPath}：${subErr.message}`);
-        }
-      }
-    }
-    return allFiles;
-  } catch (err) {
-    console.error(`遍历目录失败：${err.message}`);
-    return [];
-  }
-}
+
 
 module.exports = {
   aiCliConfig,
   defaultConfig,
-  traverseFiles
 };

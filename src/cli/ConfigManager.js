@@ -251,6 +251,7 @@ class ConfigManager {
       this.configPath,
       `module.exports = ${JSON.stringify(config, null, 2)}`,
     )
+    this.config = config
   }
 }
 
