@@ -140,6 +140,7 @@ ai config use <name> # Set the specified AI configuration as the current one
 ai config del <name> # Delete the specified AI configuration
 ai config view [name] # View details of the specified AI configuration
 ai config edit # Edit the configuration file manually
+ai config dir # Open the configuration file directory
 ai config reset # Reset configuration
 ai config clear # Delete the configuration file
 

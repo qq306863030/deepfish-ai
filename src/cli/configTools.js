@@ -8,6 +8,7 @@ const defaultConfig = {
   maxMessagesLength: 50000, // 最大压缩长度
   maxMessagesCount: 40, // 最大压缩数量
   extensions: [],
+  skills:[],
   isRecordHistory: false, // 是否创建工作流执行记录文件,用于因意外终止恢复工作流
   isLog: false, // 是否创建工作流执行日志
 };

@@ -138,6 +138,7 @@ ai config use <name> # 设置指定的AI配置为当前配置
 ai config del <name> # 删除指定的AI配置
 ai config view [name] # 查看指定AI配置的详细信息
 ai config edit # 编辑配置文件手动编辑配置文件
+ai config dir # 打开配置文件所在目录
 ai config reset # 重置配置
 ai config clear # 删除配置文件
 

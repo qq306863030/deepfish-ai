@@ -24,9 +24,28 @@ class ConfigManager {
     ) {
       fs.moveSync(path.join(os.homedir(), '.ai-cmd.config.js'), this.configPath)
     } else if (!isConfigExists) {
-      this._writeConfig()
+      this.writeConfig()
     }
-    this.config = this._getConfig()
+    this.config = this.getConfig()
+  }
+
+  dir() {
+    // 打开目录
+    const { exec } = require('child_process')
+    const platform = process.platform
+    let openCommand
+    if (platform === 'darwin') {
+      openCommand = `open "${this.configDir}"`
+    } else if (platform === 'win32') {
+      openCommand = `explorer "${this.configDir}"`
+    } else {
+      openCommand = `xdg-open "${this.configDir}"`
+    }
+    exec(openCommand, (error) => {
+      if (error) {
+        logError('Error opening configuration directory:', error.message)
+      }
+    })
   }
 
   edit() {
@@ -70,7 +89,7 @@ class ConfigManager {
   // 添加一个aiConfig
   addAiConfig(aiConfig) {
     this.config.ai.push(aiConfig)
-    this._writeConfig(this.config)
+    this.writeConfig(this.config)
     logSuccess(`AI configuration "${aiConfig.name}" added successfully!`)
   }
 
@@ -91,7 +110,7 @@ class ConfigManager {
     }
     // Remove the configuration
     this.config.ai.splice(existingIndex, 1)
-    this._writeConfig(this.config)
+    this.writeConfig(this.config)
     logSuccess(`AI configuration "${aiName}" deleted successfully!`)
   }
 
@@ -106,7 +125,7 @@ class ConfigManager {
       return
     }
     this.config.currentAi = aiName
-    this._writeConfig(this.config)
+    this.writeConfig(this.config)
     logSuccess(`Current AI configuration set to "${aiName}" successfully!`)
   }
 
@@ -144,8 +163,8 @@ class ConfigManager {
   // 重置config
   resetConfig() {
     console.log('Resetting configuration file:', this.configPath)
-    this._writeConfig()
-    this.config = this._getConfig()
+    this.writeConfig()
+    this.config = this.getConfig()
     logError('Configuration file has been reset to default settings.')
   }
 
@@ -189,14 +208,14 @@ class ConfigManager {
   // 更新扩展
   updateExtensions(extensions) {
     this.config.extensions = extensions
-    this._writeConfig(this.config)
+    this.writeConfig(this.config)
     logSuccess('Extensions updated successfully!')
   }
 
   // 删除扩展
   removeExtensionByIndex(extIndex) {
     const filePath = this.config.extensions.splice(extIndex, 1)
-    this._writeConfig(this.config)
+    this.writeConfig(this.config)
     logSuccess(
       `Extension removed from config: ${filePath}.You can run 'ai ext ls' to view the changes.`,
     )
@@ -206,18 +225,18 @@ class ConfigManager {
     this.config.extensions = this.config.extensions.filter(
       (ext) => ext !== filePath,
     )
-    this._writeConfig(this.config)
+    this.writeConfig(this.config)
     logSuccess(
       `Extension removed from config: ${filePath}.You can run 'ai ext ls' to view the changes.`,
     )
   }
 
-  _getConfig() {
+  getConfig() {
     return require(this.configPath)
   }
 
   // 写入配置
-  _writeConfig(config) {
+  writeConfig(config) {
     if (!config) {
       config = defaultConfig
     }

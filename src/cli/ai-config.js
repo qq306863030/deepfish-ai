@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-19 11:45:10
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-03-20 23:54:34
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-03-23 14:46:59
  * @FilePath: \deepfish\src\cli\ai-config.js
  * @Description: ai config 相关命令
  * @
@@ -22,6 +22,13 @@ configCommand
   .description('Edit configuration file with default editor')
   .action(() => {
     configManager.edit()
+  })
+
+configCommand
+  .command('dir')
+  .description('Open configuration directory')
+  .action(() => {
+    configManager.dir()
   })
 
 configCommand
