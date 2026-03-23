@@ -3,7 +3,7 @@ const readline = require('readline')
 const { logError } = require('./utils/log')
 const { GlobalVariable } = require('./globalVariable')
 const AiRecorder = require('./ai-services/AiWorker/AiRecorder')
-const AIService = require('./ai-services/AIService')
+const AIService = require('./ai-services')
 
 class AICLI {
   constructor(config) {

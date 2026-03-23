@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:23:42
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-23 18:27:06
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-03-23 23:50:05
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */
@@ -13,8 +13,9 @@ const cheerio = require('cheerio')
 const { GlobalVariable } = require('../core/globalVariable')
 const { logError, logSuccess } = require('../core/utils/log')
 const extract = require('extract-zip')
+const { parseFrontmatter, parseMetadata } = require('./SkillParser')
 
-// skill的数据结构: {name: string, enable: boolean, description: string, path: string}
+// skill的数据结构: {name: string, enable: boolean, description: string, baseDir: string, fileName: string}
 class SkillConfigManager {
   constructor() {
     this.configManager = GlobalVariable.configManager
@@ -32,6 +33,34 @@ class SkillConfigManager {
       this.configManager.writeConfig(userConfig)
     }
     this._check()
+  }
+
+  // 预加载skills，拼接提示词
+  preLoadSkills(skill) {}
+
+  // 调用skill，传入参数，返回结果
+  async callSkill(skill, params) {}
+
+  // 解析skill文件，获取名称、版本、作者、元数据、描述等信息
+  _parseSkill(baseDir) {
+    const skillMdPath = ['SKILL.md', 'skill.md']
+      .map((name) => path.join(baseDir, name))
+      .find((filePath) => fs.existsSync(filePath))
+    if (!skillMdPath) {
+      return {}
+    }
+    const parsed = {}
+    const raw = fs.readFileSync(skillMdPath, 'utf8').replace(/^\uFEFF/, '')
+    const frontmatterInfo = parseFrontmatter(raw)
+    const frontmatter = frontmatterInfo.frontmatter
+    parsed.name = String(frontmatter.name || '').trim()
+    parsed.description = String(frontmatter.description || '').trim()
+    parsed.version = String(frontmatter.version || '').trim()
+    parsed.author = String(frontmatter.author || '').trim()
+    parsed.homepage = String(frontmatter.homepage || '').trim()
+    const metadata = parseMetadata(frontmatter.metadata)
+    parsed.metadata = metadata || {}
+    return parsed
   }
 
   // 查看skills列表
@@ -65,18 +94,22 @@ class SkillConfigManager {
       return
     }
     if (skills.length !== skillDirs.length) {
-        // 查询未被注册的skill，自动注册
-        skillDirs.forEach((skillDir) => {
-            if (!skills.some((skill) => skill.fileName === skillDir || skill.name === skillDir)) {
-                this._registerSkill(skillDir, false)
-            }
-        })
-        // 查询已注册但目录不存在的skill，自动从列表中删除
-        skills.forEach((skill) => {
-            if (!skillDirs.includes(skill.fileName)) {
-                this.remove(skill.name)
-            }
-        })
+      // 查询未被注册的skill，自动注册
+      skillDirs.forEach((skillDir) => {
+        if (
+          !skills.some(
+            (skill) => skill.fileName === skillDir || skill.name === skillDir,
+          )
+        ) {
+          this._registerSkill(skillDir, false)
+        }
+      })
+      // 查询已注册但目录不存在的skill，自动从列表中删除
+      skills.forEach((skill) => {
+        if (!skillDirs.includes(skill.fileName)) {
+          this.remove(skill.name)
+        }
+      })
     }
   }
 
@@ -92,15 +125,15 @@ class SkillConfigManager {
     )
     if (file) {
       // 如果存在同名文件，则判断是否是目录
-      const filePath = path.join(process.cwd(), file)
-      if (fs.statSync(filePath).isDirectory()) {
+      const baseDir = path.join(process.cwd(), file)
+      if (fs.statSync(baseDir).isDirectory()) {
         // 如果是目录，则拷贝到skills目录下，并添加到config中
-        fs.copySync(filePath, path.join(this.skillDir, file))
+        fs.copySync(baseDir, path.join(this.skillDir, file))
         this._registerSkill(baseName)
       } else if (path.extname(file) === '.zip') {
         // 如果是zip文件，则解压到skills目录下，并添加到config中
         const extractPath = path.join(this.skillDir, baseName)
-        await extract(filePath, { dir: extractPath })
+        await extract(baseDir, { dir: extractPath })
         this._registerSkill(baseName)
       } else {
         logError(`File "${file}" is not a directory or a zip file.`)
@@ -212,7 +245,7 @@ class SkillConfigManager {
     userConfig.skills.splice(index, 1)
     this.configManager.writeConfig(userConfig)
     if (fs.existsSync(skillPath)) {
-        fs.removeSync(skillPath)
+      fs.removeSync(skillPath)
     }
     logSuccess(`Skill "${skill.name}" removed successfully!`)
   }
@@ -260,13 +293,14 @@ class SkillConfigManager {
     }
     const skillPath = path.join(this.skillDir, skillDirName)
     // 获取name、description
-    const name = skillDirName
-    const description = ''
+    const skillInfo = this._parseSkill(skillPath)
+    const name = skillInfo.name || skillDirName
+    const description = skillInfo.description || ''
     userConfig.skills.push({
       name,
       description,
       enable,
-      path: skillPath,
+      baseDir: skillPath,
       fileName: skillDirName,
     })
     this.configManager.writeConfig(userConfig)
@@ -283,9 +317,7 @@ class SkillConfigManager {
         skill = userConfig.skills[index]
       }
     } else {
-      index = userConfig.skills.findIndex(
-        (skill) => skill.name === skillName,
-      )
+      index = userConfig.skills.findIndex((skill) => skill.name === skillName)
       if (index === -1) {
         logError(`Skill with name "${skillName}" not found in config.`)
         return
@@ -293,8 +325,8 @@ class SkillConfigManager {
       skill = userConfig.skills[index]
     }
     return {
-        skill,
-        index,
+      skill,
+      index,
     }
   }
 }
