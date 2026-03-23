@@ -31,21 +31,28 @@ class ConfigManager {
 
   dir() {
     // 打开目录
-    const { exec } = require('child_process')
+    const { spawn } = require('child_process')
     const platform = process.platform
-    let openCommand
+    let command
+    let args
     if (platform === 'darwin') {
-      openCommand = `open "${this.configDir}"`
+      command = 'open'
+      args = [this.configDir]
     } else if (platform === 'win32') {
-      openCommand = `explorer "${this.configDir}"`
+      command = 'explorer.exe'
+      args = [this.configDir]
     } else {
-      openCommand = `xdg-open "${this.configDir}"`
+      command = 'xdg-open'
+      args = [this.configDir]
     }
-    exec(openCommand, (error) => {
-      if (error) {
-        logError('Error opening configuration directory:', error.message)
-      }
+    const child = spawn(command, args, {
+      detached: true,
+      stdio: 'ignore',
     })
+    child.on('error', (error) => {
+      logError(`Error opening configuration directory: ${error.message}`)
+    })
+    child.unref()
   }
 
   edit() {

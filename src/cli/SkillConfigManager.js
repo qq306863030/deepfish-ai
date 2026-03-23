@@ -4,7 +4,9 @@ class SkillConfigManager {
     constructor() {
         this.configManager = GlobalVariable.configManager
     }
-    
+    init() {
+        
+    }
 }
 
 module.exports = SkillConfigManager;
