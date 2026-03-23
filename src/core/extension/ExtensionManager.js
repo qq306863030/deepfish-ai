@@ -2,12 +2,15 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-20 15:40:09
+ * @LastEditTime: 2026-03-23 14:16:53
  * @FilePath: \deepfish\src\core\extension\ExtensionManager.js
  * @Description: 扩展函数管理
  * @
  */
-const { descriptions, functions } = require('./DefaultExtension')
+const BaseExtension = require('./BaseExtension')
+const SystemExtension = require('./SystemExtension')
+const FileExtension = require('./FileExtension')
+const InquirerExtension = require('./InquirerExtension')
 const path = require('path')
 const fs = require('fs-extra')
 const axios = require('axios')
@@ -23,10 +26,27 @@ class ExtensionManager {
   constructor(aiCli) {
     this.aiCli = aiCli
     this.extensions = {
-      descriptions,
-      functions,
+      descriptions: [],
+      functions: {},
     }
+    this.loadDefaultExtensions()
     this.parseExtends(this.aiCli.config.extensions || [])
+  }
+
+  loadDefaultExtensions() {
+    this.extensions.descriptions = this.extensions.descriptions.concat(
+      SystemExtension.descriptions,
+      FileExtension.descriptions,
+      InquirerExtension.descriptions,
+      BaseExtension.descriptions
+    )
+    this.extensions.functions = Object.assign(
+      this.extensions.functions,
+      SystemExtension.functions,
+      FileExtension.functions,
+      InquirerExtension.functions,
+      BaseExtension.functions
+    )
   }
 
   parseExtends(configExtends) {
