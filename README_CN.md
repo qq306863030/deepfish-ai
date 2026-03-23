@@ -147,6 +147,14 @@ ai ext add <filename> # 添加扩展工具
 ai ext del <filepath> # 通过文件路径移除扩展工具
 ai ext del <index> # 通过索引移除扩展工具
 ai ext ls # 列出所有扩展工具
+
+# Skill 命令
+ai skill ls # 列出所有已注册的 skill
+ai skill add <name> # 从当前目录添加本地 skill 目录或 zip 文件
+ai skill del <name|index> # 通过名称或索引删除 skill
+ai skill install <url> # 从 ClawHub 安装 skill
+ai skill enable <name|index> # 通过名称或索引启用 skill
+ai skill disable <name|index> # 通过名称或索引禁用 skill
 ```
 
 ### 配置文件结构
@@ -229,6 +237,13 @@ ai "检查当前目录的磁盘使用情况"
 ```bash
 ai "创建一个用于查询天气的扩展工具weather.js"
 ai ext add weather.js
+```
+
+**Skill 管理：**
+
+```bash
+ai skill install https://clawhub.ai/TheSethRose/agent-browser
+ai skill ls
 ```
 
 **媒体处理：**

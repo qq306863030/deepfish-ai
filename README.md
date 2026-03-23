@@ -149,6 +149,14 @@ ai ext add <filename> # Add an extension tool
 ai ext del <filepath> # Remove an extension tool by file path
 ai ext del <index> # Remove an extension tool by index
 ai ext ls # List all extension tools
+
+# Skill commands
+ai skill ls # List all registered skills
+ai skill add <name> # Add a local skill directory or zip file from the current directory
+ai skill del <name|index> # Remove a skill by name or index
+ai skill install <url> # Install a skill from ClawHub
+ai skill enable <name|index> # Enable a skill by name or index
+ai skill disable <name|index> # Disable a skill by name or index
 ```
 
 ### Configuration File Structure
@@ -231,6 +239,13 @@ ai "Check disk usage for the current directory"
 ```bash
 ai "Create a weather.js extension tool for querying weather"
 ai ext add weather.js
+```
+
+**Skill Management:**
+
+```bash
+ai skill install https://clawhub.ai/TheSethRose/agent-browser
+ai skill ls
 ```
 
 **Media Processing:**
