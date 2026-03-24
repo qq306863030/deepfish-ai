@@ -70,7 +70,7 @@ const descriptions = [
     type: "function",
     function: {
       name: "askConfirm",
-      description: "提示用户确认问题，返回布尔值。通过message参数显示问题文本，defaultVal参数设置默认值（默认为true），opt参数可传递inquirer的其他选项。",
+      description: "用户交互：提示用户确认问题，返回布尔值。通过message参数显示问题文本，defaultVal参数设置默认值（默认为true），opt参数可传递inquirer的其他选项。",
       parameters: {
         type: "object",
         properties: {
@@ -87,7 +87,7 @@ const descriptions = [
     type: "function",
     function: {
       name: "askList",
-      description: "提示用户从列表中选择一项，返回选择项对象。通过choices参数传递选项数组，defaultVal参数设置默认选择的索引（默认为0），opt参数可传递inquirer的其他选项。",
+      description: "用户交互：提示用户从列表中选择一项，返回选择项对象。通过choices参数传递选项数组，defaultVal参数设置默认选择的索引（默认为0），opt参数可传递inquirer的其他选项。",
       parameters: {
         type: "object",
         properties: {
@@ -105,7 +105,7 @@ const descriptions = [
     type: "function",
     function: {
       name: "askInput",
-      description: "提示用户输入文本，返回输入的字符串。通过message参数显示问题文本，defaultVal参数设置默认值（默认为空字符串），opt参数可传递inquirer的其他选项。",
+      description: "用户交互：提示用户输入文本，返回输入的字符串。通过message参数显示问题文本，defaultVal参数设置默认值（默认为空字符串），opt参数可传递inquirer的其他选项。",
       parameters: {
         type: "object",
         properties: {
@@ -122,7 +122,7 @@ const descriptions = [
     type: "function",
     function: {
       name: "askNumber",
-      description: "提示用户输入数字，返回输入的数字。通过message参数显示问题文本，defaultVal参数设置默认值（默认为0），opt参数可传递inquirer的其他选项。",
+      description: "用户交互：提示用户输入数字，返回输入的数字。通过message参数显示问题文本，defaultVal参数设置默认值（默认为0），opt参数可传递inquirer的其他选项。",
       parameters: {
         type: "object",
         properties: {
@@ -139,7 +139,7 @@ const descriptions = [
     type: "function",
     function: {
       name: "askAny",
-      description: "提示用户根据自定义问题对象数组进行交互，返回答案对象。通过questions参数传递inquirer格式的问题数组，支持多种问题类型和复杂配置。",
+      description: "用户交互：提示用户根据自定义问题对象数组进行交互，返回答案对象。通过questions参数传递inquirer格式的问题数组，支持多种问题类型和复杂配置。",
       parameters: {
         type: "object",
         properties: {

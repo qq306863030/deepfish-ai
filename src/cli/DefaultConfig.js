@@ -6,7 +6,7 @@ const defaultConfig = {
   maxMessagesCount: 40, // 最大压缩数量
   extensions: [],
   skills:[],
-  encoding: "utf-8", // 命令行编码格式
+  encoding: "", // 命令行编码格式
   isRecordHistory: false, // 是否创建工作流执行记录文件,用于因意外终止恢复工作流
   isLog: false, // 是否创建工作流执行日志
 };

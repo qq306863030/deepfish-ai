@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-24 16:36:43
+ * @LastEditTime: 2026-03-24 17:02:10
  * @FilePath: \deepfish\src\core\extension\SystemExtension.js
  * @Description: 默认扩展函数
  * @
@@ -20,8 +20,11 @@ const { aiRequestSingle } = require("../ai-services/AiWorker/AiTools");
 async function executeCommand(command) {
   return new Promise((resolve, reject) => {
     logSuccess(`Executing system command: ${command}`);
-    // const platform = os.platform();
-    const targetEncoding = this.config?.encoding || "utf-8" // platform === "win32" ? "gbk" : "utf-8"; // Windows(含PowerShell)用gbk，Linux/macOS用utf-8
+    const platform = os.platform();
+    let targetEncoding = this.config?.encoding 
+    if (!targetEncoding || targetEncoding === "auto") {
+      targetEncoding = platform === "win32" ? "gbk" : "utf-8"; // Windows(含PowerShell)用gbk，Linux/macOS用utf-8
+    }
     shelljs.exec(
       command,
       {
