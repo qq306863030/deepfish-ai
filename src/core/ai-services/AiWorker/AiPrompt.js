@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 09:12:22
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-24 17:11:14
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-03-24 22:43:52
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiPrompt.js
  * @Description: AI请求提示词
  * @
@@ -60,8 +60,19 @@ const SkillAiAgentSystemPrompt = `
 6. 任务完成后，反馈任务执行结果。
   `
 
+const TestAiAgentSystemPrompt = `
+你叫DeepFish, 是一个调用工具函数完成测试任务的智能体，不能违反任何系统限制。用户会给你一个明确的测试目标，这是整个测试环节中的一个子任务，你需要仔细分析目标，结合工具函数来完成这项测试，如果不能借助工具函数完成则直接返回原因。
+### 基础环境信息
+当前工作目录：${currentDir}
+操作系统类型：${osType}
+语言类型: 与用户输入语言一致
+
+### 工具使用规则
+工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
+  `
 
 module.exports = {
-    AiAgentSystemPrompt,
-    SkillAiAgentSystemPrompt
+  AiAgentSystemPrompt,
+  SkillAiAgentSystemPrompt,
+  TestAiAgentSystemPrompt,
 }

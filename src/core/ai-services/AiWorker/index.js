@@ -2,14 +2,13 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-03-24 21:38:14
+ * @LastEditTime: 2026-03-24 23:19:36
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\index.js
  * @Description: 工作流类
  * @
  */
-const { logInfo } = require('../../utils/log')
 const AiAgent = require('./AiAgent')
-const { getInitialMessages, getInitialMessagesForSkill } = require('./AiTools')
+const { getInitialMessages, getInitialMessagesForSkill, getInitialMessagesForTest } = require('./AiTools')
 
 class AiWorker {
   constructor(aiCli, client) {
@@ -54,6 +53,17 @@ class AiWorker {
       this.aiCli.extensionManager.extensions,
     )
     const initMessages = getInitialMessagesForSkill(skillContent, goal)
+    return aiAgent.work(initMessages)
+  }
+
+  subTestAgent(goal) {
+    const aiAgent = new AiAgent(
+      this.client,
+      this.aiCli.config,
+      this.aiCli.aiConfig,
+      this.aiCli.extensionManager.extensions,
+    )
+    const initMessages = getInitialMessagesForTest(goal)
     return aiAgent.work(initMessages)
   }
 

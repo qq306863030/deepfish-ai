@@ -1,14 +1,14 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 09:12:22
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-24 16:24:44
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-03-24 22:45:08
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiTools.js
  * @Description: 对话初始化、对话请求
  * @
  */
 const { OpenAI } = require('openai')
-const { AiAgentSystemPrompt, SkillAiAgentSystemPrompt } = require('./AiPrompt')
+const { AiAgentSystemPrompt, SkillAiAgentSystemPrompt, TestAiAgentSystemPrompt } = require('./AiPrompt')
 const { streamOutput, streamLineBreak } = require('../../utils/log')
 const { GlobalVariable } = require('../../globalVariable')
 
@@ -47,6 +47,19 @@ ${skillContent}`
     {
       role: 'system',
       content: systemDescription,
+    },
+    {
+      role: 'user',
+      content: goal,
+    },
+  ]
+}
+
+function getInitialMessagesForTest(goal) {
+  return [
+    {
+      role: 'system',
+      content: TestAiAgentSystemPrompt,
     },
     {
       role: 'user',
@@ -241,5 +254,6 @@ module.exports = {
   aiRequestSingle,
   aiRequestByTools,
   getInitialMessages,
-  getInitialMessagesForSkill
+  getInitialMessagesForSkill,
+  getInitialMessagesForTest
 }
