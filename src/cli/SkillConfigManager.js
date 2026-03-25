@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:23:42
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 16:04:13
+ * @LastEditTime: 2026-03-25 18:29:40
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */
@@ -53,7 +53,8 @@ class SkillConfigManager {
       .join('\n')
     return (
 `
-你可以调用以下技能来完成用户的请求，技能的调用方式是：当用户的请求匹配技能描述时，调用executeSkill函数加载对应技能的SKILL.md文件，获取调用说明，并根据说明调用对应的工具函数来完成任务。
+### 可以使用的Skill
+除了使用内置函数，还可以调用以下Skill来完成用户的请求，Skill的调用方式：当用户的请求匹配技能描述时，调用executeSkill函数加载对应Skill的SKILL.md说明文件，获取调用说明，通过仔细阅读说明文件学习Skill的使用方法，来完成任务。
 ## Available Skills
 
 | Skill | Description | Location | SkillFilePath |
@@ -62,8 +63,9 @@ ${table}
 
 ## Skills Policy
 - 当用户请求匹配 skill description 时，调用 executeSkill 函数加载对应 SKILL.md
-- 一次只加载一个技能，优先匹配最具体的技能
-- 当用户请求不匹配任何技能描述时，不加载任何技能`
+- 一次只加载一个Skill，优先匹配最具体的Skill
+- 当用户请求不匹配任何Skill描述时，不加载任何Skill
+- Skill即你可以使用的技能`
     )
   }
 

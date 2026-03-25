@@ -8,7 +8,7 @@ const defaultConfig = {
   maxLogExpireTime: 3, // 日志过期时间，单位天，-1表示无限制，0表示不记录
   extensions: [],
   skills:[],
-  encoding: "", // 命令行编码格式
+  encoding: "utf-8", // 命令行编码格式, 可设置为utf-8、gbk等, 也可以设置成auto或空值自动判断
 };
 
 const aiCliConfig = {

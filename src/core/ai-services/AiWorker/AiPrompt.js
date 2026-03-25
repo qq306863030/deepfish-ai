@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 09:12:22
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 09:23:08
+ * @LastEditTime: 2026-03-25 18:25:15
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiPrompt.js
  * @Description: AI请求提示词
  * @
@@ -18,7 +18,7 @@ const AiAgentSystemPrompt = `
 语言类型: 与用户输入语言一致
 
 ### 工具使用规则
-优先使用工具完成任务：可调用 executeJSCode 运行 Node.js 代码处理复杂逻辑；可调用 executeCommand 运行系统命令行工具（如 git、npm 等），工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
+系统中内置了一些可以直接调用的工具函数，如可调用 executeJSCode 运行 Node.js 代码处理复杂逻辑；可调用 executeCommand 运行系统命令行工具（如 git、npm 等），工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
 
 ### 大文本文件处理规则（分步执行）
 处理长文档等大文件（单文件＞20KB）时，必须按以下步骤分块处理：

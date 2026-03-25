@@ -1,14 +1,14 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-03-24 23:19:36
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-03-25 18:58:27
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\index.js
  * @Description: 工作流类
  * @
  */
 const AiAgent = require('./AiAgent')
-const { getInitialMessages, getInitialMessagesForSkill, getInitialMessagesForTest } = require('./AiTools')
+const { getInitialMessages, getInitialMessagesForSkill, getInitialMessagesForTest, getSystemPrompt } = require('./AiTools')
 
 class AiWorker {
   constructor(aiCli, client) {
@@ -29,6 +29,9 @@ class AiWorker {
     if (this.messages.length === 0) {
       const messages = this.historyManager.getMessage()
       if (messages.length) {
+        // 更新系统skill提示词
+        const systemPrompt = getSystemPrompt()
+        messages[0].content = systemPrompt
         await this.loadHhistoryMessages(messages)
         await this.main(goal)
       } else {
@@ -41,6 +44,7 @@ class AiWorker {
         role: 'user',
         content: goal,
       })
+      console.log('Updated messages with new goal, starting work loop...')
       await this.aiAgent.work(this.messages)
     }
   }

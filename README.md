@@ -188,14 +188,14 @@ module.exports = {
     }
   ],
   currentAi: "default", // Name of the currently active AI configuration
-  maxIterations: -1, // Maximum iterations for agent workflow, -1 for unlimited
+  maxIterations: -1, // Maximum iterations for AI to complete the workflow, -1 for unlimited
   maxMessagesLength: 150000, // Maximum compression length, -1 for unlimited
   maxMessagesCount: 100, // Maximum compression count, -1 for unlimited
   maxHistoryExpireTime: 30, // Maximum session expiration time in days, -1 for unlimited, 0 to disable recording
   maxLogExpireTime: 3, // Log expiration time in days, -1 for unlimited, 0 to disable recording
   extensions: [], // List of extension file paths
   skills: [], // List of skill configurations
-  encoding: "", // Command line encoding format
+  encoding: "utf-8", // Command line encoding format, can be set to utf-8, gbk, etc., or auto/empty for auto-detection
 };
 ```
 

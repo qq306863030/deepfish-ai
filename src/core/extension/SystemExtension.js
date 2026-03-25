@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 14:40:06
+ * @LastEditTime: 2026-03-25 18:53:17
  * @FilePath: \deepfish\src\core\extension\SystemExtension.js
  * @Description: 默认扩展函数
  * @
@@ -10,23 +10,15 @@
 const path = require('path')
 const { logError, logSuccess, logInfo, getConfigPath } = require('../utils/log')
 const iconv = require('iconv-lite') // 用于编码转换
-const os = require('os') // 用于判断系统类型
 const { cloneDeep } = require('lodash')
 const { aiRequestSingle } = require('../ai-services/AiWorker/AiTools')
 const { spawnSync } = require('child_process')
+const { detectEncoding } = require('../utils/normal')
 
 // 执行系统命令
 // 执行系统命令（全平台兼容：Windows/PowerShell/CentOS）
 function executeCommand(command) {
   logSuccess(`Executing system command: ${command}`)
-
-  // 1. 编码判断（和你原来完全一样）
-  const platform = os.platform()
-  let targetEncoding = this.config?.encoding
-  if (!targetEncoding || targetEncoding === 'auto') {
-    targetEncoding = platform === 'win32' ? 'gbk' : 'utf-8'
-  }
-
   try {
     const result = spawnSync(command, {
       cwd: process.cwd(),
@@ -36,7 +28,10 @@ function executeCommand(command) {
       windowsHide: true,
       argv0: 'deepfish-shell',
     })
-
+    let targetEncoding = this.config?.encoding
+    if (!targetEncoding || targetEncoding === 'auto') {
+      targetEncoding = detectEncoding(result.stdout || result.stderr)
+    }
     const stdout = iconv.decode(result.stdout, targetEncoding)
     const stderr = iconv.decode(result.stderr, targetEncoding)
     const code = result.status

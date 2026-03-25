@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-19 11:45:10
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 13:37:31
+ * @LastEditTime: 2026-03-25 18:40:12
  * @FilePath: \deepfish\src\cli\ai-config.js
  * @Description: ai config 相关命令
  * @
@@ -172,7 +172,6 @@ configCommand
       maxTokens: answers.maxTokens,
       stream: answers.stream,
     }
-    console.log(aiConfig)
     return configManager.addAiConfig(aiConfig)
   })
 

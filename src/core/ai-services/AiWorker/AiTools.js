@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 09:12:22
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-03-24 22:45:08
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-03-25 18:10:32
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiTools.js
  * @Description: 对话初始化、对话请求
  * @
@@ -23,18 +23,22 @@ function createOpenAiClient(aiConfig) {
 // 获取初始的message
 function getInitialMessages(goal) {
   // 合并系统描述
-  const skillPrompt = GlobalVariable.skillConfigManager.preLoadSkills()
-  const systemDescription = `${AiAgentSystemPrompt}\n\n${skillPrompt}`
   return [
     {
       role: 'system',
-      content: systemDescription,
+      content: getSystemPrompt(),
     },
     {
       role: 'user',
       content: goal,
     },
   ]
+}
+
+function getSystemPrompt() {
+  const skillPrompt = GlobalVariable.skillConfigManager.preLoadSkills()
+  const systemDescription = `${AiAgentSystemPrompt}\n\n${skillPrompt}`
+  return systemDescription
 }
 
 // 获取调用skill的初始message
@@ -255,5 +259,6 @@ module.exports = {
   aiRequestByTools,
   getInitialMessages,
   getInitialMessagesForSkill,
-  getInitialMessagesForTest
+  getInitialMessagesForTest,
+  getSystemPrompt
 }

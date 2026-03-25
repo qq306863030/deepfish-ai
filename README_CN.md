@@ -185,14 +185,14 @@ module.exports = {
     }
   ],
   currentAi: "default", // 当前活动的AI配置名称
-  maxIterations: -1, // 代理工作流的最大迭代次数，-1为不限制迭代次数
-  maxMessagesLength: 150000, // 最大压缩长度，-1为不限制
-  maxMessagesCount: 100, // 最大压缩数量，-1为不限制
+  maxIterations: -1, // ai完成工作流的最大迭代次数，-1表示无限制
+  maxMessagesLength: 150000, // 最大压缩长度，-1表示无限制
+  maxMessagesCount: 100, // 最大压缩数量，-1表示无限制
   maxHistoryExpireTime: 30, // 整个会话的最大过期时间，单位天，-1表示无限制，0表示不记录
   maxLogExpireTime: 3, // 日志过期时间，单位天，-1表示无限制，0表示不记录
   extensions: [], // 扩展文件路径列表
   skills: [], // 技能配置列表
-  encoding: "", // 命令行编码格式
+  encoding: "utf-8", // 命令行编码格式，可设置为utf-8、gbk等，也可以设置成auto或空值自动判断
 };
 ```
 

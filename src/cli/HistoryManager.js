@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 16:15:03
+ * @LastEditTime: 2026-03-25 18:33:13
  * @FilePath: \deepfish\src\cli\HistoryManager.js
  * @Description: 对话历史记录、恢复
  * @
@@ -33,6 +33,7 @@ class HistoryManager {
       fs.removeSync(this.cacheDir)
     }
     this.initRecord()
+    logSuccess('History has been reset.')
   }
 
   initRecord() {
@@ -128,7 +129,10 @@ class HistoryManager {
     const messageFile = path.join(this.cacheDir, this.id, 'message.json')
     if (fs.existsSync(messageFile)) {
       fs.writeJsonSync(messageFile, [], { spaces: 2 })
+      logSuccess('History messages have been cleared.')
+      return
     }
+    logError('No history messages found to clear.')
   }
 
   updateMessage(message) {
