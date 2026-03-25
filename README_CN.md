@@ -160,9 +160,10 @@ ai skill disable <name|index> # 通过名称或索引禁用 skill, exp: ai skill
 ai skill dir # 打开 skill 目录
 
 # 历史记录命令
-ai history clear # 清除历史消息
+ai history clear # 清除当前目录的对话历史
 ai history output # 将历史消息输出到当前目录
 ai history dir # 打开历史记录目录
+ai history reset # 清除所有目录的对话历史
 ```
 
 ### 配置文件结构
@@ -368,6 +369,17 @@ module.exports = {
 ### 使用相对路径
 
 AI始终使用相对于当前工作目录的相对路径。
+
+### 对话历史
+
+对话历史是以程序执行目录为单位创建的，每个程序的执行目录会对应一个独立的 Agent 上下文。这意味着在不同目录下启动的对话是相互独立的。
+
+对话历史会在一定时间内自动清除（通过配置文件中的 `maxHistoryExpireTime` 字段控制，默认为 30 天）。您也可以手动管理对话历史：
+
+- `ai history dir` — 打开历史记录目录，查看已存储的对话上下文
+- `ai history clear` — 清除当前目录的对话历史
+- `ai history output` — 将对话历史导出到当前目录
+- `ai history reset` — 清除所有目录的对话历史
 
 ## 9. 故障排除
 

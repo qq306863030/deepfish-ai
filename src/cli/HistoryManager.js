@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 16:01:19
+ * @LastEditTime: 2026-03-25 16:15:03
  * @FilePath: \deepfish\src\cli\HistoryManager.js
  * @Description: 对话历史记录、恢复
  * @
@@ -18,18 +18,28 @@ const { openDirectory } = require('../core/utils/normal')
 class HistoryManager {
   constructor() {
     this.configManager = GlobalVariable.configManager
+    this.cacheDir = null
+    this.historyFilePath = null
+    this.history = null
+    this.id = null
+    this.logDir = null
     GlobalVariable.historyManager = this
+    this.initRecord()
+  }
+
+  reset() {
+    // 删除缓存目录
+    if (this.cacheDir && fs.existsSync(this.cacheDir)) {
+      fs.removeSync(this.cacheDir)
+    }
+    this.initRecord()
+  }
+
+  initRecord() {
     this.cacheDir = path.join(this.configManager.configDir, './cache')
     fs.ensureDirSync(this.cacheDir)
     this.historyFilePath = path.join(this.cacheDir, 'history.json')
     this.history = this.getHistory()
-    this.id = null
-    this.logDir = null
-    this.initRecord()
-    this.autoClearLog()
-  }
-
-  initRecord() {
     this.autoClearRecord()
     const currentPath = process.cwd()
     const historyItem = this.history.find(
@@ -57,6 +67,7 @@ class HistoryManager {
     const logDir = path.join(this.cacheDir, this.id, 'logs')
     fs.ensureDirSync(logDir)
     this.logDir = logDir
+    this.autoClearLog()
   }
 
   openDirectory() {

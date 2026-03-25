@@ -7,7 +7,7 @@ const extCommand = program
 
 extCommand
   .command("clear")
-  .description("Clear the history messages")
+  .description("Clear the history messages for the current directory")
   .action(() => {
     historyManager.clearMessage();
   });
@@ -24,4 +24,11 @@ extCommand
   .description("Open the history directory")
   .action(() => {
     historyManager.openDirectory();
+  });
+
+extCommand
+  .command("reset")
+  .description("Reset all history for all directories")
+  .action(() => {
+    historyManager.reset();
   });

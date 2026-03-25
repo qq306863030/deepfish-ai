@@ -54,6 +54,7 @@
   - [AI Service Selection](#ai-service-selection)
 - [8. Usage Notes](#8-usage-notes)
   - [Using Relative Paths](#using-relative-paths)
+  - [Conversation History](#conversation-history)
 - [9. Troubleshooting](#9-troubleshooting)
   - [Configuration Issues](#configuration-issues)
   - [AI Service Connection](#ai-service-connection)
@@ -162,9 +163,10 @@ ai skill disable <name|index> # Disable a skill by name or index, exp: ai skill 
 ai skill dir # Open the skill directory
 
 # History commands
-ai history clear # Clear the history messages
+ai history clear # Clear the history messages for the current directory
 ai history output # Output the history messages to current directory
 ai history dir # Open the history directory
+ai history reset # Reset all history for all directories
 ```
 
 ### Configuration File Structure
@@ -372,6 +374,17 @@ For production environments or complex tasks, we recommend using DeepSeek, OpenA
 ### Using Relative Paths
 
 AI always uses paths relative to the current working directory.
+
+### Conversation History
+
+Conversation history is created on a per-directory basis — each execution directory corresponds to its own Agent context. This means that conversations started in different directories are independent of each other.
+
+Conversation history will be automatically cleared after a configurable period (controlled by the `maxHistoryExpireTime` field in the configuration file, default is 30 days). You can also manage it manually:
+
+- `ai history dir` — Open the history directory to view stored conversation contexts
+- `ai history clear` — Manually clear the conversation history for the current directory
+- `ai history output` — Export the conversation history to the current directory
+- `ai history reset` — Reset all conversation history for all directories
 
 ## 9. Troubleshooting
 
