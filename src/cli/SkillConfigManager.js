@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:23:42
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 18:29:40
+ * @LastEditTime: 2026-03-25 20:43:02
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */
@@ -268,8 +268,8 @@ ${table}
       return
     }
     const { skill, index } = skillObj
-    const skillPath = skill.path
-    userConfig.skills.splice(index, 1)
+    const skillPath = skill.location
+    userConfig.skills = userConfig.skills.filter((_, i) => i !== index)
     this.configManager.writeConfig(userConfig)
     if (fs.existsSync(skillPath)) {
       fs.removeSync(skillPath)
