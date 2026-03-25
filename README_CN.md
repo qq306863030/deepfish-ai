@@ -70,6 +70,8 @@
 
 - 多模型兼容：无缝支持DeepSeek、Ollama，以及所有遵循OpenAI API规范的AI模型，可根据需求灵活切换，适配不同场景下的指令生成需求。
 
+- OpenClaw Skill 兼容：支持适配 OpenClaw 的 Skill 生态，可通过现有 Skill 命令进行安装、启用与管理，快速扩展工作流能力。
+
 - 自然语言转指令：精准解析自然语言需求，自动转换为对应的操作系统命令（如Linux、Windows、macOS终端指令）和文件操作指令（如创建、删除、修改文件/目录），无需手动编写复杂命令。
 
 - 高度可扩展：支持通过扩展机制拓展功能边界，除基础的终端、文件操作外，可轻松实现翻译、小说创作、文件格式转换、数据处理等复杂任务，满足多样化使用需求。
@@ -147,6 +149,21 @@ ai ext add <filename> # 添加扩展工具
 ai ext del <filepath> # 通过文件路径移除扩展工具
 ai ext del <index> # 通过索引移除扩展工具
 ai ext ls # 列出所有扩展工具
+
+# Skill 命令
+ai skill ls # 列出所有已注册的 skill
+ai skill add <name> # 从当前目录添加本地 skill 目录或 zip 文件
+ai skill del <name|index> # 通过名称或索引删除 skill, exp: ai skill del 1
+ai skill install <url> # 从 ClawHub 安装 skill，exp: ai skill install https://clawhub.ai/TheSethRose/agent-browser
+ai skill enable <name|index> # 通过名称或索引启用 skill, exp: ai skill enable 1
+ai skill disable <name|index> # 通过名称或索引禁用 skill, exp: ai skill disable 1
+ai skill dir # 打开 skill 目录
+
+# 历史记录命令
+ai history clear # 清除当前目录的对话历史
+ai history output # 将历史消息输出到当前目录
+ai history dir # 打开历史记录目录
+ai history reset # 清除所有目录的对话历史
 ```
 
 ### 配置文件结构
@@ -168,12 +185,14 @@ module.exports = {
     }
   ],
   currentAi: "default", // 当前活动的AI配置名称
-  maxIterations: -1, // 代理工作流的最大迭代次数，-1为不限制迭代次数
-  maxMessagesLength: 50000, // 最大压缩长度
-  maxMessagesCount: 40, // 最大压缩数量
+  maxIterations: -1, // ai完成工作流的最大迭代次数，-1表示无限制
+  maxMessagesLength: 150000, // 最大压缩长度，-1表示无限制
+  maxMessagesCount: 100, // 最大压缩数量，-1表示无限制
+  maxHistoryExpireTime: 30, // 整个会话的最大过期时间，单位天，-1表示无限制，0表示不记录
+  maxLogExpireTime: 3, // 日志过期时间，单位天，-1表示无限制，0表示不记录
   extensions: [], // 扩展文件路径列表
-  isRecordHistory: false, // 是否创建工作流执行记录文件
-  isLog: false // 是否创建工作流执行日志
+  skills: [], // 技能配置列表
+  encoding: "utf-8", // 命令行编码格式，可设置为utf-8、gbk等，也可以设置成auto或空值自动判断
 };
 ```
 
@@ -229,6 +248,13 @@ ai "检查当前目录的磁盘使用情况"
 ```bash
 ai "创建一个用于查询天气的扩展工具weather.js"
 ai ext add weather.js
+```
+
+**Skill 管理：**
+
+```bash
+ai skill install https://clawhub.ai/TheSethRose/agent-browser
+ai skill ls
 ```
 
 **媒体处理：**
@@ -343,6 +369,17 @@ module.exports = {
 ### 使用相对路径
 
 AI始终使用相对于当前工作目录的相对路径。
+
+### 对话历史
+
+对话历史是以程序执行目录为单位创建的，每个程序的执行目录会对应一个独立的 Agent 上下文。这意味着在不同目录下启动的对话是相互独立的。
+
+对话历史会在一定时间内自动清除（通过配置文件中的 `maxHistoryExpireTime` 字段控制，默认为 30 天）。您也可以手动管理对话历史：
+
+- `ai history dir` — 打开历史记录目录，查看已存储的对话上下文
+- `ai history clear` — 清除当前目录的对话历史
+- `ai history output` — 将对话历史导出到当前目录
+- `ai history reset` — 清除所有目录的对话历史
 
 ## 9. 故障排除
 

@@ -2,15 +2,14 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-17 10:00:50
- * @FilePath: \src\core\ai-services\AiWorker\AIMessageManager.js
+ * @LastEditTime: 2026-03-25 15:27:58
+ * @FilePath: \deepfish\src\core\ai-services\AiWorker\AIMessageManager.js
  * @Description: 上下文管理-添加、自动压缩
  * @
  */
-const { cloneDeep } = require('lodash')
 const { logError, logInfo } = require('../../utils/log')
 const { aiRequestSingle } = require('./AiTools')
-const { GlobalVariable } = require('../../GlobalVariable')
+const { GlobalVariable } = require('../../globalVariable')
 
 class AIMessageManager {
   aiClient
@@ -28,8 +27,8 @@ class AIMessageManager {
   // 添加消息
   addMsg(message) {
     this.messages.push(message)
-    GlobalVariable.aiRecorder.record(this.messages)
-    GlobalVariable.aiRecorder.log(message)
+    GlobalVariable.historyManager.record(this.messages)
+    GlobalVariable.historyManager.log(message)
   }
   // 添加tool
   addTool(id, content) {
@@ -42,8 +41,8 @@ class AIMessageManager {
       content: content,
     }
     this.messages.push(message)
-    GlobalVariable.aiRecorder.record(this.messages)
-    GlobalVariable.aiRecorder.log(message)
+    GlobalVariable.historyManager.record(this.messages)
+    GlobalVariable.historyManager.log(message)
   }
   /**
    * 压缩消息，根据配置压缩消息长度和数量
@@ -54,41 +53,50 @@ class AIMessageManager {
     const currentLength = this._getLength(messages)
     const currentCount = messages.length
     if (
-      currentLength > this.config.maxMessagesLength ||
-      currentCount > this.config.maxMessagesCount
+      (this.config.maxMessagesLength !== -1 && currentLength > this.config.maxMessagesLength) ||
+      (this.config.maxMessagesCount !== -1 && currentCount > this.config.maxMessagesCount)
     ) {
       logInfo(
         `Managing messages: current length ${currentLength}, count ${currentCount}`,
       )
-      const systemMessage = messages[0]
-      const userMessage = messages[1]
-      const goal = messages[1].content
-      const messagesToSummarize = messages.slice(2, -2)
-
-      if (messagesToSummarize.length > 0) {
-        messages = cloneDeep(messages)
-        const summary = await this._getSummary(
-          goal,
-          messages.slice(-2),
-          messagesToSummarize,
+      let newMessages = []
+      if (messages.length > 2) {
+        // 始终只保留system和user的最后一条消息，以及最后两条消息，其他消息进行压缩
+        const systemMessage = messages[0]
+        // 查询最后一条用户消息
+        const lastUserMessageIndex = messages.findIndex(
+          (m) => m.role === 'user',
         )
-
-        const newMessages = [
-          systemMessage,
-          userMessage,
-          {
-            role: 'user',
-            content: `[CONVERSATION SUMMARY]: ${summary}`,
-          },
-          ...messages.slice(-2),
-        ]
-        logInfo(
-          `Messages compressed: ${messages.length} -> ${newMessages.length}`,
-        )
-        GlobalVariable.aiRecorder.record(newMessages)
-        GlobalVariable.aiRecorder.log(newMessages)
-        return newMessages
+        // 压缩第二条到lastUserMessageIndex之间的消息
+        const messages1 = messages.slice(1, lastUserMessageIndex)
+        newMessages = [systemMessage]
+        if (messages1.length > 0) {
+          const summary1 = await this._getSummary(messages1)
+          newMessages.push(summary1)
+          GlobalVariable.historyManager.log(summary1, true)
+        }
+        if (lastUserMessageIndex < messages.length - 2) {
+          newMessages.push(messages[lastUserMessageIndex])
+          // 压缩lastUserMessageIndex到倒数第二条消息之间的消息
+          const messages2 = messages.slice(lastUserMessageIndex + 1, -2)
+          if (messages2.length > 0) {
+            const summary2 = await this._getSummary(messages2)
+            newMessages.push(summary2)
+            GlobalVariable.historyManager.log(summary2, true)
+          }
+          newMessages.push(...messages.slice(-2))
+        } else if (lastUserMessageIndex === messages.length - 2) {
+          newMessages.push(messages[lastUserMessageIndex])
+          newMessages.push(messages[messages.length - 1])
+        } else if (lastUserMessageIndex === messages.length - 1) {
+          newMessages.push(messages[lastUserMessageIndex])
+        }
+        GlobalVariable.historyManager.record(newMessages)
+      } else if (messages.length === 2) {
+        const summary = await this._getSummary([messages[1]])
+        newMessages.push([messages[0], summary])
       }
+      return newMessages
     }
     return messages
   }
@@ -109,22 +117,12 @@ class AIMessageManager {
     }, 0)
   }
   // 合并消息
-  async _getSummary(goal, lastTwoMessages, messages) {
-    lastTwoMessages = lastTwoMessages
-      .map((m) => {
-        if (m.role === 'system') return `[SYSTEM]: ${m.content}`
-        if (m.role === 'user') return `[USER]: ${m.content}`
-        if (m.role === 'assistant')
-          return `[ASSISTANT]: ${m.content ? m.content : '[Tool calls]'}`
-        if (m.role === 'tool') return `[TOOL RESULT]: ${m.content}`
-        return ''
-      })
-      .join('\n')
-    const summaryPrompt = `请结合任务目标${goal}，和最后两轮的对话${lastTwoMessages}, 总结以下对话历史，重点：
-  1. 删除不需要的信息，如程序报错、冗余表述、语气词、闲聊等信息
-  2. 关注当前进度和状态
-  3. 总结后续任务所需的重要背景信息并以及所需要的内容
-结果只保留对上下文有用的内容，保持摘要简短且全面，保证后续任务有效进行。.
+  async _getSummary(messages) {
+    const summaryPrompt = `总结以下对话历史，重点：
+  1. 只需要关注用户输入的任务目标和AI的执行结果，删除过程中的细节描述和执行过程中的失败信息等无用信息;
+  2. 删除不需要的信息，如程序报错、冗余表述、语气词、闲聊等信息;
+  3. 保留和总结后续任务所需的重要背景信息并以及所需要的内容;
+  4. 保持摘要简短且全面，保证后续任务有效进行.
 
 Conversation history:
 ${messages
@@ -144,10 +142,29 @@ ${messages
         'You are a helpful assistant that creates concise summaries of conversations.',
         summaryPrompt,
       )
-      return summary
+      return {
+        role: 'user',
+        content: summary,
+      }
     } catch (error) {
       logError('Failed to summarize messages: ' + error.message)
-      return 'Previous conversation history was too long and has been summarized. Please continue with the current task.'
+      // 出错时手动压缩
+        let manualSummary = ''
+        messages.forEach((m) => {
+          if (m.role === 'system') {
+            manualSummary += `[SYSTEM]: ${m.content.slice(0, 100)}...\n`
+          } else if (m.role === 'user') {
+            manualSummary += `[USER]: ${m.content.slice(0, 100)}...\n`
+          } else if (m.role === 'assistant') {
+            manualSummary += `[ASSISTANT]: ${m.content ? m.content.slice(0, 100) : '[Tool calls]'}...\n`
+          } else if (m.role === 'tool') {
+            manualSummary += `[TOOL RESULT]: ${m.content.slice(0, 100)}...\n`
+          }
+        })
+      return {
+        role: 'user',
+        content: manualSummary,
+      }
     }
   }
 }

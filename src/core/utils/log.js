@@ -15,6 +15,14 @@ function logError(message) {
   log(message, '#ed7f7f')
 }
 
+function logWarning(message) {
+  log(message, '#f2c94c')
+}
+
+function logDisabled(message) {
+  log(message, '#999999')
+}
+
 function writeLine(msg1, msg2 = '', color = 'blue') {
   if (color === 'blue') {
     process.stdout.write('\r' + chalk.hex('#6dd2ea')(msg1) + ' ' + msg2)
@@ -134,6 +142,8 @@ module.exports = {
   logInfo,
   logSuccess,
   logError,
+  logWarning,
+  logDisabled,
   loading,
   writeLine,
   streamOutput,

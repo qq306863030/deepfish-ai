@@ -1,9 +1,11 @@
 const path = require('path')
 const os = require('os')
 const fs = require('fs-extra')
-const { defaultConfig } = require('./configTools')
+const { defaultConfig } = require('./DefaultConfig')
 const { logSuccess, logError, logInfo } = require('../core/utils/log')
 const { GlobalVariable } = require('../core/globalVariable')
+const { merge } = require('lodash')
+const { openDirectory } = require('../core/utils/normal')
 
 class ConfigManager {
   config = null
@@ -27,32 +29,11 @@ class ConfigManager {
       this.writeConfig()
     }
     this.config = this.getConfig()
+    this.writeConfig(this.config)
   }
 
   dir() {
-    // 打开目录
-    const { spawn } = require('child_process')
-    const platform = process.platform
-    let command
-    let args
-    if (platform === 'darwin') {
-      command = 'open'
-      args = [this.configDir]
-    } else if (platform === 'win32') {
-      command = 'explorer.exe'
-      args = [this.configDir]
-    } else {
-      command = 'xdg-open'
-      args = [this.configDir]
-    }
-    const child = spawn(command, args, {
-      detached: true,
-      stdio: 'ignore',
-    })
-    child.on('error', (error) => {
-      logError(`Error opening configuration directory: ${error.message}`)
-    })
-    child.unref()
+    openDirectory(this.configDir)
   }
 
   edit() {
@@ -98,6 +79,7 @@ class ConfigManager {
     this.config.ai.push(aiConfig)
     this.writeConfig(this.config)
     logSuccess(`AI configuration "${aiConfig.name}" added successfully!`)
+    return aiConfig
   }
 
   // 删除一个aiConfig
@@ -239,7 +221,8 @@ class ConfigManager {
   }
 
   getConfig() {
-    return require(this.configPath)
+    const config = require(this.configPath)
+    return merge(defaultConfig, config)
   }
 
   // 写入配置
@@ -251,6 +234,7 @@ class ConfigManager {
       this.configPath,
       `module.exports = ${JSON.stringify(config, null, 2)}`,
     )
+    this.config = config
   }
 }
 

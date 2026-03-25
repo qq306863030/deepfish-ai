@@ -432,6 +432,8 @@ const functions = {
 };
 
 module.exports = {
+  name: 'FileExtension',
+  extensionDescription: "提供文件和目录的创建、读取、修改、删除、移动、重命名、信息获取等文件系统操作功能",
   descriptions,
   functions,
 };

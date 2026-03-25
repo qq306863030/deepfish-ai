@@ -2,14 +2,15 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 09:12:22
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-20 16:28:53
+ * @LastEditTime: 2026-03-25 19:56:42
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiTools.js
  * @Description: 对话初始化、对话请求
  * @
  */
 const { OpenAI } = require('openai')
-const { AiAgentSystemPrompt } = require('./AiPrompt')
+const { AiAgentSystemPrompt, SkillAiAgentSystemPrompt, TestAiAgentSystemPrompt } = require('./AiPrompt')
 const { streamOutput, streamLineBreak } = require('../../utils/log')
+const { GlobalVariable } = require('../../globalVariable')
 
 // 创建client
 function createOpenAiClient(aiConfig) {
@@ -21,10 +22,48 @@ function createOpenAiClient(aiConfig) {
 
 // 获取初始的message
 function getInitialMessages(goal) {
+  // 合并系统描述
   return [
     {
       role: 'system',
-      content: AiAgentSystemPrompt,
+      content: getSystemPrompt(),
+    },
+    {
+      role: 'user',
+      content: goal,
+    },
+  ]
+}
+
+function getSystemPrompt() {
+  const skillPrompt = GlobalVariable.skillConfigManager.preLoadSkills()
+  const systemDescription = `${AiAgentSystemPrompt}\n\n${skillPrompt}`
+  return systemDescription
+}
+
+// 获取调用skill的初始message
+function getInitialMessagesForSkill(skillContent, goal) {
+  const systemDescription = `
+${SkillAiAgentSystemPrompt}
+### 以下是加载完成的Skill.md文件的内容：
+${skillContent}`
+  return [
+    {
+      role: 'system',
+      content: systemDescription,
+    },
+    {
+      role: 'user',
+      content: goal,
+    },
+  ]
+}
+
+function getInitialMessagesForTest(goal) {
+  return [
+    {
+      role: 'system',
+      content: TestAiAgentSystemPrompt,
     },
     {
       role: 'user',
@@ -153,13 +192,13 @@ async function _streamToNonStream(stream) {
       if (reasoning_content) {
         finalResponse.choices[0].message.reasoning_content += reasoning_content
         // 流式输出
-        streamOutput(reasoning_content)
+        streamOutput(reasoning_content, '#47854a')
       }
       const content = delta.content
       if (content) {
         finalResponse.choices[0].message.content += content
         // 流式输出
-        streamOutput(content)
+        streamOutput(content, '#68e46e')
       }
       // 3. 处理工具调用（核心逻辑）
       if (delta.tool_calls && delta.tool_calls.length > 0) {
@@ -185,7 +224,7 @@ async function _streamToNonStream(stream) {
             const toolCall = toolCallBuffers.get(id)
             if (toolCall && toolCallChunk.function?.arguments) {
               toolCall.function.arguments += toolCallChunk.function.arguments
-              streamOutput(toolCallChunk.function.arguments)
+              streamOutput(toolCallChunk.function.arguments, '#47854a')
             }
           }
         })
@@ -219,4 +258,7 @@ module.exports = {
   aiRequestSingle,
   aiRequestByTools,
   getInitialMessages,
+  getInitialMessagesForSkill,
+  getInitialMessagesForTest,
+  getSystemPrompt
 }

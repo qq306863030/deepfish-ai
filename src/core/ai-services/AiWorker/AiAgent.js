@@ -10,12 +10,9 @@
 
 const { logError, logInfo, loading } = require('../../utils/log')
 const AIMessageManager = require('./AIMessageManager')
-const { AiAgentSystemPrompt } = require('./AiPrompt')
 const { aiRequestByTools } = require('./AiTools')
 
 class AiAgent {
-  // 工作流提示词
-  prompt
   messages
   maxIterations
   goal
@@ -29,7 +26,6 @@ class AiAgent {
     this.aiClient = aiClient
     this.config = config
     this.aiConfig = aiConfig
-    this.prompt = AiAgentSystemPrompt
     this.maxIterations =
       config.maxIterations === -1 ? Infinity : config.maxIterations
     this.aiMessageManager = new AIMessageManager(aiClient, config, aiConfig, [])

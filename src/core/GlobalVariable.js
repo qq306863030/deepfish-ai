@@ -1,9 +1,8 @@
 const GlobalVariable = {
   aiCli: null,
-  aiRecorder: null,
-  isRecordHistory: false,
-  isLog: false,
   configManager: null,
+  skillConfigManager: null,
+  historyManager: null,
 }
 
 module.exports = {

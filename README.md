@@ -54,6 +54,7 @@
   - [AI Service Selection](#ai-service-selection)
 - [8. Usage Notes](#8-usage-notes)
   - [Using Relative Paths](#using-relative-paths)
+  - [Conversation History](#conversation-history)
 - [9. Troubleshooting](#9-troubleshooting)
   - [Configuration Issues](#configuration-issues)
   - [AI Service Connection](#ai-service-connection)
@@ -70,6 +71,8 @@ An efficient and convenient AI-driven command-line tool designed to break down t
 Core Features:
 
 - Multi-model Compatibility: Seamlessly supports DeepSeek, Ollama, and all AI models that comply with the OpenAI API specification. It can be flexibly switched according to needs to adapt to instruction generation requirements in different scenarios.
+
+- OpenClaw Skill Compatibility: Supports the OpenClaw Skill ecosystem. Skills can be installed, enabled, and managed through the existing Skill commands to quickly expand workflow capabilities.
 
 - Natural Language to Instructions: Precisely parses natural language requirements and automatically converts them into corresponding operating system commands (such as Linux, Windows, and macOS terminal commands) and file operation instructions (such as creating, deleting, and modifying files/directories), eliminating the need to manually write complex commands.
 
@@ -149,6 +152,21 @@ ai ext add <filename> # Add an extension tool
 ai ext del <filepath> # Remove an extension tool by file path
 ai ext del <index> # Remove an extension tool by index
 ai ext ls # List all extension tools
+
+# Skill commands
+ai skill ls # List all registered skills
+ai skill add <name> # Add a local skill directory or zip file from the current directory
+ai skill del <name|index> # Remove a skill by name or index, exp: ai skill del 1
+ai skill install <url> # Install a skill from ClawHub，exp: ai skill install https://clawhub.ai/TheSethRose/agent-browser
+ai skill enable <name|index> # Enable a skill by name or index, exp: ai skill enable 1
+ai skill disable <name|index> # Disable a skill by name or index, exp: ai skill disable 1
+ai skill dir # Open the skill directory
+
+# History commands
+ai history clear # Clear the history messages for the current directory
+ai history output # Output the history messages to current directory
+ai history dir # Open the history directory
+ai history reset # Reset all history for all directories
 ```
 
 ### Configuration File Structure
@@ -170,12 +188,14 @@ module.exports = {
     }
   ],
   currentAi: "default", // Name of the currently active AI configuration
-  maxIterations: -1, // Maximum iterations for agent workflow, -1 for unlimited
-  maxMessagesLength: 50000, // Maximum compression length
-  maxMessagesCount: 40, // Maximum compression count
+  maxIterations: -1, // Maximum iterations for AI to complete the workflow, -1 for unlimited
+  maxMessagesLength: 150000, // Maximum compression length, -1 for unlimited
+  maxMessagesCount: 100, // Maximum compression count, -1 for unlimited
+  maxHistoryExpireTime: 30, // Maximum session expiration time in days, -1 for unlimited, 0 to disable recording
+  maxLogExpireTime: 3, // Log expiration time in days, -1 for unlimited, 0 to disable recording
   extensions: [], // List of extension file paths
-  isRecordHistory: false, // Whether to create workflow execution record files
-  isLog: false // Whether to create workflow execution logs
+  skills: [], // List of skill configurations
+  encoding: "utf-8", // Command line encoding format, can be set to utf-8, gbk, etc., or auto/empty for auto-detection
 };
 ```
 
@@ -231,6 +251,13 @@ ai "Check disk usage for the current directory"
 ```bash
 ai "Create a weather.js extension tool for querying weather"
 ai ext add weather.js
+```
+
+**Skill Management:**
+
+```bash
+ai skill install https://clawhub.ai/TheSethRose/agent-browser
+ai skill ls
 ```
 
 **Media Processing:**
@@ -347,6 +374,17 @@ For production environments or complex tasks, we recommend using DeepSeek, OpenA
 ### Using Relative Paths
 
 AI always uses paths relative to the current working directory.
+
+### Conversation History
+
+Conversation history is created on a per-directory basis — each execution directory corresponds to its own Agent context. This means that conversations started in different directories are independent of each other.
+
+Conversation history will be automatically cleared after a configurable period (controlled by the `maxHistoryExpireTime` field in the configuration file, default is 30 days). You can also manage it manually:
+
+- `ai history dir` — Open the history directory to view stored conversation contexts
+- `ai history clear` — Manually clear the conversation history for the current directory
+- `ai history output` — Export the conversation history to the current directory
+- `ai history reset` — Reset all conversation history for all directories
 
 ## 9. Troubleshooting
 
