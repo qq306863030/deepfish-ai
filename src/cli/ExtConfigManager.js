@@ -17,6 +17,11 @@ class ExtConfigManager {
       return
     }
     const filePath = path.resolve(process.cwd(), fileName)
+    // 判断文件是否存在
+    if (!fs.existsSync(filePath)) {
+      logError(`File not found: ${filePath}`)
+      return
+    }
     // 判断是否路径是文件还是目录
     if (fs.statSync(filePath).isDirectory()) {
       // 扫描目录和子目录下所有js、cjs文件
@@ -35,11 +40,6 @@ class ExtConfigManager {
           this.add(jsFile)
         }
       })
-      return
-    }
-    // 判断文件是否存在
-    if (!fs.existsSync(filePath)) {
-      logError(`File not found: ${filePath}`)
       return
     }
     const userConfig = this.configManager.config

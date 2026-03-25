@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-03-24 22:09:14
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-03-25 15:27:58
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AIMessageManager.js
  * @Description: 上下文管理-添加、自动压缩
  * @
@@ -119,10 +119,10 @@ class AIMessageManager {
   // 合并消息
   async _getSummary(messages) {
     const summaryPrompt = `总结以下对话历史，重点：
-  1. 删除不需要的信息，如程序报错、冗余表述、语气词、闲聊等信息
-  2. 关注当前进度和状态
-  3. 总结后续任务所需的重要背景信息并以及所需要的内容
-结果只保留对上下文有用的内容，保持摘要简短且全面，保证后续任务有效进行。.
+  1. 只需要关注用户输入的任务目标和AI的执行结果，删除过程中的细节描述和执行过程中的失败信息等无用信息;
+  2. 删除不需要的信息，如程序报错、冗余表述、语气词、闲聊等信息;
+  3. 保留和总结后续任务所需的重要背景信息并以及所需要的内容;
+  4. 保持摘要简短且全面，保证后续任务有效进行.
 
 Conversation history:
 ${messages
@@ -142,10 +142,29 @@ ${messages
         'You are a helpful assistant that creates concise summaries of conversations.',
         summaryPrompt,
       )
-      return summary
+      return {
+        role: 'user',
+        content: summary,
+      }
     } catch (error) {
       logError('Failed to summarize messages: ' + error.message)
-      return 'Previous conversation history was too long and has been summarized. Please continue with the current task.'
+      // 出错时手动压缩
+        let manualSummary = ''
+        messages.forEach((m) => {
+          if (m.role === 'system') {
+            manualSummary += `[SYSTEM]: ${m.content.slice(0, 100)}...\n`
+          } else if (m.role === 'user') {
+            manualSummary += `[USER]: ${m.content.slice(0, 100)}...\n`
+          } else if (m.role === 'assistant') {
+            manualSummary += `[ASSISTANT]: ${m.content ? m.content.slice(0, 100) : '[Tool calls]'}...\n`
+          } else if (m.role === 'tool') {
+            manualSummary += `[TOOL RESULT]: ${m.content.slice(0, 100)}...\n`
+          }
+        })
+      return {
+        role: 'user',
+        content: manualSummary,
+      }
     }
   }
 }
