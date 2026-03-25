@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:07:51
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-23 18:29:43
+ * @LastEditTime: 2026-03-25 16:03:48
  * @FilePath: \deepfish\src\cli\ai-skill.js
  * @Description: AI skill management CLI
  * @
@@ -34,6 +34,13 @@ skillCommand
   .description("Remove a skill by name or index")
   .action((name) => {
     skillConfigManager.remove(name);
+  });
+
+skillCommand
+  .command("dir")
+  .description("Open the history directory")
+  .action(() => {
+    skillConfigManager.openDirectory();
   });
 
 skillCommand

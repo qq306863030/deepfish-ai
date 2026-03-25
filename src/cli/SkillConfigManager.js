@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:23:42
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-24 16:25:41
+ * @LastEditTime: 2026-03-25 16:04:13
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */
@@ -14,6 +14,7 @@ const { GlobalVariable } = require('../core/globalVariable')
 const { logError, logSuccess } = require('../core/utils/log')
 const extract = require('extract-zip')
 const { parseSkillMetadataYaml } = require('./SkillParser')
+const { openDirectory } = require('../core/utils/normal')
 
 // skill的数据结构: {name: string, enable: boolean, description: string, baseDir: string, skillDirName: string, location: string, skillFilePath: string, homepage: string, metadata: object}
 class SkillConfigManager {
@@ -34,6 +35,11 @@ class SkillConfigManager {
       this.configManager.writeConfig(userConfig)
     }
     this._check()
+  }
+
+  openDirectory() {
+    // 打开目录
+    openDirectory(this.skillDir)
   }
 
   // 预加载skills，拼接提示词

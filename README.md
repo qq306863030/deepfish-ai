@@ -159,6 +159,7 @@ ai skill del <name|index> # Remove a skill by name or index, exp: ai skill del 1
 ai skill install <url> # Install a skill from ClawHub，exp: ai skill install https://clawhub.ai/TheSethRose/agent-browser
 ai skill enable <name|index> # Enable a skill by name or index, exp: ai skill enable 1
 ai skill disable <name|index> # Disable a skill by name or index, exp: ai skill disable 1
+ai skill dir # Open the skill directory
 
 # History commands
 ai history clear # Clear the history messages

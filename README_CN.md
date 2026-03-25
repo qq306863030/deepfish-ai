@@ -157,6 +157,7 @@ ai skill del <name|index> # 通过名称或索引删除 skill, exp: ai skill del
 ai skill install <url> # 从 ClawHub 安装 skill，exp: ai skill install https://clawhub.ai/TheSethRose/agent-browser
 ai skill enable <name|index> # 通过名称或索引启用 skill, exp: ai skill enable 1
 ai skill disable <name|index> # 通过名称或索引禁用 skill, exp: ai skill disable 1
+ai skill dir # 打开 skill 目录
 
 # 历史记录命令
 ai history clear # 清除历史消息

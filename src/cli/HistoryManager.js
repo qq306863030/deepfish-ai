@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 10:28:41
+ * @LastEditTime: 2026-03-25 16:01:19
  * @FilePath: \deepfish\src\cli\HistoryManager.js
  * @Description: 对话历史记录、恢复
  * @
@@ -13,6 +13,7 @@ const dayjs = require('dayjs')
 const { GlobalVariable } = require('../core/globalVariable')
 const { v4: uuidv4 } = require('uuid')
 const { logSuccess, logError } = require('../core/utils/log')
+const { openDirectory } = require('../core/utils/normal')
 // cache => [history.json, id => [message.json, logs => [log.txt]]]
 class HistoryManager {
   constructor() {
@@ -59,30 +60,8 @@ class HistoryManager {
   }
 
   openDirectory() {
-    // 打开目录
-    const { spawn } = require('child_process')
-    const platform = process.platform
-    let command
-    let args
     const dir = path.join(this.cacheDir, this.id)
-    if (platform === 'darwin') {
-      command = 'open'
-      args = [dir]
-    } else if (platform === 'win32') {
-      command = 'explorer.exe'
-      args = [dir]
-    } else {
-      command = 'xdg-open'
-      args = [dir]
-    }
-    const child = spawn(command, args, {
-      detached: true,
-      stdio: 'ignore',
-    })
-    child.on('error', (error) => {
-      logError(`Error opening history directory: ${error.message}`)
-    })
-    child.unref()
+    openDirectory(dir)
   }
 
   autoClearRecord() {

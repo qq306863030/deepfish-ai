@@ -1,5 +1,6 @@
 const path = require("path");
 const fs = require("fs-extra");
+const { logError } = require("./log");
 
 // 对象字符串转对象
 function objStrToObj(str) {
@@ -50,8 +51,37 @@ function traverseFiles() {
   }
 }
 
+// 打开目录
+function openDirectory(dirPath) {
+    // 打开目录
+    const { spawn } = require('child_process')
+    const platform = process.platform
+    let command
+    let args
+    const dir = dirPath
+    if (platform === 'darwin') {
+      command = 'open'
+      args = [dir]
+    } else if (platform === 'win32') {
+      command = 'explorer.exe'
+      args = [dir]
+    } else {
+      command = 'xdg-open'
+      args = [dir]
+    }
+    const child = spawn(command, args, {
+      detached: true,
+      stdio: 'ignore',
+    })
+    child.on('error', (error) => {
+      logError(`Error opening directory "${dirPath}": ${error.message}`)
+    })
+    child.unref()
+  }
+
 module.exports = {
   objStrToObj,
   delay,
-  traverseFiles
+  traverseFiles,
+  openDirectory
 }
