@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-26 11:02:17
+ * @LastEditTime: 2026-03-26 11:27:23
  * @FilePath: \deepfish\src\cli\HistoryManager.js
  * @Description: 对话历史记录、恢复
  * @
@@ -176,9 +176,6 @@ class HistoryManager {
 
   // 更新任务会话
   updateTaskMessage(message) {
-    if (!message || !message.length) {
-      message = this.getMessage(1)
-    }
     fs.writeJsonSync(this.taskMessagePath, message, { spaces: 2 })
   }
 

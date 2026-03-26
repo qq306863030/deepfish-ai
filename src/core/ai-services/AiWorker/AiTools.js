@@ -1,15 +1,15 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 09:12:22
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-03-26 01:08:48
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-03-26 11:40:54
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiTools.js
  * @Description: 对话初始化、对话请求
  * @
  */
 const { OpenAI } = require('openai')
-const { AiAgentSystemPrompt, SkillAiAgentSystemPrompt, TestAiAgentSystemPrompt } = require('./AiPrompt')
-const { streamOutput, streamLineBreak } = require('../../utils/log')
+const { AiAgentSystemPrompt, SkillAiAgentSystemPrompt, TestAiAgentSystemPrompt, TaskAiAgentSystemPrompt } = require('./AiPrompt')
+const { streamOutput, streamLineBreak, logError } = require('../../utils/log')
 const { GlobalVariable } = require('../../globalVariable')
 
 // 创建client
@@ -73,6 +73,84 @@ function getInitialMessagesForTest(goal) {
     },
   ]
 }
+
+// 获取子任务初始化message
+async function getInitialMessagesForTask(mainMessages, goal) {
+  // 对主任务的上下文进行摘要总结，生成总体任务规划、当前进度、待办事项等，作为子任务的一部分系统提示词，能够指导子任务更好地完成目标
+  const summary = await _mainTaskSummary(mainMessages)
+  return [
+    {
+      role: 'system',
+      content: TaskAiAgentSystemPrompt.replace('20KB', `${GlobalVariable.aiCli.config.maxBlockFileSize}KB`) + '\n\n' + summary,
+    },
+    {
+      role: 'user',
+      content: goal,
+    },
+  ]
+}
+
+async function _mainTaskSummary(mainMessages) {
+  mainMessages = mainMessages.slice(1) // 去掉system消息
+  if (mainMessages.length === 0) {
+    return ''
+  }
+  // 对主任务的上下文进行摘要总结，生成总体任务规划、当前进度、待办事项等，作为子任务的一部分系统提示词，能够指导子任务更好地完成目标
+  const summaryPrompt = `你是“子任务上下文整理器”。
+请基于下面的主任务对话历史，生成一个可直接提供给子任务使用的“执行摘要”。
+
+摘要目标：
+1. 明确主任务的最终目标与验收标准；
+2. 提炼当前进度：已完成内容、关键结论、已验证结果；
+3. 列出仍需推进的事项（按优先级）；
+4. 提取对子任务有约束作用的信息：技术栈、文件路径、接口约定、用户偏好、限制条件；
+5. 标注风险与未决问题（如有）。
+
+输出要求：
+- 只保留与后续执行直接相关的信息；
+- 删除闲聊、重复表达、无关报错细节、无价值过程噪音；
+- 不要编造对话中不存在的信息；
+- 用尽可能简洁的语言输出；
+- 严格按以下结构输出：
+
+【主任务目标】
+...
+
+【当前进度】
+- 已完成：...
+- 关键结论：...
+
+【待办事项】
+1. ...
+2. ...
+
+【关键约束与上下文】
+- ...
+
+Conversation history:
+${mainMessages
+  .map((m) => {
+    if (m.role === 'system') return `[SYSTEM]: ${m.content}`
+    if (m.role === 'user') return `[USER]: ${m.content}`
+    if (m.role === 'assistant')
+      return `[ASSISTANT]: ${m.content ? m.content : '[Tool calls]'}`
+    if (m.role === 'tool') return `[TOOL RESULT]: ${m.content}`
+    return ''
+  })
+  .join('\n')}`
+    try {
+      const summary = await aiRequestSingle(
+        this.aiClient,
+        this.aiConfig,
+        summaryPrompt,
+      )
+      return summary
+    } catch (error) {
+      logError('Failed to summarize messages to sub task: ' + error.message)
+      return ''
+    }
+}
+
 
 /**
  * Ai单轮问答
@@ -262,5 +340,6 @@ module.exports = {
   getInitialMessages,
   getInitialMessagesForSkill,
   getInitialMessagesForTest,
-  getSystemPrompt
+  getInitialMessagesForTask,
+  getSystemPrompt,
 }

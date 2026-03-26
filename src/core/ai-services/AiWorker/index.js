@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-26 10:26:47
+ * @LastEditTime: 2026-03-26 11:42:15
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\index.js
  * @Description: 工作流类
  * @
@@ -14,6 +14,7 @@ const {
   getInitialMessagesForSkill,
   getInitialMessagesForTest,
   getSystemPrompt,
+  getInitialMessagesForTask,
 } = require('./AiTools')
 
 class AiWorker {
@@ -56,6 +57,22 @@ class AiWorker {
       await this.aiAgent.work(this.messages)
     }
   }
+
+  async subTaskAgent(goal) {
+     const aiAgent = new AiAgent(
+      this.client,
+      this.aiCli.config,
+      this.aiCli.aiConfig,
+      this.aiCli.extensionManager.extensions,
+      3
+    )
+    const initMessages = await getInitialMessagesForTask(this.messages, goal)
+    GlobalVariable.historyManager.log(`开始执行Skill Agent, 任务目标：${goal}`)
+    const res = await aiAgent.work(initMessages)
+    GlobalVariable.historyManager.log(`Skill Agent执行完毕, 任务${goal}已完成`)
+    return res
+  }
+
 
   async subSkillAgent(skillContent, goal) {
     const aiAgent = new AiAgent(
