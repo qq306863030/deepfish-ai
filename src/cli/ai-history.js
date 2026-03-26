@@ -9,7 +9,9 @@ extCommand
   .command("clear")
   .description("Clear the history messages for the current directory")
   .action(() => {
-    historyManager.clearMessage();
+    historyManager.clearMessage(1);
+    historyManager.clearMessage(2);
+    historyManager.clearMessage(3);
   });
 
 extCommand

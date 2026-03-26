@@ -55,6 +55,7 @@
   - [AI服务选择](#ai服务选择)
 - [8. 使用说明](#8-使用说明)
   - [使用相对路径](#使用相对路径)
+  - [对话历史](#对话历史)
 - [9. 故障排除](#9-故障排除)
   - [配置问题](#配置问题)
   - [AI服务连接](#ai服务连接)
@@ -255,7 +256,10 @@ ai ext add weather.js
 
 ```bash
 ai skill install https://clawhub.ai/TheSethRose/agent-browser
+ai skill install https://clawhub.ai/steipete/weather
 ai skill ls
+ai skill enable 1
+ai skill disable 0
 ```
 
 **媒体处理：**

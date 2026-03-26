@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:23:42
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 20:43:02
+ * @LastEditTime: 2026-03-26 10:34:01
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */

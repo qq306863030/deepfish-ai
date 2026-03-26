@@ -258,7 +258,10 @@ ai ext add weather.js
 
 ```bash
 ai skill install https://clawhub.ai/TheSethRose/agent-browser
+ai skill install https://clawhub.ai/steipete/weather
 ai skill ls
+ai skill enable 1
+ai skill disable 0
 ```
 
 **Media Processing:**

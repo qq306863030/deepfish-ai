@@ -2,11 +2,12 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 20:25:28
+ * @LastEditTime: 2026-03-26 10:26:47
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\index.js
  * @Description: 工作流类
  * @
  */
+const { GlobalVariable } = require('../../globalVariable')
 const AiAgent = require('./AiAgent')
 const {
   getInitialMessages,
@@ -26,6 +27,7 @@ class AiWorker {
       this.aiCli.config,
       this.aiCli.aiConfig,
       this.aiCli.extensionManager.extensions,
+      1
     )
   }
 
@@ -55,26 +57,34 @@ class AiWorker {
     }
   }
 
-  subSkillAgent(skillContent, goal) {
+  async subSkillAgent(skillContent, goal) {
     const aiAgent = new AiAgent(
       this.client,
       this.aiCli.config,
       this.aiCli.aiConfig,
       this.aiCli.extensionManager.extensions,
+      2
     )
     const initMessages = getInitialMessagesForSkill(skillContent, goal)
-    return aiAgent.work(initMessages)
+    GlobalVariable.historyManager.log(`开始执行Skill Agent, 任务目标：${goal}`)
+    const res = await aiAgent.work(initMessages)
+    GlobalVariable.historyManager.log(`Skill Agent执行完毕, 任务${goal}已完成`)
+    return res
   }
 
-  subTestAgent(goal) {
+  async subTestAgent(goal) {
     const aiAgent = new AiAgent(
       this.client,
       this.aiCli.config,
       this.aiCli.aiConfig,
       this.aiCli.extensionManager.extensions,
+      2
     )
+    GlobalVariable.historyManager.log(`开始执行Test Agent, 任务目标：${goal}`)
     const initMessages = getInitialMessagesForTest(goal)
-    return aiAgent.work(initMessages)
+    const res = await aiAgent.work(initMessages)
+    GlobalVariable.historyManager.log(`Test Agent执行完毕, 任务${goal}已完成`)
+    return res
   }
 
   clearUserMessage(messages) {

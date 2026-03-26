@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-03-26 01:04:45
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-03-26 10:55:55
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiAgent.js
  * @Description: 工作流循环
  * @
@@ -22,6 +22,7 @@ class AiAgent {
     config,
     aiConfig,
     extensionTools = { descriptions: [], functions: {} },
+    messageType = 1
   ) {
     this.aiClient = aiClient
     this.config = config
@@ -29,7 +30,8 @@ class AiAgent {
     this.maxIterations =
       config.maxIterations === -1 ? Infinity : config.maxIterations
     this.maxBlockFileSize = this.config.maxBlockFileSize || 20 // 默认20KB
-    this.aiMessageManager = new AIMessageManager(aiClient, config, aiConfig, [])
+    this.aiMessageManager = new AIMessageManager(aiClient, config, aiConfig, [], messageType)
+    this.messageType = messageType
     this.extensionTools = extensionTools
     this.name = config.name
   }
@@ -60,12 +62,16 @@ class AiAgent {
           loadingStop(`${this.name} have finished thinking.`)
           loadingStop = null
         }
-        logInfo(content)
         // 检查是否是任务完成的总结响应（没有工具调用且有内容）
         if (tool_calls) {
           // 执行函数
+          logInfo(content)
           await this.execTools(tool_calls)
         } else {
+          if (this.messageType === 1) {
+            // 只有主任务输出最后总结
+            logInfo(content)
+          }
           // 没有工具调用，结束
           break
         }
