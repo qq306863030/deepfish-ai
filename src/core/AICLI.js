@@ -3,10 +3,22 @@ const readline = require('readline')
 const { logError } = require('./utils/log')
 const { GlobalVariable } = require('./globalVariable')
 const AIService = require('./ai-services')
+const ConfigManager = require('../cli/ConfigManager')
+const SkillConfigManager = require('../cli/SkillConfigManager')
+const HistoryManager = require('../cli/HistoryManager')
 
 class AICLI {
   constructor(config) {
-    this.config = config
+    if (!GlobalVariable.configManager) {
+      GlobalVariable.configManager = new ConfigManager()
+    }
+    if (!GlobalVariable.skillConfigManager) {
+      GlobalVariable.skillConfigManager = new SkillConfigManager()
+    }
+    if (!GlobalVariable.historyManager) {
+      GlobalVariable.historyManager = new HistoryManager()
+    }
+    this.config = config || GlobalVariable.configManager.getConfig()
     this.aiConfig = GlobalVariable.configManager.getCurrentAiConfig()
     this.skillConfigManager = GlobalVariable.skillConfigManager
     this.historyManager = GlobalVariable.historyManager
