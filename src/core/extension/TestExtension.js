@@ -1,7 +1,7 @@
 // 执行测试任务
 function executeTestTask(subGoalPrompt = "") {
   // 调用子工作流完成目标
-  return this.aiService.subTestWorkflow(subGoalPrompt)
+  return this.aiCli.aiService.subTestWorkflow(subGoalPrompt)
 }
 
 // 生成测试任务

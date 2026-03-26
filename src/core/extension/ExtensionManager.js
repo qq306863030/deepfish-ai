@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-26 17:07:20
+ * @LastEditTime: 2026-03-26 18:49:38
  * @FilePath: \deepfish\src\core\extension\ExtensionManager.js
  * @Description: 扩展函数管理
  * @
@@ -39,7 +39,7 @@ class ExtensionManager {
       InquirerExtension.descriptions,
       TestExtension.descriptions,
       TaskExtension.descriptions,
-      BaseExtension.descriptions
+      BaseExtension.descriptions,
     )
     this.extensions.functions = Object.assign(
       this.extensions.functions,
@@ -93,12 +93,10 @@ class ExtensionManager {
       }
     }
     const functions = this.extensions.functions
-    for (const fnName of Object.keys(functions)) {
-      functions[fnName] = functions[fnName].bind(this.aiCli)
-      if (fnName === 'test') {
-        functions[fnName]()
-      }
-    }
+    functions.aiCli = this.aiCli
+    // for (const fnName of Object.keys(functions)) {
+    //   functions[fnName] = functions[fnName].bind(this.aiCli)
+    // }
     functions['fs'] = fs
     functions['axios'] = axios
     functions['dayjs'] = dayjs
@@ -157,7 +155,7 @@ class ExtensionManager {
         ) {
           const mainFile = this._scanDeepFishPackage(dirPath, dirName)
           if (mainFile) {
-              result.push(mainFile)
+            result.push(mainFile)
           }
         }
       })

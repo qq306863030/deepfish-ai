@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-26 17:17:13
+ * @LastEditTime: 2026-03-26 19:33:02
  * @FilePath: \deepfish\src\core\extension\SystemExtension.js
  * @Description: 默认扩展函数
  * @
@@ -29,7 +29,7 @@ function executeCommand(command, timeout = -1) {
       argv0: 'deepfish-shell',
       timeout: timeout > 0 ? timeout : undefined,
     })
-    let targetEncoding = this.config?.encoding
+    let targetEncoding = this.aiCli.config?.encoding
     if (!targetEncoding || targetEncoding === 'auto') {
       targetEncoding = detectEncoding(result.stdout || result.stderr)
     }
@@ -53,7 +53,7 @@ function executeCommand(command, timeout = -1) {
 async function requestAI(
   systemDescription,
   prompt,
-  temperature = this.aiConfig.temperature,
+  temperature = this.aiCli.aiConfig.temperature,
 ) {
   logSuccess(`Requesting AI`)
   if (
@@ -66,13 +66,13 @@ async function requestAI(
   try {
     logInfo(`aiSystem: ${systemDescription}`)
     logInfo(`aiPrompt: ${prompt}`)
-    let aiConfig = this.aiConfig
+    let aiConfig = this.aiCli.aiConfig
     if (temperature !== aiConfig.temperature) {
       aiConfig = cloneDeep(aiConfig)
       aiConfig.temperature = temperature
     }
     const response = await aiRequestSingle(
-      this.aiService.client,
+      this.aiCli.aiService.client,
       aiConfig,
       systemDescription,
       prompt,
@@ -91,7 +91,7 @@ async function executeJSCode(code) {
   logSuccess(code)
 
   try {
-    const { functions } = this.extensionManager.extensions
+    const { functions } = this.aiCli.extensionManager.extensions
     const Func = new Function(
       'Tools',
       'require',
@@ -127,7 +127,7 @@ async function executeJSCode(code) {
 }
 // 获取ai的配置
 function getAiConfig() {
-  return cloneDeep(this.aiConfig)
+  return cloneDeep(this.aiCli.aiConfig)
 }
 
 // 获取ai的配置文件所在目录
@@ -137,12 +137,12 @@ function getAiConfigPath() {
 
 // 加载skill
 function executeSkill(skillFilePath, subGoalPrompt = '') {
-  const skillContent = this.skillConfigManager.loadSkill(skillFilePath)
+  const skillContent = this.aiCli.skillConfigManager.loadSkill(skillFilePath)
   if (!subGoalPrompt) {
     return skillContent
   }
   // 调用子工作流完成目标
-  return this.aiService.subSkillWorkflow(skillContent, subGoalPrompt)
+  return this.aiCli.aiService.subSkillWorkflow(skillContent, subGoalPrompt)
 }
 
 // 了解自己

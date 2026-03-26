@@ -262,6 +262,14 @@ ai skill enable 1
 ai skill disable 0
 ```
 
+**OpenClaw Skill 生成：**
+
+```bash
+ai "创建一个查询天气的skill"
+ai skill add weather-query
+ai skill enable weather-query
+```
+
 **媒体处理：**
 
 ```bash
@@ -353,7 +361,7 @@ module.exports = {
 
 程序启动时自动扫描扩展模块的规则:
 1. 扫描位置:
-    - 根目录的node_modules
+    - npm根目录的node_modules
     - 命令执行目录的node_modules
     - 命令执行目录
 2. 扫描文件:

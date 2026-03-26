@@ -19,7 +19,7 @@ const descriptions = [
   {
     type: 'function',
     function: {
-      name: 'generateSkillPackage',
+      name: 'generateSkillPackageRule',
       description:
         '如果用户需要生成一个兼容OpenClaw规范的Skill工具包，则先调用此函数获取生成Skill工具包的完整规则和提示词;示例：生成一个Skill工具包: 能够抓取网页内容并提取关键信息;',
       parameters: {
@@ -47,7 +47,8 @@ async function generateExtensionRule(goal) {
    - version字段值：初始版本设置为1.0.0
    - description字段值：简要描述该项目的核心功能和价值
    - git仓库地址：固定为 https://github.com/qq306863030/deepfish-extensions.git
-   - author设置为"DeepFish AI",
+   - author设置为"DeepFish AI"
+   - type字段设置为"commonjs"，确保模块系统兼容
 3. 主文件：项目入口文件必须命名为index.js
 4. 文档文件：项目根目录需新增2个文档文件：
    - README_CN.md（中文说明文档）
@@ -67,12 +68,12 @@ async function generateExtensionRule(goal) {
 2. 命名规范：
    - 函数名称前缀：「领域用途+分隔符」（如systemFileManagement_）
    - 函数描述开头：统一格式「领域用途+分隔符+功能描述」（如系统文件管理:重命名文件）
-3. 内置工具函数调用：函数内部会自动注入所有内置工具函数，可以通过this.Tools获取，示例：
-   - this.Tools.requestAI(systemDescription, prompt, temperature)
-   - this.Tools.readFile(filePath)
+3. 内置工具函数调用：函数内部会自动注入所有内置工具函数，可以通过this.aiCli.Tools获取，示例：
+   - this.aiCli.Tools.requestAI(systemDescription, prompt, temperature)
+   - this.aiCli.Tools.readFile(filePath)
    - 其他文件处理类内置函数（运行时自动注入）
 4. 函数数量：至少包含1个可被AI工作流调用的函数
-5. 函数中的this在运行时指向DeepFish AI的运行时环境，可以通过this访问到AI配置、工具函数等资源，因此在创建扩展时需要注意this的指向
+5. 函数中的this.aiCli在运行时指向DeepFish AI的运行时环境，可以通过this.aiCli访问到AI配置、工具函数等资源
 6. 尽量保持代码思路清晰，避免过度复杂的逻辑嵌套，必要时可以适当拆分函数、添加注释说明或拆分成多个文件
 7. 需要创建的是DeepFish AI的扩展工具，并非创建Skill工具包，因此不需要编写SKILL.md文件
 
@@ -102,7 +103,7 @@ const descriptions = [
 ]
 const functions = {
   systemFileManagement_renameFile: (oldPath, newPath) => {
-    return this.Tools.rename(oldPath, newPath)
+    return this.aiCli.Tools.rename(oldPath, newPath)
   },
 }
 module.exports = {
@@ -115,12 +116,11 @@ module.exports = {
 ### 第三步：测试规则
 1. 测试目标：至少覆盖扩展中的核心函数（建议覆盖每个对外函数），验证“正常输入可用、关键边界可处理、异常输入有明确反馈”。
 2. 测试文件：统一在 test.js 编写可直接运行的测试脚本，结构清晰，包含“准备数据 → 执行函数 → 断言结果 → 输出结论”。
-3. 运行时注入要求：必须模拟 DeepFish 运行时环境，确保函数可正确使用 this 上下文。
+3. 运行时注入要求：必须模拟 DeepFish 运行时环境，确保函数可正确使用 this.aiCli 上下文。
    - 环境创建方式：
      "const { AICLI } = require('${packagePath}')\nconst aiCli = new AICLI();"
-   - 调用方式：
-     "await functionName.call(aiCli, ...args)"
-   - 若函数依赖 this.Tools/this.aiConfig，需在测试中验证其可被正常访问。
+   - 调用方式：为模块导出的functions绑定aiCli上下文，示例：functions.aiCli = aiCli;
+   - 若函数依赖 this.aiCli.Tools/this.aiCli.aiConfig，需在测试中验证其可被正常访问。
 4. 断言与输出规范：每个用例需打印“用例名称、输入、期望、实际、是否通过（PASS/FAIL）”；全部执行后输出汇总（总数、通过数、失败数）。
 5. 失败处理：出现异常时不得静默吞错，需捕获并输出可定位信息（错误消息、对应用例、关键参数）。
 6. 副作用控制：测试过程中创建的临时文件必须使用 tmp_test_ 前缀，并在测试结束后清理。
@@ -150,13 +150,13 @@ module.exports = {
 }
 
 // 生成一个Skill工具包
-async function generateSkillPackage(goal) {
+async function generateSkillPackageRule(goal) {
   const newGoal = `
 ### 任务目标
-基于OpenClaw Skill规范创建一个标准化的Skill工具包目录，实现用户目标：${goal}，最终输出可被DeepFish AI直接加载使用的Skill工具包。
+基于OpenClaw Skill规范创建一个标准化的Skill工具包，实现用户目标：${goal}，最终输出可被DeepFish AI直接加载使用。
 
 ### 第一步：项目初始化
-1. 目录创建：新建目录，目录名称应简洁明了地反映Skill功能（如"web-scraper"、"code-reviewer"、"image-optimizer"等）
+1. 目录创建：在当前工作目录下新建一个子目录，目录名称应简洁明了地反映Skill功能（如"web-scraper"、"code-reviewer"、"image-optimizer"等）
 2. 核心文件：目录中必须包含 SKILL.md 文件（文件名大小写敏感，必须为 SKILL.md）
 3. 文档文件：目录中需新增2个说明文档：
    - README_CN.md（中文说明文档）
@@ -284,6 +284,7 @@ homepage: "https://github.com/example/file-translator"
    - 其他文件处理类内置函数（运行时自动注入）
 5. description字段的描述至关重要，它决定了AI何时选择加载该Skill，必须准确反映Skill的核心能力
 6. 需要创建的是Skill工具包，并非创建Extension扩展，因此核心文件是SKILL.md而非index.js
+7. 工具包创建在当前工作目录下，完成后不需要自动安装到全局
 
 ### 第三步：辅助脚本文件规范（如需要）
 1. 如果Skill的功能较复杂，无法仅通过纯文本指令描述完成，可以创建辅助脚本文件
@@ -321,7 +322,7 @@ homepage: "https://github.com/example/file-translator"
 
 const functions = {
   generateExtensionRule,
-  generateSkillPackage,
+  generateSkillPackageRule,
 }
 
 module.exports = {

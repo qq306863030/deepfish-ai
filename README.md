@@ -264,6 +264,14 @@ ai skill enable 1
 ai skill disable 0
 ```
 
+**OpenClaw Skill Generation:**
+
+```bash
+ai "Create a weather query skill"
+ai skill add weather-query
+ai skill enable weather-query
+```
+
 **Media Processing:**
 
 ```bash
@@ -356,7 +364,7 @@ module.exports = {
 Rules for automatic scanning of extension modules upon program startup:
 
 1. Scanning locations:
-   - node_modules in the root directory
+   - node_modules in the npm root directory
    - node_modules in the command execution directory
    - the command execution directory itself
 

@@ -58,7 +58,7 @@ function updateTaskList(taskListPath, list) {
 
 // 从任务列表执行子任务
 function executeSubTaskFromTaskList(subTaskGoalPrompt = "") {
-    return this.aiService.subTaskWorkflow(subTaskGoalPrompt)
+    return this.aiCli.aiService.subTaskWorkflow(subTaskGoalPrompt)
 }
 
 const descriptions = [

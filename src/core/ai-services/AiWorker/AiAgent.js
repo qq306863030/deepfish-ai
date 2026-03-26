@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-26 10:55:55
+ * @LastEditTime: 2026-03-26 19:32:11
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiAgent.js
  * @Description: 工作流循环
  * @
@@ -95,15 +95,12 @@ class AiAgent {
     for (const toolCall of tool_calls) {
       const { id, function: func } = toolCall
       const { name, arguments: args } = func
-      let toolFunction = this.extensionTools.functions[name]
+      const toolFunctions = this.extensionTools.functions
       logInfo(`Calling tool ${toolCall.function.name}`)
-      if (toolFunction) {
+      if (toolFunctions[name]) {
         try {
           const parsedArgs = typeof args === 'string' ? JSON.parse(args) : args
-          if (name === 'readFile') {
-            const fileInfo = await this.extensionTools.functions['getFileInfo'](
-              parsedArgs.filePath,
-            )
+            const fileInfo = await toolFunctions['getFileInfo'](parsedArgs.filePath)
             if (fileInfo && fileInfo.isFile && fileInfo.size > this.maxBlockFileSize * 1024) {
               this.aiMessageManager.addTool(id, {
                 error:
@@ -113,8 +110,7 @@ class AiAgent {
               })
               continue
             }
-          }
-          let result = await toolFunction(...Object.values(parsedArgs))
+          let result = await toolFunctions[name](...Object.values(parsedArgs))
           let toolContent = JSON.stringify(result)
           if (name !== 'requestAI') {
             const MAX_CONTENT_SIZE = this.maxBlockFileSize * 1024
