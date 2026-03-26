@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-03-26 00:54:25
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-03-26 09:15:54
  * @FilePath: \deepfish\src\core\extension\SystemExtension.js
  * @Description: 默认扩展函数
  * @
@@ -132,9 +132,9 @@ async function getExtensionFileRule(goal) {
 基于指定规则创建一个标准化的Node.js NPM项目，实现用户目标：${goal}，最终输出符合AI工作流调用规范的函数模块，并配套中英文说明文档。
 
 ### 第一步：项目初始化
-1. 目录创建：新建目录，目录名称以"deepfish-"开头,如"deepfish-「项目功能名称」"，作为NPM项目根目录
+1. 目录创建：新建目录，目录名称以"deepfish-"开头,如"deepfish-「项目功能名称」"，作为NPM项目根目录，并作为当前项目的名称
 2. package.json配置：
-   - name字段值：@deepfish-ai/项目功能名称（替换「项目功能名称」为实际功能名）
+   - name字段值：与项目名称一致，即"deepfish-「项目功能名称」"
    - git仓库地址：固定为 https://github.com/qq306863030/deepfish-extensions.git
    - author设置为"DeepFish AI",
 3. 主文件：项目入口文件必须命名为index.js
