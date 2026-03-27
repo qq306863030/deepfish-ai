@@ -143,7 +143,7 @@ module.exports = functions
 ### 第三步：测试规则
 1. 测试目标：至少覆盖扩展中的核心函数（建议覆盖每个对外函数），验证“正常输入可用、关键边界可处理、异常输入有明确反馈”。
 2. 测试文件：统一在 test.js 编写可直接运行的测试脚本，结构清晰，包含“准备数据 → 执行函数 → 断言结果 → 输出结论”。
-3. 运行时注入要求：必须确保函数可正确使用 this.aiCli 上下文。
+3. 测试文件：必须确保函数可正确使用 this.aiCli 上下文。
    - 环境创建方式：
      "const { AICLI } = require('${packagePath}')\nconst aiCli = new AICLI();"
    - 调用方式：为模块导出的functions绑定aiCli上下文，示例：functions.aiCli = aiCli;
