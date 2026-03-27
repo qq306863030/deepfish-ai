@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-26 18:49:38
+ * @LastEditTime: 2026-03-27 10:33:37
  * @FilePath: \deepfish\src\core\extension\ExtensionManager.js
  * @Description: 扩展函数管理
  * @
@@ -12,6 +12,7 @@ const SystemExtension = require('./SystemExtension')
 const FileExtension = require('./FileExtension')
 const InquirerExtension = require('./InquirerExtension')
 const TestExtension = require('./TestExtension')
+const GenerateExtension = require('./GenerateExtension')
 const path = require('path')
 const fs = require('fs-extra')
 const axios = require('axios')
@@ -39,6 +40,7 @@ class ExtensionManager {
       InquirerExtension.descriptions,
       TestExtension.descriptions,
       TaskExtension.descriptions,
+      GenerateExtension.descriptions,
       BaseExtension.descriptions,
     )
     this.extensions.functions = Object.assign(
@@ -48,6 +50,8 @@ class ExtensionManager {
       InquirerExtension.functions,
       TestExtension.functions,
       TaskExtension.functions,
+      GenerateExtension.functions,
+      BaseExtension.functions,
     )
   }
 

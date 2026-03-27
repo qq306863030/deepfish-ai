@@ -10,13 +10,13 @@
     alt="WeChat"
     src="https://img.shields.io/badge/WeChat-MrRoman_123-green.svg"
   />
-  <a href="https://github.com/qq306863030/deepfish">
+  <a href="https://github.com/qq306863030/deepfish-ai">
     <img
       alt="GitHub"
-      src="https://img.shields.io/badge/GitHub-DeepFish-blue.svg"
+      src="https://img.shields.io/badge/GitHub-DeepFish AI-blue.svg"
   /></a>
-  <a href="https://www.npmjs.com/package/deepfish">
-    <img alt="NPM" src="https://img.shields.io/badge/NPM-DeepFish-blue.svg"
+  <a href="https://www.npmjs.com/package/deepfish-ai">
+    <img alt="NPM" src="https://img.shields.io/badge/NPM-DeepFish AI-blue.svg"
   /></a>
   <img
     alt="Code License"
@@ -288,6 +288,9 @@ ai "Classify all files under the 'model' directory into the 'model2' directory b
 
 ```bash
 ai "Create a task list: 1.xxxx; 2.xxxx; ..."
+ai "Execute task list" # Start execution
+
+ai "I want to implement an extension tool for long-form novel writing that supports large-scale writing, maintains contextual logic coherence, and avoids AI context explosion issues. This extension tool may be a bit complex to implement. You need to carefully read the extension tool generation rules first, then create a task list"
 ai "Execute task list" # Start execution
 ```
 

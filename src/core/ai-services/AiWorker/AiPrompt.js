@@ -4,7 +4,7 @@ const { GlobalVariable } = require("../../globalVariable")
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 09:12:22
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-26 16:56:47
+ * @LastEditTime: 2026-03-27 10:32:06
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiPrompt.js
  * @Description: AI请求提示词
  * @
@@ -22,7 +22,10 @@ const AiAgentSystemPrompt = () => {
 语言类型: 与用户输入语言一致
 
 ### 工具使用规则
-系统中内置了一些可以直接调用的工具函数，如可调用 executeJSCode 运行 Node.js 代码处理复杂逻辑；可调用 executeCommand 运行系统命令行工具（如 git、npm 等），工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
+1.系统中有两种工具可以调用：一种是系统内置的工具函数（扩展工具），另一种是Skill工具包。优先使用系统内置工具函数，只有在系统内置工具函数无法满足需求时才使用Skill工具包。
+2.创建工具函数时，需要先调用generateExtensionRule函数查看生成规则
+3.创建Skill工具包时，需要先调用generateSkillPackageRule函数查看生成规则
+4.工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
 
 ### 大文本文件处理规则（分步执行）
 处理长文档等大文件（单文件＞${maxBlockFileSize}KB）时，必须按以下步骤分块处理：
@@ -109,7 +112,10 @@ const TaskAiAgentSystemPrompt = () => {
 语言类型: 与用户输入语言一致
 
 ### 工具使用规则
-系统中内置了一些可以直接调用的工具函数，如可调用 executeJSCode 运行 Node.js 代码处理复杂逻辑；可调用 executeCommand 运行系统命令行工具（如 git、npm 等），工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
+1.系统中有两种工具可以调用：一种是系统内置的工具函数（扩展工具），另一种是Skill工具包。优先使用系统内置工具函数，只有在系统内置工具函数无法满足需求时才使用Skill工具包。
+2.创建工具函数时，需要先调用generateExtensionRule函数查看生成规则
+3.创建Skill工具包时，需要先调用generateSkillPackageRule函数查看生成规则
+4.工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
 
 ### 大文本文件处理规则（分步执行）
 处理长文档等大文件（单文件＞${maxBlockFileSize}KB）时，必须按以下步骤分块处理：

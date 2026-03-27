@@ -50,10 +50,11 @@ async function generateExtensionRule(goal) {
    - author设置为"DeepFish AI"
    - type字段设置为"commonjs"，确保模块系统兼容
 3. 主文件：项目入口文件必须命名为index.js
-4. 文档文件：项目根目录需新增2个文档文件：
+4. 子文件：复杂的逻辑可以拆分到其他.js文件中
+5. 文档文件：项目根目录需新增2个文档文件：
    - README_CN.md（中文说明文档）
    - README.md（英文说明文档）
-5. 主测试文件：test.js
+6. 主测试文件：test.js
 
 ### 第二步：index.js 完整开发规范
 #### 2.1 核心输出要求
@@ -76,6 +77,7 @@ async function generateExtensionRule(goal) {
 5. 函数中的this.aiCli在运行时指向DeepFish AI的运行时环境，可以通过this.aiCli访问到AI配置、工具函数等资源
 6. 尽量保持代码思路清晰，避免过度复杂的逻辑嵌套，必要时可以适当拆分函数、添加注释说明或拆分成多个文件
 7. 需要创建的是DeepFish AI的扩展工具，并非创建Skill工具包，因此不需要编写SKILL.md文件
+8. 对于复杂的的扩展功能，需要在functions中输出一个说明函数，只需返回一个markdown类型的字符串，专门用于解释当前扩展工具的使用方法、参数说明、示例等内容，函数名称为「extensionRule」，如「systemFileManagement_extensionRule」。
 
 #### 2.3 基础代码模板（必须遵循）
 const descriptions = []
@@ -104,7 +106,7 @@ const descriptions = [
 const functions = {
   systemFileManagement_renameFile: (oldPath, newPath) => {
     return this.aiCli.Tools.rename(oldPath, newPath)
-  },
+  }
 }
 module.exports = {
   name: 'systemFileManagement',
@@ -138,9 +140,10 @@ module.exports = {
    - 清晰说明当前NPM包的核心定位、整体功能价值、适用场景
    - 语言简洁易懂，无需技术细节，聚焦「做什么」而非「怎么做」
 2. 快速开始：
-   - 明确说明安装步骤，顺序不可颠倒：
-     ① 先安装deepfish-ai全局库：npm install deepfish-ai -g
-     ② 再安装当前项目库：npm install @deepfish-ai/项目功能名称 -g
+   - 明确说明安装步骤：
+     ① 全局安装deepfish-ai：npm install deepfish-ai -g
+     ② 全局安装当前项目：npm install @deepfish-ai/项目功能名称 -g
+     ③ 在命令行中输入：ai 「扩展的某一个功能」。如：添加了一个查询天气的扩展。则输入：ai 查询一下今天的天气
 3. 函数列表及功能描述：
    - 列出当前项目中所有函数名称
    - 对应说明每个函数的核心功能
