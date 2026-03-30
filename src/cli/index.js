@@ -3,12 +3,13 @@ const { program } = require("commander");
 const AICLI = require("../core/AICLI");
 const { logError } = require("../core/utils/log");
 const { GlobalVariable } = require("../core/globalVariable.js");
+const packageJson = require("../../package.json");
 require("./ai-config.js");
 require("./ai-ext.js");
 require("./ai-skill.js");
 require("./ai-history.js");
 program
-  .version("1.0.0")
+  .version(packageJson.version)
   .description(
     "A command-line tool that uses AI to execute commands and manipulate files",
   )
