@@ -10,13 +10,13 @@
     alt="WeChat"
     src="https://img.shields.io/badge/WeChat-MrRoman_123-green.svg"
   />
-  <a href="https://github.com/qq306863030/deepfish">
+  <a href="https://github.com/qq306863030/deepfish-ai">
     <img
       alt="GitHub"
-      src="https://img.shields.io/badge/GitHub-DeepFish-blue.svg"
+      src="https://img.shields.io/badge/GitHub-DeepFish AI-blue.svg"
   /></a>
-  <a href="https://www.npmjs.com/package/deepfish">
-    <img alt="NPM" src="https://img.shields.io/badge/NPM-DeepFish-blue.svg"
+  <a href="https://www.npmjs.com/package/deepfish-ai">
+    <img alt="NPM" src="https://img.shields.io/badge/NPM-DeepFish AI-blue.svg"
   /></a>
   <img
     alt="Code License"
@@ -193,6 +193,7 @@ module.exports = {
   maxMessagesCount: 100, // Maximum compression count, -1 for unlimited
   maxHistoryExpireTime: 30, // Maximum session expiration time in days, -1 for unlimited, 0 to disable recording
   maxLogExpireTime: 3, // Log expiration time in days, -1 for unlimited, 0 to disable recording
+  maxBlockFileSize: 20, // Maximum block file size in KB; files exceeding this size need to be processed in blocks
   extensions: [], // List of extension file paths
   skills: [], // List of skill configurations
   encoding: "utf-8", // Command line encoding format, can be set to utf-8, gbk, etc., or auto/empty for auto-detection
@@ -257,7 +258,18 @@ ai ext add weather.js
 
 ```bash
 ai skill install https://clawhub.ai/TheSethRose/agent-browser
+ai skill install https://clawhub.ai/steipete/weather
 ai skill ls
+ai skill enable 1
+ai skill disable 0
+```
+
+**OpenClaw Skill Generation:**
+
+```bash
+ai "Create a weather query skill"
+ai skill add weather-query
+ai skill enable weather-query
 ```
 
 **Media Processing:**
@@ -270,6 +282,16 @@ ai "I have ffmpeg5 installed on my system, help me convert all MP4 files in the 
 
 ```bash
 ai "Classify all files under the 'model' directory into the 'model2' directory by month, date format YYYY-MM"
+```
+
+**Task List Execution:**
+
+```bash
+ai "Create a task list: 1.xxxx; 2.xxxx; ..."
+ai "Execute task list" # Start execution
+
+ai "I want to implement an extension tool for long-form novel writing that supports large-scale writing, maintains contextual logic coherence, and avoids AI context explosion issues. This extension tool may be a bit complex to implement. You need to carefully read the extension tool generation rules first, then create a task list"
+ai "Execute task list" # Start execution
 ```
 
 ## 6. Extension Development
@@ -345,7 +367,7 @@ module.exports = {
 Rules for automatic scanning of extension modules upon program startup:
 
 1. Scanning locations:
-   - node_modules in the root directory
+   - node_modules in the npm root directory
    - node_modules in the command execution directory
    - the command execution directory itself
 

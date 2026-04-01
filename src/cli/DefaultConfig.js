@@ -6,9 +6,10 @@ const defaultConfig = {
   maxMessagesCount: 100, // 最大压缩数量，-1表示无限制
   maxHistoryExpireTime: 30, // 整个会话的最大过期时间，单位天，-1表示无限制, 0表示不记录
   maxLogExpireTime: 3, // 日志过期时间，单位天，-1表示无限制，0表示不记录
+  maxBlockFileSize: 20, // 最大分块文件大小，单位KB；超过该大小的文件需要分块处理
   extensions: [],
   skills:[],
-  encoding: "utf-8", // 命令行编码格式, 可设置为utf-8、gbk等, 也可以设置成auto或空值自动判断
+  encoding: "auto", // 命令行编码格式, 可设置为utf-8、gbk等, 也可以设置成auto或空值自动判断
 };
 
 const aiCliConfig = {

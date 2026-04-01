@@ -2,14 +2,24 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 09:12:22
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 19:56:42
+ * @LastEditTime: 2026-03-27 15:38:26
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiTools.js
  * @Description: 对话初始化、对话请求
  * @
  */
 const { OpenAI } = require('openai')
-const { AiAgentSystemPrompt, SkillAiAgentSystemPrompt, TestAiAgentSystemPrompt } = require('./AiPrompt')
-const { streamOutput, streamLineBreak } = require('../../utils/log')
+const {
+  AiAgentSystemPrompt,
+  SkillAiAgentSystemPrompt,
+  TestAiAgentSystemPrompt,
+  TaskAiAgentSystemPrompt,
+} = require('./AiPrompt')
+const {
+  streamOutput,
+  streamLineBreak,
+  logError,
+  loading,
+} = require('../../utils/log')
 const { GlobalVariable } = require('../../globalVariable')
 
 // 创建client
@@ -37,14 +47,14 @@ function getInitialMessages(goal) {
 
 function getSystemPrompt() {
   const skillPrompt = GlobalVariable.skillConfigManager.preLoadSkills()
-  const systemDescription = `${AiAgentSystemPrompt}\n\n${skillPrompt}`
+  const systemDescription = `${AiAgentSystemPrompt()}\n\n${skillPrompt}`
   return systemDescription
 }
 
 // 获取调用skill的初始message
 function getInitialMessagesForSkill(skillContent, goal) {
   const systemDescription = `
-${SkillAiAgentSystemPrompt}
+${SkillAiAgentSystemPrompt()}
 ### 以下是加载完成的Skill.md文件的内容：
 ${skillContent}`
   return [
@@ -60,16 +70,102 @@ ${skillContent}`
 }
 
 function getInitialMessagesForTest(goal) {
+  const skillPrompt = GlobalVariable.skillConfigManager.preLoadSkills()
+  const systemDescription = `${TestAiAgentSystemPrompt()}\n\n${skillPrompt}`
   return [
     {
       role: 'system',
-      content: TestAiAgentSystemPrompt,
+      content: systemDescription,
     },
     {
       role: 'user',
       content: goal,
     },
   ]
+}
+
+// 获取子任务初始化message
+async function getInitialMessagesForTask(mainMessages, goal) {
+  // 对主任务的上下文进行摘要总结，生成总体任务规划、当前进度、待办事项等，作为子任务的一部分系统提示词，能够指导子任务更好地完成目标
+  const summary = await _mainTaskSummary(mainMessages)
+  const skillPrompt = GlobalVariable.skillConfigManager.preLoadSkills()
+  const systemDescription =
+    TaskAiAgentSystemPrompt() + '\n\n' + summary + '\n\n' + skillPrompt
+  return [
+    {
+      role: 'system',
+      content: systemDescription,
+    },
+    {
+      role: 'user',
+      content: goal,
+    },
+  ]
+}
+
+async function _mainTaskSummary(mainMessages) {
+  mainMessages = mainMessages.slice(1) // 去掉system消息
+  if (mainMessages.length === 0) {
+    return ''
+  }
+  // 对主任务的上下文进行摘要总结，生成总体任务规划、当前进度、待办事项等，作为子任务的一部分系统提示词，能够指导子任务更好地完成目标
+  const systemPrompt = `你是“子任务上下文整理器”。
+请基于主任务对话历史，生成一个可直接提供给子任务使用的“执行摘要”。
+
+摘要目标：
+1. 明确主任务的最终目标与验收标准；
+2. 提炼当前进度：已完成内容、关键结论、已验证结果；
+3. 列出仍需推进的事项（按优先级）；
+4. 提取对子任务有约束作用的信息：技术栈、文件路径、接口约定、用户偏好、限制条件；
+5. 标注风险与未决问题（如有）。
+
+输出要求：
+- 只保留与后续执行直接相关的信息；
+- 删除闲聊、重复表达、无关报错细节、无价值过程噪音；
+- 不要编造对话中不存在的信息；
+- 用尽可能简洁的语言输出；
+- 严格按以下结构输出：
+
+【主任务目标】
+...
+
+【当前进度】
+- 已完成：...
+- 关键结论：...
+
+【待办事项】
+1. ...
+2. ...
+
+【关键约束与上下文】
+- ...
+`
+  const summaryPrompt = `
+Conversation history:
+${mainMessages
+  .map((m) => {
+    if (m.role === 'system') return `[SYSTEM]: ${m.content}`
+    if (m.role === 'user') return `[USER]: ${m.content}`
+    if (m.role === 'assistant')
+      return `[ASSISTANT]: ${m.content ? m.content : '[Tool calls]'}`
+    if (m.role === 'tool') return `[TOOL RESULT]: ${m.content}`
+    return ''
+  })
+  .join('\n')}
+`
+  try {
+    const aiCli = GlobalVariable.aiCli
+    const summary = await aiRequestSingle(
+      aiCli.aiService.client,
+      aiCli.aiConfig,
+      systemPrompt,
+      summaryPrompt,
+    )
+    return summary
+  } catch (error) {
+    logError('Failed to summarize messages to sub task: ' + error.message)
+    return ''
+  }
 }
 
 /**
@@ -88,22 +184,29 @@ async function aiRequestSingle(
   prompt,
   isOnline = false,
 ) {
-  const messages = []
-  messages.push({
-    role: 'system',
-    content: systemDescription,
-  })
-  messages.push({
-    role: 'user',
-    content: prompt,
-  })
-  const opt = {
-    messages: messages,
-    ...aiConfig,
-    stream: false,
+  let loadingStop = loading('Thinking...')
+  try {
+    const messages = []
+    messages.push({
+      role: 'system',
+      content: systemDescription,
+    })
+    messages.push({
+      role: 'user',
+      content: prompt,
+    })
+    const opt = {
+      messages: messages,
+      ...aiConfig,
+      stream: false,
+    }
+    const response = await openAiClient.chat.completions.create(opt)
+    loadingStop('AI have finished thinking.')
+    return response.choices[0].message.content
+  } catch (error) {
+    loadingStop('AI process terminated unexpectedly: ' + error.message, true)
+    return `AI response error: ${error.message}`
   }
-  const response = await openAiClient.chat.completions.create(opt)
-  return response.choices[0].message.content
 }
 /**
  * Ai携带工具请求
@@ -181,8 +284,10 @@ async function _streamToNonStream(stream) {
       if (!finalResponse.model) {
         finalResponse.model = chunk.model || 'deepseek-reasoner'
       }
-
       const choice = chunk.choices[0]
+      if (!choice) {
+        continue
+      }
       const delta = choice.delta
       if (!delta) {
         continue
@@ -260,5 +365,6 @@ module.exports = {
   getInitialMessages,
   getInitialMessagesForSkill,
   getInitialMessagesForTest,
-  getSystemPrompt
+  getInitialMessagesForTask,
+  getSystemPrompt,
 }

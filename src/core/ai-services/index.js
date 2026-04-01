@@ -30,6 +30,10 @@ class AIService {
   subTestWorkflow(goal) {
     return this.aiWorker.subTestAgent(goal);
   }
+
+  subTaskWorkflow(goal) {
+    return this.aiWorker.subTaskAgent(goal);
+  }
 }
 
 module.exports = AIService;

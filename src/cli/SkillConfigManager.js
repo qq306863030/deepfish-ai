@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:23:42
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 18:29:40
+ * @LastEditTime: 2026-03-27 10:30:40
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */
@@ -46,7 +46,7 @@ class SkillConfigManager {
   preLoadSkills() {
     const skills = this.configManager.config.skills.filter((skill) => skill.enable)
     if (skills.length === 0) {
-        return ''
+        return '### 暂无可以使用的Skill'
     }
     const table = skills
       .map((s) => `| ${s.name} | ${s.description} | ${s.location} | ${s.skillFilePath} |`)
@@ -268,8 +268,11 @@ ${table}
       return
     }
     const { skill, index } = skillObj
-    const skillPath = skill.path
-    userConfig.skills.splice(index, 1)
+    let skillPath = skill.location
+    if (!skillPath) {
+      skillPath = path.join(this.skillDir, skill.skillDirName)
+    }
+    userConfig.skills = userConfig.skills.filter((_, i) => i !== index)
     this.configManager.writeConfig(userConfig)
     if (fs.existsSync(skillPath)) {
       fs.removeSync(skillPath)

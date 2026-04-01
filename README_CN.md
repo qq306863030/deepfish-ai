@@ -10,13 +10,13 @@
     alt="WeChat"
     src="https://img.shields.io/badge/WeChat-MrRoman_123-green.svg"
   />
-  <a href="https://github.com/qq306863030/deepfish">
+  <a href="https://github.com/qq306863030/deepfish-ai">
     <img
       alt="GitHub"
-      src="https://img.shields.io/badge/GitHub-DeepFish-blue.svg"
+      src="https://img.shields.io/badge/GitHub-DeepFish AI-blue.svg"
   /></a>
-  <a href="https://www.npmjs.com/package/deepfish">
-    <img alt="NPM" src="https://img.shields.io/badge/NPM-DeepFish-blue.svg"
+  <a href="https://www.npmjs.com/package/deepfish-ai">
+    <img alt="NPM" src="https://img.shields.io/badge/NPM-DeepFish AI-blue.svg"
   /></a>
   <img
     alt="Code License"
@@ -55,6 +55,7 @@
   - [AI服务选择](#ai服务选择)
 - [8. 使用说明](#8-使用说明)
   - [使用相对路径](#使用相对路径)
+  - [对话历史](#对话历史)
 - [9. 故障排除](#9-故障排除)
   - [配置问题](#配置问题)
   - [AI服务连接](#ai服务连接)
@@ -190,6 +191,7 @@ module.exports = {
   maxMessagesCount: 100, // 最大压缩数量，-1表示无限制
   maxHistoryExpireTime: 30, // 整个会话的最大过期时间，单位天，-1表示无限制，0表示不记录
   maxLogExpireTime: 3, // 日志过期时间，单位天，-1表示无限制，0表示不记录
+  maxBlockFileSize: 20, // 最大分块文件大小，单位KB；超过该大小的文件需要分块处理
   extensions: [], // 扩展文件路径列表
   skills: [], // 技能配置列表
   encoding: "utf-8", // 命令行编码格式，可设置为utf-8、gbk等，也可以设置成auto或空值自动判断
@@ -254,7 +256,18 @@ ai ext add weather.js
 
 ```bash
 ai skill install https://clawhub.ai/TheSethRose/agent-browser
+ai skill install https://clawhub.ai/steipete/weather
 ai skill ls
+ai skill enable 1
+ai skill disable 0
+```
+
+**OpenClaw Skill 生成：**
+
+```bash
+ai "创建一个查询天气的skill"
+ai skill add weather-query
+ai skill enable weather-query
 ```
 
 **媒体处理：**
@@ -267,6 +280,16 @@ ai "我的系统上安装了ffmpeg5，帮我将目录中的所有MP4文件转换
 
 ```bash
 ai "将model目录下的所有文件按月份分类到model2目录中，日期格式为YYYY-MM"
+```
+
+**任务列表执行：**
+
+```bash
+ai "创建一个任务列表，1.xxxx；2.xxxx；..."
+ai "执行任务列表" # 开始执行
+
+ai "我要实现一个用于长篇小说创作的扩展工具，支持大篇幅写作，保持上下文逻辑连贯，避免AI上下文爆炸问题。这个扩展工具实现起来可能有点复杂，你需要先仔细阅读扩展工具生成规则，然后创建一个任务列表"
+ai "执行任务列表" # 开始执行
 ```
 
 ## 6. 扩展开发
@@ -341,7 +364,7 @@ module.exports = {
 
 程序启动时自动扫描扩展模块的规则:
 1. 扫描位置:
-    - 根目录的node_modules
+    - npm根目录的node_modules
     - 命令执行目录的node_modules
     - 命令执行目录
 2. 扫描文件:

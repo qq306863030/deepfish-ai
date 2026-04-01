@@ -2,15 +2,17 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-17 10:00:20
- * @FilePath: \src\core\ai-services\AiWorker\AiAgent.js
+ * @LastEditTime: 2026-03-27 16:17:49
+ * @FilePath: \deepfish\src\core\ai-services\AiWorker\AiAgent.js
  * @Description: 工作流循环
  * @
  */
 
+const { GlobalVariable } = require('../../globalVariable')
 const { logError, logInfo, loading } = require('../../utils/log')
 const AIMessageManager = require('./AIMessageManager')
 const { aiRequestByTools } = require('./AiTools')
+const { v4: uuidv4 } = require('uuid')
 
 class AiAgent {
   messages
@@ -22,19 +24,26 @@ class AiAgent {
     config,
     aiConfig,
     extensionTools = { descriptions: [], functions: {} },
+    messageType = 1
   ) {
+    this.id = uuidv4()
     this.aiClient = aiClient
     this.config = config
     this.aiConfig = aiConfig
     this.maxIterations =
       config.maxIterations === -1 ? Infinity : config.maxIterations
-    this.aiMessageManager = new AIMessageManager(aiClient, config, aiConfig, [])
+    this.maxBlockFileSize = this.config.maxBlockFileSize || 20 // 默认20KB
+    this.aiMessageManager = new AIMessageManager(aiClient, config, aiConfig, [], messageType)
+    this.messageType = messageType
     this.extensionTools = extensionTools
     this.name = config.name
   }
 
   // 工作流循环
   async work(messages) {
+    const name = this.messageType === 1? 'Main Task' : 'Sub Task'
+    const workId = uuidv4()
+    GlobalVariable.historyManager.logTime(workId, `${name} AI Agent`)
     this.aiMessageManager.reLinkMsgs(messages)
     let maxIterations = this.maxIterations
     let loadingStop
@@ -59,16 +68,21 @@ class AiAgent {
           loadingStop(`${this.name} have finished thinking.`)
           loadingStop = null
         }
-        logInfo(content)
         // 检查是否是任务完成的总结响应（没有工具调用且有内容）
         if (tool_calls) {
           // 执行函数
+          logInfo(content)
           await this.execTools(tool_calls)
         } else {
+          if (this.messageType === 1) {
+            // 只有主任务输出最后总结
+            logInfo(content)
+          }
           // 没有工具调用，结束
           break
         }
       }
+      GlobalVariable.historyManager.logTime(workId, `${name} AI Agent`)
       return messages[messages.length - 1]?.content || ''
     } catch (error) {
       if (loadingStop) {
@@ -79,6 +93,7 @@ class AiAgent {
       } else {
         logError('AI process terminated unexpectedly: ' + error.message)
       }
+      GlobalVariable.historyManager.logTime(workId, `${name} AI Agent`)
       throw error
     }
   }
@@ -88,16 +103,13 @@ class AiAgent {
     for (const toolCall of tool_calls) {
       const { id, function: func } = toolCall
       const { name, arguments: args } = func
-      let toolFunction = this.extensionTools.functions[name]
+      const toolFunctions = this.extensionTools.functions
       logInfo(`Calling tool ${toolCall.function.name}`)
-      if (toolFunction) {
+      if (toolFunctions[name]) {
         try {
           const parsedArgs = typeof args === 'string' ? JSON.parse(args) : args
-          if (name === 'readFile') {
-            const fileInfo = await this.extensionTools.functions['getFileInfo'](
-              parsedArgs.filePath,
-            )
-            if (fileInfo && fileInfo.isFile && fileInfo.size > 10 * 1024) {
+            const fileInfo = await toolFunctions['getFileInfo'](parsedArgs.filePath)
+            if (fileInfo && fileInfo.isFile && fileInfo.size > this.maxBlockFileSize * 1024) {
               this.aiMessageManager.addTool(id, {
                 error:
                   '文件过大，请使用executeJSCode工具编写脚本分块读取和处理文件，避免一次性读取整个文件内容到对话中。建议使用fs.createReadStream逐行或分块读取，仅返回必要的结果或总结。',
@@ -106,11 +118,10 @@ class AiAgent {
               })
               continue
             }
-          }
-          let result = await toolFunction(...Object.values(parsedArgs))
+          let result = await toolFunctions[name](...Object.values(parsedArgs))
           let toolContent = JSON.stringify(result)
           if (name !== 'requestAI') {
-            const MAX_CONTENT_SIZE = 100000
+            const MAX_CONTENT_SIZE = this.maxBlockFileSize * 1024
             if (toolContent.length > MAX_CONTENT_SIZE) {
               if (
                 typeof result === 'string' &&

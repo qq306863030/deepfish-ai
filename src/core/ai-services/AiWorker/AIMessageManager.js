@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 15:27:58
+ * @LastEditTime: 2026-03-26 10:17:59
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\AIMessageManager.js
  * @Description: 上下文管理-添加、自动压缩
  * @
@@ -15,11 +15,12 @@ class AIMessageManager {
   aiClient
   aiConfig
   config
-  constructor(aiClient, config, aiConfig, messages) {
+  constructor(aiClient, config, aiConfig, messages, messageType = 1) {
     this.aiClient = aiClient
     this.aiConfig = aiConfig
     this.config = config
     this.messages = messages
+    this.messageType = messageType
   }
   reLinkMsgs(messages) {
     this.messages = messages
@@ -27,7 +28,7 @@ class AIMessageManager {
   // 添加消息
   addMsg(message) {
     this.messages.push(message)
-    GlobalVariable.historyManager.record(this.messages)
+    GlobalVariable.historyManager.record(this.messages, this.messageType)
     GlobalVariable.historyManager.log(message)
   }
   // 添加tool
@@ -41,7 +42,7 @@ class AIMessageManager {
       content: content,
     }
     this.messages.push(message)
-    GlobalVariable.historyManager.record(this.messages)
+    GlobalVariable.historyManager.record(this.messages, this.messageType)
     GlobalVariable.historyManager.log(message)
   }
   /**
@@ -91,7 +92,7 @@ class AIMessageManager {
         } else if (lastUserMessageIndex === messages.length - 1) {
           newMessages.push(messages[lastUserMessageIndex])
         }
-        GlobalVariable.historyManager.record(newMessages)
+        GlobalVariable.historyManager.record(newMessages, this.messageType)
       } else if (messages.length === 2) {
         const summary = await this._getSummary([messages[1]])
         newMessages.push([messages[0], summary])

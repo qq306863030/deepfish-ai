@@ -2,13 +2,21 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 19:54:59
+ * @LastEditTime: 2026-03-26 14:49:34
  * @FilePath: \deepfish\src\core\ai-services\AiWorker\index.js
  * @Description: 工作流类
  * @
  */
+const { GlobalVariable } = require('../../globalVariable')
+const { askConfirm } = require('../../utils/log')
 const AiAgent = require('./AiAgent')
-const { getInitialMessages, getInitialMessagesForSkill, getInitialMessagesForTest, getSystemPrompt } = require('./AiTools')
+const {
+  getInitialMessages,
+  getInitialMessagesForSkill,
+  getInitialMessagesForTest,
+  getSystemPrompt,
+  getInitialMessagesForTask,
+} = require('./AiTools')
 
 class AiWorker {
   constructor(aiCli, client) {
@@ -21,6 +29,7 @@ class AiWorker {
       this.aiCli.config,
       this.aiCli.aiConfig,
       this.aiCli.extensionManager.extensions,
+      1
     )
   }
 
@@ -50,35 +59,92 @@ class AiWorker {
     }
   }
 
-  subSkillAgent(skillContent, goal) {
-    const aiAgent = new AiAgent(
+  async subTaskAgent(goal) {
+     const aiAgent = new AiAgent(
       this.client,
       this.aiCli.config,
       this.aiCli.aiConfig,
       this.aiCli.extensionManager.extensions,
+      3
     )
-    const initMessages = getInitialMessagesForSkill(skillContent, goal)
-    return aiAgent.work(initMessages)
+    // 先读取历史任务上下文
+    let subTaskMessages = this.historyManager.getMessage(3)
+    if (subTaskMessages && subTaskMessages.length) {
+      // 询问用户是否继续上次未完成的任务
+      const answer = await askConfirm(`检测到上次未完成的任务，是否继续执行？`)
+      if (answer) {
+        this.clearUserMessage(subTaskMessages)
+      } else {
+        this.historyManager.clearMessage(3)
+        subTaskMessages = await getInitialMessagesForTask(this.messages, goal)
+      }
+    } else {
+      subTaskMessages = await getInitialMessagesForTask(this.messages, goal)
+    }
+    GlobalVariable.historyManager.log(`开始执行Skill Agent, 任务目标：${goal}`)
+    const res = await aiAgent.work(subTaskMessages)
+    // 清除子任务历史记录，避免下次执行时被加载
+    this.historyManager.clearMessage(3)
+    GlobalVariable.historyManager.log(`Skill Agent执行完毕, 任务${goal}已完成`)
+    return res
   }
 
-  subTestAgent(goal) {
+
+  async subSkillAgent(skillContent, goal) {
     const aiAgent = new AiAgent(
       this.client,
       this.aiCli.config,
       this.aiCli.aiConfig,
       this.aiCli.extensionManager.extensions,
+      2
     )
+    const initMessages = getInitialMessagesForSkill(skillContent, goal)
+    GlobalVariable.historyManager.log(`开始执行Skill Agent, 任务目标：${goal}`)
+    const res = await aiAgent.work(initMessages)
+    GlobalVariable.historyManager.log(`Skill Agent执行完毕, 任务${goal}已完成`)
+    return res
+  }
+
+  async subTestAgent(goal) {
+    const aiAgent = new AiAgent(
+      this.client,
+      this.aiCli.config,
+      this.aiCli.aiConfig,
+      this.aiCli.extensionManager.extensions,
+      2
+    )
+    GlobalVariable.historyManager.log(`开始执行Test Agent, 任务目标：${goal}`)
     const initMessages = getInitialMessagesForTest(goal)
-    return aiAgent.work(initMessages)
+    const res = await aiAgent.work(initMessages)
+    GlobalVariable.historyManager.log(`Test Agent执行完毕, 任务${goal}已完成`)
+    return res
   }
 
   clearUserMessage(messages) {
-    while (messages.length > 0 && messages[messages.length - 1].role === 'user') {
+    while (
+      messages.length > 0 &&
+      messages[messages.length - 1].role === 'user'
+    ) {
       messages.pop()
     }
-    const lastMessage = messages[messages.length - 1]
+    let lastMessage = messages[messages.length - 1]
     if (lastMessage.role === 'assistant' && lastMessage.tool_calls) {
       messages.pop()
+    }
+    while (
+      messages.length > 0 &&
+      messages[messages.length - 1].role === 'user'
+    ) {
+      messages.pop()
+    }
+    lastMessage = messages[messages.length - 1]
+    if (lastMessage.role === 'tool' && lastMessage.tool_call_id) {
+      messages.push({
+        role: 'assistant',
+        content:
+          '上次对话未完成，已清除用户输入，请重新输入。',
+        reasoning_content: '',
+      })
     }
   }
 

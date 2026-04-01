@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 19:28:32
+ * @LastEditTime: 2026-03-27 10:33:37
  * @FilePath: \deepfish\src\core\extension\ExtensionManager.js
  * @Description: 扩展函数管理
  * @
@@ -12,6 +12,7 @@ const SystemExtension = require('./SystemExtension')
 const FileExtension = require('./FileExtension')
 const InquirerExtension = require('./InquirerExtension')
 const TestExtension = require('./TestExtension')
+const GenerateExtension = require('./GenerateExtension')
 const path = require('path')
 const fs = require('fs-extra')
 const axios = require('axios')
@@ -19,6 +20,7 @@ const dayjs = require('dayjs')
 const lodash = require('lodash')
 const { logError } = require('../utils/log')
 const { getGlobalNodeModulesPath } = require('../utils/node-root')
+const TaskExtension = require('./TaskExtension')
 
 class ExtensionManager {
   constructor(aiCli) {
@@ -37,7 +39,9 @@ class ExtensionManager {
       FileExtension.descriptions,
       InquirerExtension.descriptions,
       TestExtension.descriptions,
-      BaseExtension.descriptions
+      TaskExtension.descriptions,
+      GenerateExtension.descriptions,
+      BaseExtension.descriptions,
     )
     this.extensions.functions = Object.assign(
       this.extensions.functions,
@@ -45,7 +49,9 @@ class ExtensionManager {
       FileExtension.functions,
       InquirerExtension.functions,
       TestExtension.functions,
-      BaseExtension.functions
+      TaskExtension.functions,
+      GenerateExtension.functions,
+      BaseExtension.functions,
     )
   }
 
@@ -91,12 +97,10 @@ class ExtensionManager {
       }
     }
     const functions = this.extensions.functions
-    for (const fnName of Object.keys(functions)) {
-      functions[fnName] = functions[fnName].bind(this.aiCli)
-      if (fnName === 'test') {
-        functions[fnName]()
-      }
-    }
+    functions.aiCli = this.aiCli
+    // for (const fnName of Object.keys(functions)) {
+    //   functions[fnName] = functions[fnName].bind(this.aiCli)
+    // }
     functions['fs'] = fs
     functions['axios'] = axios
     functions['dayjs'] = dayjs
@@ -155,7 +159,7 @@ class ExtensionManager {
         ) {
           const mainFile = this._scanDeepFishPackage(dirPath, dirName)
           if (mainFile) {
-              result.push(mainFile)
+            result.push(mainFile)
           }
         }
       })

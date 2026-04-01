@@ -73,63 +73,64 @@ function log(msg, color) {
 }
 
 // 判断问答
-async function askConfirm(name, message, defaultVal = true, opt = {}) {
+async function askConfirm(message, defaultVal = true, opt = {}) {
   const questions = [
     {
       type: 'confirm',
-      name,
+      name: 'confirm',
       message,
       default: defaultVal,
       ...opt
     }
   ]
   const answers = await inquirer.prompt(questions)
-  return answers[name]
+  return answers['confirm']
 }
 
 // 选择问答
-function askList(name, message, choices, defaultVal = 0, opt = {}) {
+async function askList(message, choices, defaultVal = 0, opt = {}) {
   const questions = [
     {
       type: 'list',
-      name,
+      name: 'list',
       message,
       choices,
       default: defaultVal,
       ...opt
     }
   ]
-  return inquirer.prompt(questions)
+  const answers = await inquirer.prompt(questions)
+  return answers['list']
 }
 
 // 输入问答
-async function askInput(name, message, defaultVal = '', opt = {}) {
+async function askInput(message, defaultVal = '', opt = {}) {
   const questions = [
     {
       type: 'input',
-      name,
+      name: 'input',
       message,
       default: defaultVal,
       ...opt
     },
   ]
   const answers = await inquirer.prompt(questions)
-  return answers[name]
+  return answers['input']
 }
 
 // 输入数字
-async function askNumber(name, message, defaultVal = 0, opt = {}) {
+async function askNumber(message, defaultVal = 0, opt = {}) {
   const questions = [
     {
       type: 'number',
-      name,
+      name: 'number',
       message,
       default: defaultVal,
       ...opt
     },
   ]
   const answers = await inquirer.prompt(questions)
-  return answers[name]
+  return answers['number']
 }
 
 // 输入任何

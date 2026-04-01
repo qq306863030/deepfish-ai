@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 18:33:13
+ * @LastEditTime: 2026-03-27 16:15:37
  * @FilePath: \deepfish\src\cli\HistoryManager.js
  * @Description: 对话历史记录、恢复
  * @
@@ -12,17 +12,22 @@ const path = require('path')
 const dayjs = require('dayjs')
 const { GlobalVariable } = require('../core/globalVariable')
 const { v4: uuidv4 } = require('uuid')
-const { logSuccess, logError } = require('../core/utils/log')
+const { logSuccess, logError, logInfo } = require('../core/utils/log')
 const { openDirectory } = require('../core/utils/normal')
 // cache => [history.json, id => [message.json, logs => [log.txt]]]
+// messageType:1.主会话 2.子会话（每次开始前自动清空上下文） 3.子任务会话（任务开始前，自动加载会话历史，或加载主会话历史）
 class HistoryManager {
   constructor() {
     this.configManager = GlobalVariable.configManager
     this.cacheDir = null
     this.historyFilePath = null
     this.history = null
+    this.messagePath = null // 主会话历史记录
+    this.subMessagePath = null // 子会话历史记录
+    this.taskMessagePath = null // 任务会话历史记录
     this.id = null
     this.logDir = null
+    this.logTimeMap = new Map()
     GlobalVariable.historyManager = this
     this.initRecord()
   }
@@ -55,15 +60,21 @@ class HistoryManager {
       }
       // 根据id创建目录，再创建一个message.json文件
       const recordDir = path.join(this.cacheDir, id)
-      const messageFile = path.join(recordDir, 'message.json')
+      this.messagePath = path.join(recordDir, 'message.json')
+      this.subMessagePath = path.join(recordDir,'subMessage.json')
+      this.taskMessagePath = path.join(recordDir,'taskMessage.json')
       fs.ensureDirSync(recordDir)
-      fs.writeJsonSync(messageFile, [], { spaces: 2 })
+      fs.writeJsonSync(this.messagePath, [], { spaces: 2 })
       this.history.push(newHistoryItem)
       this.updateHistory(this.history)
       this.id = newHistoryItem.id
     } else {
       historyItem.execTime = dayjs().format('YYYY-MM-DD HH:mm:ss')
       this.id = historyItem.id
+      const recordDir = path.join(this.cacheDir, this.id)
+      this.messagePath = path.join(recordDir, 'message.json')
+      this.subMessagePath = path.join(recordDir,'subMessage.json')
+      this.taskMessagePath = path.join(recordDir,'taskMessage.json')
     }
     const logDir = path.join(this.cacheDir, this.id, 'logs')
     fs.ensureDirSync(logDir)
@@ -125,25 +136,86 @@ class HistoryManager {
     }
   }
 
-  clearMessage() {
-    const messageFile = path.join(this.cacheDir, this.id, 'message.json')
-    if (fs.existsSync(messageFile)) {
-      fs.writeJsonSync(messageFile, [], { spaces: 2 })
+  // 清除主会话
+  clearMainMessage() {
+    if (fs.existsSync(this.messagePath)) {
+      fs.writeJsonSync(this.messagePath, [], { spaces: 2 })
       logSuccess('History messages have been cleared.')
       return
     }
     logError('No history messages found to clear.')
   }
+    
 
-  updateMessage(message) {
-    const messageFile = path.join(this.cacheDir, this.id, 'message.json')
-    if (fs.pathExistsSync(messageFile)) {
-      fs.writeJsonSync(messageFile, message, { spaces: 2 })
+  // 清除子会话
+  clearSubMessage() {
+    if (fs.existsSync(this.subMessagePath)) {
+      fs.writeJsonSync(this.subMessagePath, [], { spaces: 2 })
+      return
     }
   }
 
-  getMessage() {
-    const messageFile = path.join(this.cacheDir, this.id, 'message.json')
+  // 清除任务会话
+  clearTaskMessage() {
+    if (fs.existsSync(this.taskMessagePath)) {
+      fs.writeJsonSync(this.taskMessagePath, [], { spaces: 2 })
+      return
+    }
+  }
+
+  // 更新主会话
+  updateMainMessage(message) {
+    if (fs.pathExistsSync(this.messagePath)) {
+      fs.writeJsonSync(this.messagePath, message, { spaces: 2 })
+    }
+  }
+
+  // 更新子会话
+  updateSubMessage(message) {
+    fs.writeJsonSync(this.subMessagePath, message, { spaces: 2 })
+  }
+
+  // 更新任务会话
+  updateTaskMessage(message) {
+    fs.writeJsonSync(this.taskMessagePath, message, { spaces: 2 })
+  }
+
+
+  clearMessage(messageType = 1) {
+    switch (messageType) {
+      case 1:
+        this.clearMainMessage()
+        break
+      case 2:
+        this.clearSubMessage()
+        break
+      case 3:
+        this.clearTaskMessage()
+        break
+    }
+  }
+
+  updateMessage(messageType = 1, message) {
+    switch (messageType) {
+      case 1:
+        this.updateMainMessage(message)
+        break
+      case 2:
+        this.updateSubMessage(message)
+        break
+      case 3:
+        this.updateTaskMessage(message)
+        break
+    }
+  }
+
+  getMessage(messageType = 1) {
+    let messageFile = this.messagePath
+    if (messageType === 2) {
+      messageFile = this.subMessagePath
+    } else if (messageType === 3) {
+      messageFile = this.taskMessagePath
+    }
     if (!fs.pathExistsSync(messageFile)) {
       return []
     }
@@ -174,17 +246,30 @@ class HistoryManager {
     fs.writeJsonSync(this.historyFilePath, this.history, { spaces: 2 })
   }
 
-  record(messages) {
+  
+  record(messages, messageType = 1) {
     try {
       const config = this.configManager.getConfig()
       if (config.maxHistoryExpireTime === 0) {
         return false
       }
-      this.updateMessage(messages)
+      this.updateMessage(messageType, messages)
       return true
     } catch (error) {
       console.error('Failed to record:', error.message)
       return false
+    }
+  }
+
+  logTime(id, description = '') {
+    if (this.logTimeMap.has(id)) {
+      const startTime = this.logTimeMap.get(id)
+      const duration = dayjs().diff(startTime, 'second')
+      this.logTimeMap.delete(id)
+      logInfo(`${description} Execution time: ${duration} seconds`)
+      this.log(`${description} Execution time: ${duration} seconds`)
+    } else {
+      this.logTimeMap.set(id, dayjs())
     }
   }
 
@@ -200,10 +285,14 @@ class HistoryManager {
     )
     try {
       let logEntry = ''
-      if (isCompress) {
-        logEntry = `[${new Date().toISOString()}][compress] ${message.content}\n`
+      if (typeof message === 'string') {
+        logEntry = `[${new Date().toISOString()}][###############] ${message}\n`
       } else {
-        logEntry = `[${new Date().toISOString()}][${message.role}] ${message.content}\n`
+        if (isCompress) {
+          logEntry = `[${new Date().toISOString()}][***compress***] ${message.content}\n`
+        } else {
+          logEntry = `[${new Date().toISOString()}][${message.role}] ${message.content}\n`
+        }
       }
       fs.appendFileSync(logFile, logEntry)
       return true
