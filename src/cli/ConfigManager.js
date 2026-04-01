@@ -9,7 +9,7 @@ import { logSuccess, logError, logInfo } from '../core/utils/log.js'
 import { GlobalVariable } from '../core/GlobalVariable.js'
 import { openDirectory } from '../core/utils/normal.js'
 
-const require = createRequire(import.meta.url)
+const importModule = createRequire(import.meta.url)
 const { merge } = lodash
 
 class ConfigManager {
@@ -225,9 +225,9 @@ class ConfigManager {
   }
 
   getConfig() {
-    const resolvedConfigPath = require.resolve(this.configPath)
-    delete require.cache[resolvedConfigPath]
-    const config = require(this.configPath)
+    const resolvedConfigPath = importModule.resolve(this.configPath)
+    delete importModule.cache[resolvedConfigPath]
+    const config = importModule(this.configPath)
     return merge(defaultConfig, config)
   }
 
@@ -238,7 +238,7 @@ class ConfigManager {
     }
     fs.writeFileSync(
       this.configPath,
-      `module.exports = ${JSON.stringify(config, null, 2)}`,
+      `export default ${JSON.stringify(config, null, 2)}`,
     )
     this.config = config
   }
