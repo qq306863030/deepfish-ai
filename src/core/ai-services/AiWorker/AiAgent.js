@@ -7,12 +7,11 @@
  * @Description: 工作流循环
  * @
  */
-
-const { GlobalVariable } = require('../../globalVariable')
-const { logError, logInfo, loading } = require('../../utils/log')
-const AIMessageManager = require('./AIMessageManager')
-const { aiRequestByTools } = require('./AiTools')
-const { v4: uuidv4 } = require('uuid')
+import { v4 as uuidv4 } from 'uuid'
+import { GlobalVariable } from '../../GlobalVariable.js'
+import { logError, logInfo, loading } from '../../utils/log.js'
+import AIMessageManager from './AIMessageManager.js'
+import { aiRequestByTools } from './AiTools.js'
 
 class AiAgent {
   messages
@@ -155,4 +154,4 @@ class AiAgent {
   }
 }
 
-module.exports = AiAgent
+export default AiAgent

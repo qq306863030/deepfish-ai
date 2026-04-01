@@ -1,5 +1,5 @@
-const fs = require('fs-extra')
-const path = require('path')
+import fs from 'fs-extra'
+import path from 'path'
 
 // 生成/创建任务列表
 function createTaskListRules() {
@@ -159,11 +159,13 @@ const functions = {
     executeSubTaskFromTaskList,
 }
 
-module.exports = {
+const TaskExtension = {
     name: 'TaskExtension',
     extensionDescription: '提供任务列表创建规则、执行规则、任务读写与子任务执行能力，支持基于tasklist的可追踪拆分执行流程',
     descriptions,
     functions,
 }
+
+export default TaskExtension
 
 

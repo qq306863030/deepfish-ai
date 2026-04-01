@@ -6,15 +6,15 @@
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */
-const path = require('path')
-const fs = require('fs-extra')
-const axios = require('axios')
-const cheerio = require('cheerio')
-const { GlobalVariable } = require('../core/globalVariable')
-const { logError, logSuccess } = require('../core/utils/log')
-const extract = require('extract-zip')
-const { parseSkillMetadataYaml } = require('./SkillParser')
-const { openDirectory } = require('../core/utils/normal')
+import path from 'path'
+import fs from 'fs-extra'
+import axios from 'axios'
+import * as cheerio from 'cheerio'
+import extract from 'extract-zip'
+import { GlobalVariable } from '../core/GlobalVariable.js'
+import { logError, logSuccess } from '../core/utils/log.js'
+import { parseSkillMetadataYaml } from './SkillParser.js'
+import { openDirectory } from '../core/utils/normal.js'
 
 // skill的数据结构: {name: string, enable: boolean, description: string, baseDir: string, skillDirName: string, location: string, skillFilePath: string, homepage: string, metadata: object}
 class SkillConfigManager {
@@ -362,4 +362,4 @@ ${table}
   }
 }
 
-module.exports = SkillConfigManager
+export default SkillConfigManager

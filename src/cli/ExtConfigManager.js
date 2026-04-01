@@ -1,8 +1,8 @@
-const path = require("path");
-const fs = require("fs-extra");
-const { GlobalVariable } = require('../core/globalVariable')
-const { logError, logSuccess } = require('../core/utils/log');
-const { traverseFiles } = require("../core/utils/normal");
+import path from 'path'
+import fs from 'fs-extra'
+import { GlobalVariable } from '../core/GlobalVariable.js'
+import { logError } from '../core/utils/log.js'
+import { traverseFiles } from '../core/utils/normal.js'
 
 class ExtConfigManager {
   constructor() {
@@ -87,4 +87,4 @@ class ExtConfigManager {
 
 }
 
-module.exports = ExtConfigManager
+export default ExtConfigManager

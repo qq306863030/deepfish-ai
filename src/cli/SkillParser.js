@@ -1,6 +1,6 @@
-const fs = require("fs-extra");
-const path = require("path");
-const yaml = require('js-yaml');
+import fs from 'fs-extra'
+import path from 'path'
+import yaml from 'js-yaml'
 
 function parseSkillMetadata(skillPath) {
   const content = fs.readFileSync(skillPath, 'utf-8');
@@ -55,7 +55,4 @@ function parseSkillMetadataYaml(skillPath) {
   };
 }
 
-module.exports = {
-  parseSkillMetadata,
-  parseSkillMetadataYaml
-}
+export { parseSkillMetadata, parseSkillMetadataYaml }

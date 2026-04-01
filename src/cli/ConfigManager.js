@@ -1,11 +1,16 @@
-const path = require('path')
-const os = require('os')
-const fs = require('fs-extra')
-const { defaultConfig } = require('./DefaultConfig')
-const { logSuccess, logError, logInfo } = require('../core/utils/log')
-const { GlobalVariable } = require('../core/globalVariable')
-const { merge } = require('lodash')
-const { openDirectory } = require('../core/utils/normal')
+import path from 'path'
+import os from 'os'
+import fs from 'fs-extra'
+import { createRequire } from 'module'
+import { exec } from 'child_process'
+import lodash from 'lodash'
+import { defaultConfig } from './DefaultConfig.js'
+import { logSuccess, logError, logInfo } from '../core/utils/log.js'
+import { GlobalVariable } from '../core/GlobalVariable.js'
+import { openDirectory } from '../core/utils/normal.js'
+
+const require = createRequire(import.meta.url)
+const { merge } = lodash
 
 class ConfigManager {
   config = null
@@ -37,7 +42,6 @@ class ConfigManager {
   }
 
   edit() {
-    const { exec } = require('child_process')
     const platform = process.platform
 
     let openCommand
@@ -221,6 +225,8 @@ class ConfigManager {
   }
 
   getConfig() {
+    const resolvedConfigPath = require.resolve(this.configPath)
+    delete require.cache[resolvedConfigPath]
     const config = require(this.configPath)
     return merge(defaultConfig, config)
   }
@@ -238,4 +244,4 @@ class ConfigManager {
   }
 }
 
-module.exports = ConfigManager
+export default ConfigManager

@@ -1,4 +1,10 @@
-const { askConfirm, askInput, askList, askNumber, askAny } = require('../utils/log')
+import {
+  askConfirm,
+  askInput,
+  askList,
+  askNumber,
+  askAny,
+} from '../utils/log.js'
 
 // 判断问答
 async function inquirerConfirm(message, defaultVal = true, opt = {}) {
@@ -224,10 +230,12 @@ const functions = {
   inquirerAny,
 }
 
-module.exports = {
+const InquirerExtension = {
   name: 'InquirerExtension',
   extensionDescription:
     '提供用户交互功能，支持确认、列表选择、文本输入、数字输入等多种交互方式',
   descriptions,
   functions,
 }
+
+export default InquirerExtension

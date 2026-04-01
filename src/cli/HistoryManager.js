@@ -7,13 +7,13 @@
  * @Description: 对话历史记录、恢复
  * @
  */
-const fs = require('fs-extra')
-const path = require('path')
-const dayjs = require('dayjs')
-const { GlobalVariable } = require('../core/globalVariable')
-const { v4: uuidv4 } = require('uuid')
-const { logSuccess, logError, logInfo } = require('../core/utils/log')
-const { openDirectory } = require('../core/utils/normal')
+import fs from 'fs-extra'
+import path from 'path'
+import dayjs from 'dayjs'
+import { v4 as uuidv4 } from 'uuid'
+import { GlobalVariable } from '../core/GlobalVariable.js'
+import { logSuccess, logError, logInfo } from '../core/utils/log.js'
+import { openDirectory } from '../core/utils/normal.js'
 // cache => [history.json, id => [message.json, logs => [log.txt]]]
 // messageType:1.主会话 2.子会话（每次开始前自动清空上下文） 3.子任务会话（任务开始前，自动加载会话历史，或加载主会话历史）
 class HistoryManager {
@@ -303,4 +303,4 @@ class HistoryManager {
   }
 }
 
-module.exports = HistoryManager
+export default HistoryManager

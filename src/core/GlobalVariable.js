@@ -5,6 +5,4 @@ const GlobalVariable = {
   historyManager: null,
 }
 
-module.exports = {
-  GlobalVariable
-};
+export { GlobalVariable }

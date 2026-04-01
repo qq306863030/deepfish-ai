@@ -1,6 +1,6 @@
-const { execSync } = require('child_process');
-const path = require('path');
-const fs = require('fs');
+import { execSync } from 'child_process'
+import path from 'path'
+import fs from 'fs'
 
 /**
  * 辅助函数：安全执行 shell 命令（避免执行失败导致程序崩溃）
@@ -9,9 +9,9 @@ const fs = require('fs');
  */
 function safeExec(cmd) {
   try {
-    return execSync(cmd, { encoding: 'utf8', stdio: 'pipe' }).trim();
+    return execSync(cmd, { encoding: 'utf8', stdio: 'pipe' }).trim()
   } catch (err) {
-    return null;
+    return null
   }
 }
 
@@ -21,14 +21,14 @@ function safeExec(cmd) {
  * @returns {string|null} 真实存在的路径（失败返回 null）
  */
 function resolveValidPath(targetPath) {
-  if (!targetPath) return null;
+  if (!targetPath) return null
   try {
     // 解析软链/快捷方式的真实物理路径
-    const realPath = fs.realpathSync(targetPath);
+    const realPath = fs.realpathSync(targetPath)
     // 验证路径是否存在
-    return fs.existsSync(realPath) ? realPath : null;
+    return fs.existsSync(realPath) ? realPath : null
   } catch (err) {
-    return null;
+    return null
   }
 }
 
@@ -42,11 +42,11 @@ function getNvmGlobalPath() {
     process.platform === 'win32'
       ? path.join(process.env.USERPROFILE, '.nvm')
       : path.join(process.env.HOME, '.nvm')
-  );
+  )
 
   // 2. 获取当前激活的 Node 版本
-  const nodeVersion = safeExec('nvm current');
-  if (!nodeVersion || nodeVersion.includes('N/A')) return null;
+  const nodeVersion = safeExec('nvm current')
+  if (!nodeVersion || nodeVersion.includes('N/A')) return null
 
   // 3. 拼接 NVM 下的全局 node_modules 路径
   const nvmGlobalPath = path.join(
@@ -56,10 +56,10 @@ function getNvmGlobalPath() {
     nodeVersion,
     'lib',
     'node_modules'
-  );
+  )
 
   // 4. 解析并验证路径有效性
-  return resolveValidPath(nvmGlobalPath);
+  return resolveValidPath(nvmGlobalPath)
 }
 
 /**
@@ -68,9 +68,9 @@ function getNvmGlobalPath() {
  */
 function getNpmGlobalPath() {
   // 1. 执行 npm root -g 获取路径
-  const npmPath = safeExec('npm root -g');
+  const npmPath = safeExec('npm root -g')
   // 2. 解析并验证路径有效性
-  return resolveValidPath(npmPath);
+  return resolveValidPath(npmPath)
 }
 
 /**
@@ -79,21 +79,21 @@ function getNpmGlobalPath() {
  */
 function getFallbackGlobalPath() {
   try {
-    const nodeExecPath = process.execPath;
+    const nodeExecPath = process.execPath
     let globalPrefix;
 
     if (process.platform === 'win32') {
       // Windows：node.exe 所在目录的上一级
-      globalPrefix = path.dirname(path.dirname(nodeExecPath));
+      globalPrefix = path.dirname(path.dirname(nodeExecPath))
     } else {
       // Mac/Linux：node 所在目录的上两级
-      globalPrefix = path.dirname(path.dirname(path.dirname(nodeExecPath)));
+      globalPrefix = path.dirname(path.dirname(path.dirname(nodeExecPath)))
     }
 
-    const fallbackPath = path.join(globalPrefix, 'lib', 'node_modules');
-    return resolveValidPath(fallbackPath);
+    const fallbackPath = path.join(globalPrefix, 'lib', 'node_modules')
+    return resolveValidPath(fallbackPath)
   } catch (err) {
-    return null;
+    return null
   }
 }
 
@@ -104,37 +104,35 @@ function getFallbackGlobalPath() {
  */
 function getGlobalNodeModulesPath() {
   // 优先级 1：优先获取 NVM 环境下的路径（适配 NVM 场景）
-  const nvmPath = getNvmGlobalPath();
+  const nvmPath = getNvmGlobalPath()
   if (nvmPath) {
-    return nvmPath;
+    return nvmPath
   }
 
   // 优先级 2：通过 npm 命令获取（普通环境最准确）
-  const npmPath = getNpmGlobalPath();
+  const npmPath = getNpmGlobalPath()
   if (npmPath) {
-    return npmPath;
+    return npmPath
   }
 
   // 优先级 3：兜底计算（仅当以上都失败时使用）
-  const fallbackPath = getFallbackGlobalPath();
+  const fallbackPath = getFallbackGlobalPath()
   if (fallbackPath) {
-    return fallbackPath;
+    return fallbackPath
   }
 
   // 所有方案都失败
-  console.error('无法获取全局 node_modules 路径');
-  return null;
+  console.error('无法获取全局 node_modules 路径')
+  return null
 }
 
-// 导出所有函数（方便单独使用），主函数作为默认导出
-module.exports = {
+export {
   safeExec,
   resolveValidPath,
   getNvmGlobalPath,
   getNpmGlobalPath,
   getFallbackGlobalPath,
   getGlobalNodeModulesPath // 主函数
-};
+}
 
-// 默认导出主函数（简化使用）
-module.exports.default = getGlobalNodeModulesPath;
+export default getGlobalNodeModulesPath

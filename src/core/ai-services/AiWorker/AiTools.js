@@ -7,20 +7,20 @@
  * @Description: 对话初始化、对话请求
  * @
  */
-const { OpenAI } = require('openai')
-const {
+import { OpenAI } from 'openai'
+import {
   AiAgentSystemPrompt,
   SkillAiAgentSystemPrompt,
   TestAiAgentSystemPrompt,
   TaskAiAgentSystemPrompt,
-} = require('./AiPrompt')
-const {
+} from './AiPrompt.js'
+import {
   streamOutput,
   streamLineBreak,
   logError,
   loading,
-} = require('../../utils/log')
-const { GlobalVariable } = require('../../globalVariable')
+} from '../../utils/log.js'
+import { GlobalVariable } from '../../GlobalVariable.js'
 
 // 创建client
 function createOpenAiClient(aiConfig) {
@@ -358,7 +358,7 @@ async function _streamToNonStream(stream) {
   }
 }
 
-module.exports = {
+export {
   createOpenAiClient,
   aiRequestSingle,
   aiRequestByTools,

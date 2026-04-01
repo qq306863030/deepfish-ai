@@ -7,30 +7,30 @@
  * @Description: ai ext 相关命令
  * @
  */
-const { program } = require("commander");
-const ExtConfigManager = require("./ExtConfigManager");
+import { program } from 'commander'
+import ExtConfigManager from './ExtConfigManager.js'
 const extConfigManager = new ExtConfigManager()
 const extCommand = program
-  .command("ext")
-  .description("Extension management commands");
+  .command('ext')
+  .description('Extension management commands')
 
 extCommand
-  .command("add <filename>")
-  .description("Add extension tool to the configuration")
+  .command('add <filename>')
+  .description('Add extension tool to the configuration')
   .action((filename) => {
-    extConfigManager.add(filename);
-  });
+    extConfigManager.add(filename)
+  })
 
 extCommand
-  .command("del <filename>")
-  .description("Remove extension tool from the configuration")
+  .command('del <filename>')
+  .description('Remove extension tool from the configuration')
   .action((filename) => {
-    extConfigManager.remove(filename);
-  });
+    extConfigManager.remove(filename)
+  })
 
 extCommand
-  .command("ls")
-  .description("List all extension tools in the configuration")
+  .command('ls')
+  .description('List all extension tools in the configuration')
   .action(() => {
-    extConfigManager.viewList();
-  });
+    extConfigManager.viewList()
+  })

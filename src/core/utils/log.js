@@ -1,5 +1,7 @@
-const chalk = require('chalk')
-const { default: inquirer } = require('inquirer')
+import os from 'os'
+import path from 'path'
+import chalk from 'chalk'
+import inquirer from 'inquirer'
 
 
 // 日志相关工具函数
@@ -72,6 +74,10 @@ function log(msg, color) {
   }
 }
 
+function getConfigPath() {
+  return path.join(os.homedir(), '.deepfish-ai', 'config.js')
+}
+
 // 判断问答
 async function askConfirm(message, defaultVal = true, opt = {}) {
   const questions = [
@@ -139,7 +145,7 @@ function askAny(questions) {
 }
 
 
-module.exports = {
+export {
   logInfo,
   logSuccess,
   logError,
@@ -153,5 +159,6 @@ module.exports = {
   askConfirm,
   askList,
   askInput,
-  askNumber
+  askNumber,
+  getConfigPath,
 }

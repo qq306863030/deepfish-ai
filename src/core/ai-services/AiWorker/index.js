@@ -7,16 +7,16 @@
  * @Description: 工作流类
  * @
  */
-const { GlobalVariable } = require('../../globalVariable')
-const { askConfirm } = require('../../utils/log')
-const AiAgent = require('./AiAgent')
-const {
+import { GlobalVariable } from '../../GlobalVariable.js'
+import { askConfirm } from '../../utils/log.js'
+import AiAgent from './AiAgent.js'
+import {
   getInitialMessages,
   getInitialMessagesForSkill,
   getInitialMessagesForTest,
   getSystemPrompt,
   getInitialMessagesForTask,
-} = require('./AiTools')
+} from './AiTools.js'
 
 class AiWorker {
   constructor(aiCli, client) {
@@ -177,4 +177,4 @@ class AiWorker {
   }
 }
 
-module.exports = AiWorker
+export default AiWorker

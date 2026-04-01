@@ -53,7 +53,4 @@ const aiCliConfig = {
 
 
 
-module.exports = {
-  aiCliConfig,
-  defaultConfig,
-};
+export { aiCliConfig, defaultConfig }

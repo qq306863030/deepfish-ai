@@ -1,22 +1,22 @@
-const { OpenAI } = require("openai");
-const AiWorker = require("./AiWorker");
+import { OpenAI } from 'openai'
+import AiWorker from './AiWorker/index.js'
 
 class AIService {
-  constructor(type = "deepseek", aiCli) {
-    this.type = type;
-    this.aiCli = aiCli;
-    this.config = aiCli.config;
-    this.aiConfig = aiCli.aiConfig;
-    this.name = this.config.currentAi || "I";
-    this.config.name = this.name;
-    this.config.type = this.type;
-    this.aiConfig.type = this.type;
+  constructor(type = 'deepseek', aiCli) {
+    this.type = type
+    this.aiCli = aiCli
+    this.config = aiCli.config
+    this.aiConfig = aiCli.aiConfig
+    this.name = this.config.currentAi || 'I'
+    this.config.name = this.name
+    this.config.type = this.type
+    this.aiConfig.type = this.type
     this.client = new OpenAI({
       baseURL: this.aiConfig.baseUrl,
-      apiKey: this.aiConfig.apiKey || "",
-    });
-    this.aiWorker = new AiWorker(this.aiCli, this.client);
-    this.aiWorker.aiService = this;
+      apiKey: this.aiConfig.apiKey || '',
+    })
+    this.aiWorker = new AiWorker(this.aiCli, this.client)
+    this.aiWorker.aiService = this
   }
 
   mainWorkflow(goal) {
@@ -36,4 +36,4 @@ class AIService {
   }
 }
 
-module.exports = AIService;
+export default AIService

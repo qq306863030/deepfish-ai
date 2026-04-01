@@ -7,9 +7,9 @@
  * @Description: 文件处理扩展函数
  * @
  */
-const path = require('path')
-const fs = require('fs-extra')
-const AdmZip = require('adm-zip');
+import path from 'path'
+import fs from 'fs-extra'
+import AdmZip from 'adm-zip'
 
 async function createFile(filePath, content) {
   try {
@@ -580,10 +580,12 @@ const functions = {
   extractZip,
 }
 
-module.exports = {
+const FileExtension = {
   name: 'FileExtension',
   extensionDescription:
     '提供文件和目录的创建、读取、修改、删除、移动、重命名、信息获取等文件系统操作功能',
   descriptions,
   functions,
 }
+
+export default FileExtension

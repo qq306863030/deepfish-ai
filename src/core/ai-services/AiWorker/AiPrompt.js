@@ -1,4 +1,4 @@
-const { GlobalVariable } = require("../../globalVariable")
+import { GlobalVariable } from '../../GlobalVariable.js'
 
 /**
  * @Author: Roman 306863030@qq.com
@@ -133,9 +133,9 @@ const TaskAiAgentSystemPrompt = () => {
 `
 }
 
-module.exports = {
+export {
   AiAgentSystemPrompt,
   SkillAiAgentSystemPrompt,
   TestAiAgentSystemPrompt,
-  TaskAiAgentSystemPrompt
+  TaskAiAgentSystemPrompt,
 }

@@ -7,13 +7,25 @@
  * @Description: 默认扩展函数
  * @
  */
-const path = require('path')
-const { logError, logSuccess, logInfo, getConfigPath } = require('../utils/log')
-const iconv = require('iconv-lite') // 用于编码转换
-const { cloneDeep } = require('lodash')
-const { aiRequestSingle } = require('../ai-services/AiWorker/AiTools')
-const { spawnSync } = require('child_process')
-const { detectEncoding } = require('../utils/normal')
+import path from 'path'
+import iconv from 'iconv-lite'
+import lodash from 'lodash'
+import { createRequire } from 'module'
+import { fileURLToPath } from 'url'
+import { spawnSync } from 'child_process'
+import {
+  logError,
+  logSuccess,
+  logInfo,
+  getConfigPath,
+} from '../utils/log.js'
+import { aiRequestSingle } from '../ai-services/AiWorker/AiTools.js'
+import { detectEncoding } from '../utils/normal.js'
+
+const require = createRequire(import.meta.url)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const { cloneDeep } = lodash
 
 // 执行系统命令
 // 执行系统命令（全平台兼容：Windows/PowerShell/CentOS）
@@ -292,9 +304,11 @@ const functions = {
   getSelfInfo,
 }
 
-module.exports = {
+const SystemExtension = {
   name: 'SystemExtension',
   extensionDescription: "提供系统命令执行、AI请求、JS代码执行、扩展文件生成规则、AI配置管理、Skill加载执行等核心系统功能",
   descriptions,
   functions,
 }
+
+export default SystemExtension

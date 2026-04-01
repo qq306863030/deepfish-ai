@@ -1,4 +1,8 @@
-const path = require('path')
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const descriptions = [
   {
@@ -352,9 +356,11 @@ const functions = {
   generateSkillPackageRule,
 }
 
-module.exports = {
+const GenerateExtension = {
   name: 'GenerateExtension',
   extensionDescription: '提供扩展工具与Skill工具包生成规则能力，用于辅助AI构建标准化扩展项目模板',
   descriptions,
   functions,
 }
+
+export default GenerateExtension

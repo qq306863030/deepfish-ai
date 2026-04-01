@@ -1,8 +1,9 @@
-const path = require('path')
-const fs = require('fs-extra')
-const chardet = require('chardet')
-const os = require('os') // 用于判断系统类型
-const { logError } = require('./log')
+import path from 'path'
+import fs from 'fs-extra'
+import chardet from 'chardet'
+import os from 'os'
+import { spawn } from 'child_process'
+import { logError } from './log.js'
 
 // 对象字符串转对象
 function objStrToObj(str) {
@@ -56,7 +57,6 @@ function traverseFiles() {
 // 打开目录
 function openDirectory(dirPath) {
   // 打开目录
-  const { spawn } = require('child_process')
   const platform = process.platform
   let command
   let args
@@ -98,7 +98,7 @@ function detectEncoding(buffer) {
   }
 }
 
-module.exports = {
+export {
   objStrToObj,
   delay,
   traverseFiles,

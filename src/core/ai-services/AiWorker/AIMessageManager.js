@@ -7,9 +7,9 @@
  * @Description: 上下文管理-添加、自动压缩
  * @
  */
-const { logError, logInfo } = require('../../utils/log')
-const { aiRequestSingle } = require('./AiTools')
-const { GlobalVariable } = require('../../globalVariable')
+import { logError, logInfo } from '../../utils/log.js'
+import { aiRequestSingle } from './AiTools.js'
+import { GlobalVariable } from '../../GlobalVariable.js'
 
 class AIMessageManager {
   aiClient
@@ -170,4 +170,4 @@ ${messages
   }
 }
 
-module.exports = AIMessageManager
+export default AIMessageManager

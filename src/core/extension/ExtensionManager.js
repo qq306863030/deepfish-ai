@@ -7,20 +7,26 @@
  * @Description: 扩展函数管理
  * @
  */
-const BaseExtension = require('./BaseExtension')
-const SystemExtension = require('./SystemExtension')
-const FileExtension = require('./FileExtension')
-const InquirerExtension = require('./InquirerExtension')
-const TestExtension = require('./TestExtension')
-const GenerateExtension = require('./GenerateExtension')
-const path = require('path')
-const fs = require('fs-extra')
-const axios = require('axios')
-const dayjs = require('dayjs')
-const lodash = require('lodash')
-const { logError } = require('../utils/log')
-const { getGlobalNodeModulesPath } = require('../utils/node-root')
-const TaskExtension = require('./TaskExtension')
+import path from 'path'
+import fs from 'fs-extra'
+import axios from 'axios'
+import dayjs from 'dayjs'
+import lodash from 'lodash'
+import { createRequire } from 'module'
+import { fileURLToPath } from 'url'
+import BaseExtension from './BaseExtension.js'
+import SystemExtension from './SystemExtension.js'
+import FileExtension from './FileExtension.js'
+import InquirerExtension from './InquirerExtension.js'
+import TestExtension from './TestExtension.js'
+import GenerateExtension from './GenerateExtension.js'
+import TaskExtension from './TaskExtension.js'
+import { logError } from '../utils/log.js'
+import { getGlobalNodeModulesPath } from '../utils/node-root.js'
+
+const require = createRequire(import.meta.url)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 class ExtensionManager {
   constructor(aiCli) {
@@ -205,4 +211,4 @@ class ExtensionManager {
   }
 }
 
-module.exports = ExtensionManager
+export default ExtensionManager

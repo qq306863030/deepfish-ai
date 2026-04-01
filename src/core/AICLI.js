@@ -1,11 +1,11 @@
-const ExtensionManager = require('./extension/ExtensionManager')
-const readline = require('readline')
-const { logError } = require('./utils/log')
-const { GlobalVariable } = require('./globalVariable')
-const AIService = require('./ai-services')
-const ConfigManager = require('../cli/ConfigManager')
-const SkillConfigManager = require('../cli/SkillConfigManager')
-const HistoryManager = require('../cli/HistoryManager')
+import readline from 'readline'
+import ExtensionManager from './extension/ExtensionManager.js'
+import { logError } from './utils/log.js'
+import { GlobalVariable } from './GlobalVariable.js'
+import AIService from './ai-services/index.js'
+import ConfigManager from '../cli/ConfigManager.js'
+import SkillConfigManager from '../cli/SkillConfigManager.js'
+import HistoryManager from '../cli/HistoryManager.js'
 
 class AICLI {
   constructor(config) {
@@ -95,4 +95,4 @@ class AICLI {
   }
 }
 
-module.exports = AICLI
+export default AICLI

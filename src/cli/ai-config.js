@@ -2,15 +2,15 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-19 11:45:10
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 18:40:12
+ * @LastEditTime: 2026-04-01 16:32:11
  * @FilePath: \deepfish\src\cli\ai-config.js
  * @Description: ai config 相关命令
  * @
  */
-const { program } = require('commander')
-const { aiCliConfig } = require('./DefaultConfig')
-const { askConfirm, askAny } = require('../core/utils/log')
-const ConfigManager = require('./ConfigManager')
+import { program } from 'commander'
+import { aiCliConfig } from './DefaultConfig.js'
+import { askConfirm, askAny } from '../core/utils/log.js'
+import ConfigManager from './ConfigManager.js'
 
 const configManager = new ConfigManager()
 const configCommand = program
