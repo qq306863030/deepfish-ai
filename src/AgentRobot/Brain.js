@@ -19,7 +19,16 @@ export default class Brain extends EventEmitterSuper {
     this.maxIterations = agentRobot.maxIterations
     this.maxMessagesLength = agentRobot.maxMessagesLength
     this.memoryFilePath = path.join(agentRobot.agentSpace,'memory.json')
+    this.systemPrompt = agentRobot.opt.systemPrompt // 系统提示词
+    this.restoreMemory()
   }
+  // 恢复记忆
+  restoreMemory() {
+    if (fs.existsSync(this.memoryFilePath)) {
+      this.messages = fs.readJsonSync(this.memoryFilePath)
+    }
+  }
+
   remember(message) {
     this.messages.push(message)
     fs.writeJsonSync(this.memoryFilePath, this.messages, { spaces: 2 })
@@ -32,6 +41,9 @@ export default class Brain extends EventEmitterSuper {
   async thinkLoop() {
     let maxIterations = this.maxIterations
     let messages = this.messages
+    if (messages.length === 0) {
+      return ''
+    }
     if (maxIterations === -1) {
       maxIterations = Infinity
     }
@@ -62,6 +74,5 @@ export default class Brain extends EventEmitterSuper {
   async think(messages) {
     
   }
-  thinkLoopSkill(systemPrompt, userPrompt) {}
-  thinkSkill(systemPrompt, userPrompt) {}
+  
 }

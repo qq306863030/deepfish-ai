@@ -29,6 +29,7 @@ export default class AgentRobot {
       maxMemoryExpireTime: 30, // 最大记忆过期时间，单位天
       maxLogExpireTime: 3, // 最大日志过期时间，单位天
       maxBlockFileSize: 20, // 大文件分块阈值，单位KB
+      systemPrompt: '你是一个人工智能助手，协助用户完成任务。', // 系统提示语
       aiConfig: {
         name: 'deepseek',
         type: 'deepseek',
@@ -36,7 +37,8 @@ export default class AgentRobot {
         model: 'deepseek-reasoner',
         apiKey: '',
         temperature: 0.7,
-        maxTokens: 65536,
+        maxTokens: 8, // 最大输出长度，单位KB
+        maxContextLength: 64, // 最大上下文大小，单位KB
         stream: true,
       },
     },
