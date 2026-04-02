@@ -1,5 +1,4 @@
 import { OpenAI } from 'openai'
-import { streamLineBreak, streamOutput } from '../../core/utils/log'
 
 function creatClient(aiConfig) {
   return new OpenAI({

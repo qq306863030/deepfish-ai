@@ -1,6 +1,7 @@
 import fs from 'fs-extra'
 import path from 'path'
 import { EventEmitterSuper } from 'eventemitter-super'
+import MessageCompresser from './utils/MessageCompresser'
 
 export class BrainEvent {
     static THINK_BEFORE = '1' // 思考前事件，参数为当前消息列表
@@ -17,9 +18,10 @@ export default class Brain extends EventEmitterSuper {
     super()
     this.messages = []
     this.maxIterations = agentRobot.maxIterations
-    this.maxMessagesLength = agentRobot.maxMessagesLength
-    this.memoryFilePath = path.join(agentRobot.agentSpace,'memory.json')
+    this.maxContextLength = agentRobot.opt.maxContextLength
+    this.memoryFilePath = path.join(agentRobot.opt.basespace,'memory.json')
     this.systemPrompt = agentRobot.opt.systemPrompt // 系统提示词
+    this.messageCompresser = new MessageCompresser(this)
     this.restoreMemory()
   }
   // 恢复记忆
@@ -28,13 +30,12 @@ export default class Brain extends EventEmitterSuper {
       this.messages = fs.readJsonSync(this.memoryFilePath)
     }
   }
-
-  remember(message) {
+  // 写入记忆
+  storeMemory(message) {
     this.messages.push(message)
     fs.writeJsonSync(this.memoryFilePath, this.messages, { spaces: 2 })
   }
   clearMemory() {
-    // 删除文件
     fs.removeSync(this.memoryFilePath)
   }
   // 循环思考
@@ -50,7 +51,7 @@ export default class Brain extends EventEmitterSuper {
     this.emit(BrainEvent.THINK_BEFORE, messages)
     while (maxIterations-- > 0) {
       // 压缩上下文
-      await this._compressMessages(messages)
+      await this.messageCompresser.compress(messages)
       this.emit(BrainEvent.SUB_THINK_BEFORE, messages)
       const { message, content, tool_calls } = await this.thinkLoopSkill(
         this.aiClient,

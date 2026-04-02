@@ -25,7 +25,6 @@ export default class AgentRobot {
       workspace: path.pwd(), // 工作空间，目录
       basespace: path.join(os.homedir(), '.deepfish-ai'), // 记忆空间，目录
       maxIterations: -1, // 思考的最大迭代次数
-      maxMessagesLength: 150000, // 最大消息长度
       maxMemoryExpireTime: 30, // 最大记忆过期时间，单位天
       maxLogExpireTime: 3, // 最大日志过期时间，单位天
       maxBlockFileSize: 20, // 大文件分块阈值，单位KB
