@@ -1,6 +1,10 @@
 import path from 'path'
 import os from 'os'
 import { v4 as uuidv4 } from 'uuid'
+import FileSkill from './skills/FileSkill'
+import InquirerSkill from './skills/InquirerSkill'
+import SystemSkill from './skills/SystemSkill'
+import { cloneDeep } from 'lodash'
 
 export default class AgentRobot {
   id = '' // 机器人id
@@ -8,8 +12,8 @@ export default class AgentRobot {
   agentSpace = '' // 机器人的初始化空间，目录
 
   brain = null // 大脑，负责思考、记忆、决策
-  innateSkills = null // 天赋技能
-  attachSkills = null // 附加技能
+  innateSkills = null // 天赋技能, 机器人自带的技能
+  attachSkills = null // 附加技能, 机器人后续安装的技能
   heart = null // 心脏，负责心跳、连接
   sender = null // 发送器，负责发送消息
   receiver = null // 接收器，负责接收消息
@@ -17,7 +21,8 @@ export default class AgentRobot {
   logger = null // 机器人连接的日志系统，能记录日志
   children = [] // 子机器人，能分担任务
   parent = null // 父机器人，能分配任务
-  state = 0 // 机器人状态，-1表示销毁 0表示空闲，1表示忙碌
+  root = null // 根机器人
+  state = 0 // 机器人状态，-1表示销毁 0表示空闲，1表示思考中 2表示工作中
 
   constructor(
     opt = {
@@ -28,7 +33,8 @@ export default class AgentRobot {
       maxMemoryExpireTime: 30, // 最大记忆过期时间，单位天
       maxLogExpireTime: 3, // 最大日志过期时间，单位天
       maxBlockFileSize: 20, // 大文件分块阈值，单位KB
-      systemPrompt: '你是一个人工智能助手，协助用户完成任务。', // 系统提示语
+      systemPrompt: '', // 系统提示语
+      encoding: 'auto', // 命令行编码格式, 可设置为utf-8、gbk等, 也可以设置成auto或空值自动判断
       aiConfig: {
         name: 'deepseek',
         type: 'deepseek',
@@ -42,11 +48,93 @@ export default class AgentRobot {
       },
     },
   ) {
+    opt = cloneDeep(opt)
+    this.originOpt = cloneDeep(opt)
     this.id = uuidv4()
-    this.name = opt.name || `AgentRobot-${this.id}`
+    this.name = opt.name || 'AgentRobot'
     this.agentSpace = path.join(opt.basespace, this.name) // 机器人空间，目录
+
     this.opt = opt
+    this.config = opt
+    this.innateSkills = this._getInnateSkills() // 天赋技能
+    this.attachSkills = this._getAttachSkills() // 附加技能
+    this.systemPrompt = opt.systemPrompt || this._getDefaultSystemPrompt(opt) // 系统提示语
   }
-  executeTask() {}
+
+  getSkillFunctions() {
+    const skills = [...this.innateSkills, ...this.attachSkills]
+    const skillFunctions = {}
+    skills.forEach((skill) => {
+      Object.assign(skillFunctions, skill.functions)
+    })
+    skillFunctions.agentRobot = this
+    return skillFunctions
+  }
+
+  getSkillDescriptions() {
+    const skills = [...this.innateSkills, ...this.attachSkills]
+    const skillDescriptions = []
+    skills.forEach((skill) => {
+      skillDescriptions.push(...skill.descriptions)
+    })
+    return skillDescriptions
+  }
+
+  // 获取天赋
+  _getInnateSkills() {
+    return [FileSkill, InquirerSkill, SystemSkill]
+  }
+
+  // 获取附加技能
+  _getAttachSkills() {
+    // 从文件中加载附加技能
+    return []
+  }
+
+  _getDefaultSystemPrompt(opt) {
+    const osType = process.platform
+    const workspace = opt.workspace
+    const maxBlockFileSize = opt.maxBlockFileSize || 20
+    const id = this.id
+    const name = this.name
+    return `
+你叫${name}, 编号${id}, 是一个严格按规则执行任务的智能体，不能违反任何系统限制。
+### 基础环境信息
+当前工作目录：${workspace}
+操作系统类型：${osType}
+语言类型: 与用户输入语言一致
+
+### 工具使用规则
+1.系统中有两种工具可以调用：一种是系统内置的工具函数（扩展工具），另一种是Skill工具包。优先使用系统内置工具函数，只有在系统内置工具函数无法满足需求时才使用Skill工具包。
+2.创建工具函数时，需要先调用generateExtensionRule函数查看生成规则
+3.创建Skill工具包时，需要先调用generateSkillPackageRule函数查看生成规则
+4.工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
+
+### 大文本文件处理规则（分步执行）
+处理长文档等大文件（单文件＞${maxBlockFileSize}KB）时，必须按以下步骤分块处理：
+1. 预处理：先执行文件大小/结构检查（如通过命令行/JS 代码获取文件大小、判断文件格式），输出检查结果；
+2. 分块规则：按5KB-10KB/块拆分文件，拆分后每个块生成独立临时文件（命名格式：tmp_block_{原文件名}_chunk{序号}.tmp）；
+3. 处理逻辑：翻译/总结/分析类任务逐块处理，每块处理完成后记录结果，最后合并所有块的结果生成最终文件；
+4. 合并校验：合并后需校验结果完整性（如总字符数匹配、无内容缺失），确保分块处理无遗漏。
+
+### 核心执行原则
+1. 最优路径优先：执行前必须先规划最少步骤的操作路径，明确「先做什么、再做什么、哪些可省略」，避免重复操作和无效步骤；
+2. 异常反馈：操作失败（如命令执行报错、文件不存在）时，需明确说明「失败原因+可尝试的解决方案」，而非仅提示“操作失败”；
+3. 结果校验：任务完成后，需简单校验结果是否符合用户目标（如文件是否生成、内容是否完整），并向用户反馈校验结果。
+4. 如果执行任务过程中需要安装依赖、软件或工具，必须通过调用用户交互函数与用户交互，等待用户确认后再执行安装，除非用户明确说明执行过程中使用静默模式。
+5. 任务执行过程中，产生的所有临时文件（如分块文件、测试文件等）必须以"tmp_"为前缀命名，如"tmp_block_filename.txt、tmp_test_filename.txt、tmp_bak_filename.txt"，并在任务完成后删除这些临时文件，确保工作目录整洁。
+    `
+  }
+
+  executeTask(goal) {}
+
+  // 创建子机器人
+  createSubAgent() {
+    const subAgent = new AgentRobot(this.originOpt)
+    subAgent.parent = this
+    subAgent.root = this.root || this
+    this.children.push(subAgent)
+    return subAgent
+  }
   destroy() {}
 }

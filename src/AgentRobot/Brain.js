@@ -2,32 +2,42 @@ import fs from 'fs-extra'
 import path from 'path'
 import { EventEmitterSuper } from 'eventemitter-super'
 import MessageCompresser from './utils/MessageCompresser'
+import { creatClient, think, thinkByTool } from './utils/AIRequest'
+import { cloneDeep } from 'lodash'
 
 export class BrainEvent {
-    static THINK_BEFORE = '1' // 思考前事件，参数为当前消息列表
-    static SUB_THINK_BEFORE = '1.1' // 子思考前事件，参数为当前消息列表
-    static SUB_THINK_AFTER = '1.2' // 子思考后事件，参数为当前消息列表和思考结果
-    static USE_TOOL = '1.3' // 使用工具事件，参数为工具调用列表
-    static COMPRESS_MESSAGES_BEFORE = '1.4' // 压缩消息事件，参数为当前消息列表
-    static COMPRESS_MESSAGES_AFTER = '1.5' // 压缩消息后事件，参数为压缩后的消息列表
-    static THINK_AFTER = '2' // 思考后事件，参数为当前消息列表
+  static THINK_BEFORE = '1' // 思考前事件，参数为当前消息列表
+  static SUB_THINK_BEFORE = '1.1' // 子思考前事件，参数为当前消息列表
+  static SUB_THINK_AFTER = '1.2' // 子思考后事件，参数为当前消息列表和思考结果
+  static SUB_STREAM_THINK_OUTPUT = '1.3' // 子思考输出事件，参数为当前消息列表和思考输出
+  static SUB_STREAM_CONTENT_OUTPUT = '1.4' // 子思考内容输出事件，参数为当前消息列表和内容输出
+  static SUB_STREAM_TOOL_CALLS_OUTPUT = '1.5' // 子思考工具调用输出事件，参数为当前消息列表和工具调用输出
+  static SUB_STREAM_END = '1.6' // 子思考结束事件，参数为当前消息列表
+  static USE_TOOL = '1.7' // 使用工具事件，参数为工具调用列表
+  static COMPRESS_MESSAGES_BEFORE = '1.8' // 压缩消息事件，参数为当前消息列表
+  static COMPRESS_MESSAGES_AFTER = '1.9' // 压缩消息后事件，参数为压缩后的消息列表
+  static THINK_AFTER = '2' // 思考后事件，参数为当前消息列表
 }
 
 export default class Brain extends EventEmitterSuper {
   constructor(agentRobot) {
     super()
     this.messages = []
-    this.maxIterations = agentRobot.maxIterations
-    this.maxContextLength = agentRobot.opt.maxContextLength
-    this.memoryFilePath = path.join(agentRobot.opt.basespace,'memory.json')
-    this.systemPrompt = agentRobot.opt.systemPrompt // 系统提示词
+    this.maxIterations = agentRobot.opt.maxIterations
+    this.maxContextLength = agentRobot.opt.aiConfig.maxContextLength
+    this.memoryFilePath = path.join(agentRobot.agentSpace, 'memory.json')
+    this.systemPrompt = agentRobot.systemPrompt // 系统提示词
     this.messageCompresser = new MessageCompresser(this)
+    this.aiConfig = agentRobot.opt.aiConfig
+    this.aiClient = creatClient(agentRobot.opt.aiConfig)
     this.restoreMemory()
   }
   // 恢复记忆
   restoreMemory() {
     if (fs.existsSync(this.memoryFilePath)) {
-      this.messages = fs.readJsonSync(this.memoryFilePath)
+      const messages = fs.readJsonSync(this.memoryFilePath) || []
+      // 预处理
+      this.messages = this._initMessages(messages)
     }
   }
   // 写入记忆
@@ -39,27 +49,62 @@ export default class Brain extends EventEmitterSuper {
     fs.removeSync(this.memoryFilePath)
   }
   // 循环思考
-  async thinkLoop() {
+  async thinkLoop(goal) {
     let maxIterations = this.maxIterations
-    let messages = this.messages
-    if (messages.length === 0) {
-      return ''
+    if (this.messages.length === 0) {
+      // 初始化message
+      this.messages = [
+        {
+          role: 'system',
+          content: this.systemPrompt,
+        },
+        {
+          role: 'user',
+          content: goal,
+        },
+      ]
     }
+    let messages = this.messages
     if (maxIterations === -1) {
       maxIterations = Infinity
     }
+    const skillDescriptions = this.agentRobot.getSkillDescriptions()
     this.emit(BrainEvent.THINK_BEFORE, messages)
     while (maxIterations-- > 0) {
       // 压缩上下文
       await this.messageCompresser.compress(messages)
-      this.emit(BrainEvent.SUB_THINK_BEFORE, messages)
-      const { message, content, tool_calls } = await this.thinkLoopSkill(
+      const { message, content, tool_calls } = await thinkByTool(
         this.aiClient,
         this.aiConfig,
         messages,
-        this.extensionTools.descriptions,
+        skillDescriptions,
+        () => {
+          this.emit(BrainEvent.SUB_THINK_BEFORE, messages)
+        },
+        () => {
+          this.emit(BrainEvent.SUB_THINK_AFTER, messages)
+        },
+        (thinkOutput) => {
+          this.emit(BrainEvent.SUB_STREAM_THINK_OUTPUT, messages, thinkOutput)
+        },
+        (contentOutput) => {
+          this.emit(
+            BrainEvent.SUB_STREAM_CONTENT_OUTPUT,
+            messages,
+            contentOutput,
+          )
+        },
+        (toolCallsOutput) => {
+          this.emit(
+            BrainEvent.SUB_STREAM_TOOL_CALLS_OUTPUT,
+            messages,
+            toolCallsOutput,
+          )
+        },
+        () => {
+          this.emit(BrainEvent.SUB_STREAM_END, messages)
+        },
       )
-      this.emit(BrainEvent.SUB_THINK_AFTER)
       // 检查是否是任务完成的总结响应（没有工具调用且有内容）
       if (tool_calls) {
         this.emit(BrainEvent.USE_TOOL, tool_calls)
@@ -71,9 +116,62 @@ export default class Brain extends EventEmitterSuper {
     this.emit(BrainEvent.THINK_AFTER, lastMessageContent)
     return lastMessageContent
   }
-  // 思考
-  async think(messages) {
-    
+
+  think(systemPrompt, prompt, temperature) {
+    const messages = [
+      {
+        role: 'system',
+        content: systemPrompt,
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ]
+    const aiConfig = cloneDeep(this.aiConfig)
+    if (temperature) {
+      aiConfig.temperature = temperature
+    }
+    return think(
+      this.aiClient,
+      aiConfig,
+      messages,
+      () => {
+        this.emit(BrainEvent.THINK_BEFORE, messages)
+      },
+      () => {
+        this.emit(BrainEvent.THINK_AFTER, messages)
+      },
+      (thinkOutput) => {
+        this.emit(BrainEvent.SUB_STREAM_THINK_OUTPUT, messages, thinkOutput)
+      },
+      (contentOutput) => {
+        this.emit(BrainEvent.SUB_STREAM_CONTENT_OUTPUT, messages, contentOutput)
+      },
+      (toolCallsOutput) => {
+        this.emit(
+          BrainEvent.SUB_STREAM_TOOL_CALLS_OUTPUT,
+          messages,
+          toolCallsOutput,
+        )
+      },
+      () => {
+        this.emit(BrainEvent.SUB_STREAM_END, messages)
+      },
+    )
   }
-  
+
+  _initMessages(messages) {
+    let lastMessage = messages[messages.length - 1]
+    if (lastMessage.role === 'assistant' && !lastMessage.tool_calls) {
+      return messages
+    } else {
+      messages.push({
+        role: 'assistant',
+        content: '上次对话未完成，请重新输入。',
+        reasoning_content: '',
+      })
+    }
+    return messages
+  }
 }
