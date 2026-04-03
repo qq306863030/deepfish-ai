@@ -1,39 +1,17 @@
 import readline from 'readline'
-import ExtensionManager from './extension/ExtensionManager.js'
 import { logError } from './utils/log.js'
-import { GlobalVariable } from './GlobalVariable.js'
-import AIService from './ai-services/index.js'
-import ConfigManager from '../cli/ConfigManager.js'
-import SkillConfigManager from '../cli/SkillConfigManager.js'
-import HistoryManager from '../cli/HistoryManager.js'
+import AgentRobot from '../AgentRobot/index.js'
 
 class AICLI {
   constructor(config) {
-    if (!GlobalVariable.configManager) {
-      GlobalVariable.configManager = new ConfigManager()
-    }
-    if (!GlobalVariable.skillConfigManager) {
-      GlobalVariable.skillConfigManager = new SkillConfigManager()
-    }
-    if (!GlobalVariable.historyManager) {
-      GlobalVariable.historyManager = new HistoryManager()
-    }
-    this.config = config || GlobalVariable.configManager.getConfig()
-    this.aiConfig = GlobalVariable.configManager.getCurrentAiConfig()
-    this.skillConfigManager = GlobalVariable.skillConfigManager
-    this.historyManager = GlobalVariable.historyManager
-    // 初始化扩展
-    this.extensionManager = new ExtensionManager(this)
-    this.Tools = this.extensionManager.extensions.functions
-    
-    this.aiService = new AIService(this.aiConfig.type, this)
-    GlobalVariable.aiCli = this
+    // 启动一个机器人
+    this.agentRobot = new AgentRobot(config)
   }
-  
+
   // 单轮对话
   async run(userPrompt) {
     try {
-      await this.aiService.mainWorkflow(userPrompt)
+      await this.agentRobot.executeTask(userPrompt)
     } catch (error) {
       logError(error.stack)
       throw error

@@ -228,7 +228,10 @@ class ConfigManager {
     const resolvedConfigPath = importModule.resolve(this.configPath)
     delete importModule.cache[resolvedConfigPath]
     const config = importModule(this.configPath)
-    return merge(defaultConfig, config)
+    const mergedConfig = merge(defaultConfig, config)
+    const aiConfig = mergedConfig.ai.find((item) => item.name === mergedConfig.currentAi)
+    mergedConfig.aiConfig = aiConfig
+    return mergedConfig
   }
 
   // 写入配置

@@ -13,9 +13,9 @@ export class BrainEvent {
   static SUB_STREAM_CONTENT_OUTPUT = '1.4' // 子思考内容输出事件，参数为当前消息列表和内容输出
   static SUB_STREAM_TOOL_CALLS_OUTPUT = '1.5' // 子思考工具调用输出事件，参数为当前消息列表和工具调用输出
   static SUB_STREAM_END = '1.6' // 子思考结束事件，参数为当前消息列表
-  static USE_TOOL = '1.7' // 使用工具事件，参数为工具调用列表
-  static COMPRESS_MESSAGES_BEFORE = '1.8' // 压缩消息事件，参数为当前消息列表
-  static COMPRESS_MESSAGES_AFTER = '1.9' // 压缩消息后事件，参数为压缩后的消息列表
+  static SUB_THINK_ERROR = '1.8' // 子思考错误事件，参数为当前消息列表和错误信息
+  static COMPRESS_MESSAGES_BEFORE = '1.9' // 压缩消息事件，参数为当前消息列表
+  static COMPRESS_MESSAGES_AFTER = '1.10' // 压缩消息后事件，参数为压缩后的消息列表
   static THINK_AFTER = '2' // 思考后事件，参数为当前消息列表
 }
 
@@ -45,6 +45,18 @@ export default class Brain extends EventEmitterSuper {
     this.messages.push(message)
     fs.writeJsonSync(this.memoryFilePath, this.messages, { spaces: 2 })
   }
+  storeToolReport(toolId, toolReport) {
+    if (typeof toolReport === 'object') {
+      toolReport = JSON.stringify(toolReport)
+    }
+    const message = {
+      role: 'tool',
+      tool_call_id: toolId,
+      content: toolReport,
+    }
+    this.storeMemory(message)
+  }
+
   clearMemory() {
     fs.removeSync(this.memoryFilePath)
   }
@@ -71,13 +83,77 @@ export default class Brain extends EventEmitterSuper {
     const skillDescriptions = this.agentRobot.getSkillDescriptions()
     this.emit(BrainEvent.THINK_BEFORE, messages)
     while (maxIterations-- > 0) {
-      // 压缩上下文
-      await this.messageCompresser.compress(messages)
-      const { message, content, tool_calls } = await thinkByTool(
+      try {
+        // 压缩上下文
+        await this.messageCompresser.compress(messages)
+        const { message, content, tool_calls } = await thinkByTool(
+          this.aiClient,
+          this.aiConfig,
+          messages,
+          skillDescriptions,
+          () => {
+            this.emit(BrainEvent.SUB_THINK_BEFORE, messages)
+          },
+          () => {
+            this.emit(BrainEvent.SUB_THINK_AFTER, messages)
+          },
+          (thinkOutput) => {
+            this.emit(BrainEvent.SUB_STREAM_THINK_OUTPUT, messages, thinkOutput)
+          },
+          (contentOutput) => {
+            this.emit(
+              BrainEvent.SUB_STREAM_CONTENT_OUTPUT,
+              messages,
+              contentOutput,
+            )
+          },
+          (toolCallsOutput) => {
+            this.emit(
+              BrainEvent.SUB_STREAM_TOOL_CALLS_OUTPUT,
+              messages,
+              toolCallsOutput,
+            )
+          },
+          () => {
+            this.emit(BrainEvent.SUB_STREAM_END, messages)
+          },
+        )
+        this.storeMemory(message)
+        // 检查是否是任务完成的总结响应（没有工具调用且有内容）
+        if (tool_calls) {
+          await this.agentRobot.hand.useTools(tool_calls)
+        } else {
+          break
+        }
+      } catch (error) {
+        this.emit(BrainEvent.SUB_THINK_ERROR, messages, error)
+      }
+    }
+    const lastMessageContent = messages[messages.length - 1]?.content || ''
+    this.emit(BrainEvent.THINK_AFTER, lastMessageContent)
+    return lastMessageContent
+  }
+
+  async think(systemPrompt, prompt, temperature) {
+    const messages = [
+      {
+        role: 'system',
+        content: systemPrompt,
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ]
+    try {
+      const aiConfig = cloneDeep(this.aiConfig)
+      if (temperature) {
+        aiConfig.temperature = temperature
+      }
+      const result = await think(
         this.aiClient,
-        this.aiConfig,
+        aiConfig,
         messages,
-        skillDescriptions,
         () => {
           this.emit(BrainEvent.SUB_THINK_BEFORE, messages)
         },
@@ -105,60 +181,11 @@ export default class Brain extends EventEmitterSuper {
           this.emit(BrainEvent.SUB_STREAM_END, messages)
         },
       )
-      // 检查是否是任务完成的总结响应（没有工具调用且有内容）
-      if (tool_calls) {
-        this.emit(BrainEvent.USE_TOOL, tool_calls)
-      } else {
-        break
-      }
+      return result
+    } catch (error) {
+      this.emit(BrainEvent.SUB_THINK_ERROR, messages, error)
+      return `AI response error: ${error.message}`
     }
-    const lastMessageContent = messages[messages.length - 1]?.content || ''
-    this.emit(BrainEvent.THINK_AFTER, lastMessageContent)
-    return lastMessageContent
-  }
-
-  think(systemPrompt, prompt, temperature) {
-    const messages = [
-      {
-        role: 'system',
-        content: systemPrompt,
-      },
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ]
-    const aiConfig = cloneDeep(this.aiConfig)
-    if (temperature) {
-      aiConfig.temperature = temperature
-    }
-    return think(
-      this.aiClient,
-      aiConfig,
-      messages,
-      () => {
-        this.emit(BrainEvent.THINK_BEFORE, messages)
-      },
-      () => {
-        this.emit(BrainEvent.THINK_AFTER, messages)
-      },
-      (thinkOutput) => {
-        this.emit(BrainEvent.SUB_STREAM_THINK_OUTPUT, messages, thinkOutput)
-      },
-      (contentOutput) => {
-        this.emit(BrainEvent.SUB_STREAM_CONTENT_OUTPUT, messages, contentOutput)
-      },
-      (toolCallsOutput) => {
-        this.emit(
-          BrainEvent.SUB_STREAM_TOOL_CALLS_OUTPUT,
-          messages,
-          toolCallsOutput,
-        )
-      },
-      () => {
-        this.emit(BrainEvent.SUB_STREAM_END, messages)
-      },
-    )
   }
 
   _initMessages(messages) {
