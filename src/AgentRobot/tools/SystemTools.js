@@ -97,7 +97,7 @@ async function executeJSCode(code) {
   logSuccess(code)
 
   try {
-    const functions = this.agentRobot.getSkillFunctions()
+    const functions = this.agentRobot.getTools()
     const Func = new Function(
       'Tools',
       'require',

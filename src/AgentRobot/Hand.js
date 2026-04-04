@@ -12,7 +12,7 @@ export default class Hand extends EventEmitterSuper {
     super()
     this.agentRobot = agentRobot
     this.maxBlockFileSize = agentRobot.opt.maxBlockFileSize || 20 // KB
-    this.tools = agentRobot.getSkillFunctions()
+    this.tools = agentRobot.getTools()
   }
 
   _parseToolCalls(tool_call) {

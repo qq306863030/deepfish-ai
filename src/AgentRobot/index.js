@@ -1,9 +1,9 @@
 import path from 'path'
 import os from 'os'
 import fs from 'fs-extra'
-import FileSkill from './skills/FileSkill.js'
-import InquirerSkill from './skills/InquirerSkill.js'
-import SystemSkill from './skills/SystemSkill.js'
+import FileSkill from './tools/FileTools.js'
+import InquirerSkill from './tools/InquirerTools.js'
+import SystemSkill from './tools/SystemTools.js'
 import lodash from 'lodash'
 import Brain, { BrainEvent } from './Brain.js'
 import ScreenPrinter from './ScreenPrinter.js'
@@ -16,8 +16,8 @@ export default class AgentRobot {
 
   brain = null // 大脑，负责思考、记忆、决策
   hand = null // 手，负责使用工具
-  innateSkills = null // 天赋技能, 机器人自带的技能(工具函数)
-  attachSkills = null // 附加技能, 机器人后续安装的技能(工具函数)
+  originalTools = null // 原装工具
+  attachTools = null // 附加工具, 机器人后续安装的工具函数
   heart = null // 心脏，负责心跳、连接
   sender = null // 发送器，负责发送消息
   receiver = null // 接收器，负责接收消息
@@ -72,8 +72,8 @@ export default class AgentRobot {
     fs.ensureDirSync(this.agentSpace)
     this.opt = opt
     this.config = opt
-    this.innateSkills = this._getInnateSkills() // 天赋技能
-    this.attachSkills = this._getAttachSkills() // 附加技能
+    this.originalTools = this._getOriginalTools() // 天赋技能
+    this.attachTools = this._getAttachTools() // 附加技能
     this.systemPrompt = opt.systemPrompt || this._getDefaultSystemPrompt(opt) // 系统提示语
     this.screenPrinter = new ScreenPrinter() // 屏幕打印机
     this.brain = new Brain(this) // 初始化大脑
@@ -157,32 +157,32 @@ export default class AgentRobot {
     })
   }
 
-  getSkillFunctions() {
-    const skills = [...this.innateSkills, ...this.attachSkills]
-    const skillFunctions = {}
-    skills.forEach((skill) => {
-      Object.assign(skillFunctions, skill.functions)
+  getTools() {
+    const tools = [...this.originalTools, ...this.attachTools]
+    const toolFunctions = {}
+    tools.forEach((tool) => {
+      Object.assign(toolFunctions, tool.functions)
     })
-    skillFunctions.agentRobot = this
-    return skillFunctions
+    toolFunctions.agentRobot = this
+    return toolFunctions
   }
 
-  getSkillDescriptions() {
-    const skills = [...this.innateSkills, ...this.attachSkills]
-    const skillDescriptions = []
-    skills.forEach((skill) => {
-      skillDescriptions.push(...skill.descriptions)
+  getToolDescriptions() {
+    const tools = [...this.originalTools, ...this.attachTools]
+    const toolDescriptions = []
+    tools.forEach((tool) => {
+      toolDescriptions.push(...tool.descriptions)
     })
-    return skillDescriptions
+    return toolDescriptions
   }
 
   // 获取天赋
-  _getInnateSkills() {
+  _getOriginalTools() {
     return [FileSkill, InquirerSkill, SystemSkill]
   }
 
   // 获取附加技能
-  _getAttachSkills() {
+  _getAttachTools() {
     // 从文件中加载附加技能
     return []
   }
