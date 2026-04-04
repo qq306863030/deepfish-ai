@@ -225,8 +225,8 @@ const functions = {
   inquirerAny,
 }
 
-const InquirerExtension = {
-  name: 'InquirerExtension',
+const InquirerSkill = {
+  name: 'InquirerSkill',
   extensionDescription:
     '提供用户交互功能，支持确认、列表选择、文本输入、数字输入等多种交互方式',
   filePath: __dirname, // 扩展文件路径，默认为当前文件所在目录
@@ -234,4 +234,4 @@ const InquirerExtension = {
   functions,
 }
 
-export default InquirerExtension
+export default InquirerSkill

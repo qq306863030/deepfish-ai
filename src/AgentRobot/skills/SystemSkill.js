@@ -235,8 +235,8 @@ const functions = {
   getSelfInfo,
 }
 
-const SystemExtension = {
-  name: 'SystemExtension',
+const SystemSkill = {
+  name: 'SystemSkill',
   extensionDescription:
     '提供系统命令执行、AI请求、JS代码执行、扩展文件生成规则、AI配置管理、Skill加载执行等核心系统功能',
   filePath: __dirname, // 扩展文件路径，默认为当前文件所在目录
@@ -244,4 +244,4 @@ const SystemExtension = {
   functions,
 }
 
-export default SystemExtension
+export default SystemSkill

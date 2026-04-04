@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-02 18:49:38
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-04-04 14:58:04
  * @FilePath: \deepfish\src\AgentRobot\utils\MessageCompresser.js
  * @Description: 上下文管理-添加、自动压缩
  * @
@@ -21,11 +21,12 @@ export default class MessageCompresser {
    */
   async compress(messages) {
     const currentLength = this._getLength(messages)
-    if (
-      this.maxContextLength !== -1 &&
-      currentLength > this.maxContextLength
-    ) {
-      this.robotBrain.emit(BrainEvent.Compress_MESSAGES_BEFORE, messages, currentLength)
+    if (this.maxContextLength !== -1 && currentLength > this.maxContextLength) {
+      this.robotBrain.emit(
+        BrainEvent.COMPRESS_MESSAGES_BEFORE,
+        messages,
+        currentLength,
+      )
       let newMessages = []
       if (messages.length > 2) {
         // 始终只保留system和user的最后一条消息，以及最后两条消息，其他消息进行压缩
@@ -59,8 +60,13 @@ export default class MessageCompresser {
         const summary = await this._getSummary([messages[1]])
         newMessages.push([messages[0], summary])
       }
-      this.robotBrain.emit(BrainEvent.COMPRESS_MESSAGES_AFTER, newMessages)
-      return newMessages
+      messages.splice(0, messages.length, ...newMessages)
+      this.robotBrain.emit(
+        BrainEvent.COMPRESS_MESSAGES_AFTER,
+        messages,
+        this._getLength(messages),
+      )
+      return messages
     }
     return messages
   }

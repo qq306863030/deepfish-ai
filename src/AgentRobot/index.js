@@ -99,25 +99,46 @@ export default class AgentRobot {
     this.brain.on(BrainEvent.SUB_STREAM_CONTENT_OUTPUT, (messages, content) => {
       this.screenPrinter.streamOutput(content)
     })
-    this.brain.on(BrainEvent.SUB_STREAM_TOOL_CALLS_OUTPUT, (messages, toolCalls) => {
-      this.screenPrinter.streamOutput(toolCalls)
-    })
+    this.brain.on(
+      BrainEvent.SUB_STREAM_TOOL_CALLS_OUTPUT,
+      (messages, toolCalls) => {
+        this.screenPrinter.streamOutput(toolCalls)
+      },
+    )
     this.brain.on(BrainEvent.SUB_STREAM_END, () => {
       this.screenPrinter.streamLineBreak()
     })
-    this.brain.on(BrainEvent.COMPRESS_MESSAGES_BEFORE)
-    this.brain.on(BrainEvent.COMPRESS_MESSAGES_AFTER)
-    this.brain.on(BrainEvent.THINK_AFTER)
+    this.brain.on(BrainEvent.SUB_USE_TOOL, (toolCalls) => {
+      return this.agentRobot.hand.useTools(toolCalls)
+    })
+    this.brain.on(
+      BrainEvent.COMPRESS_MESSAGES_BEFORE,
+      (messages, currentLength) => {
+        this.screenPrinter.logInfo(
+          `compressing messages: current length ${currentLength}, count ${messages.length}`,
+        )
+      },
+    )
+    this.brain.on(BrainEvent.COMPRESS_MESSAGES_AFTER, (newMessages, currentLength) => {
+      this.screenPrinter.logInfo(
+        `compressed messages: new length ${currentLength}, count ${newMessages.length}`,
+      )
+    })
+    this.brain.on(BrainEvent.THINK_AFTER, (content) => {
+      this.screenPrinter.logSuccess('I have finished thinking.')
+    })
     this.brain.on(BrainEvent.SUB_THINK_ERROR)
     this.hand.on(HandEvent.USE_TOOL_BEFORE, (toolId, funcName, funcArgs) => {
       this.screenPrinter.logInfo(`I'm using tool ${funcName}`)
     })
-    this.hand.on(HandEvent.USE_TOOL_REPORT, (toolId, toolContent) => {
+    this.hand.on(HandEvent.USE_TOOL_REPORT, (toolId, funcName, toolContent) => {
       this.brain.storeToolReport(toolId, toolContent)
     })
     this.hand.on(HandEvent.USE_TOOL_ERROR, (toolId, funcName, error) => {
       this.brain.storeToolReport(toolId, error)
-      this.screenPrinter.logError(`I have an error when using tool ${funcName}: ${error}`)
+      this.screenPrinter.logError(
+        `I have an error when using tool ${funcName}: ${error}`,
+      )
     })
     this.hand.on(HandEvent.USE_TOOL_AFTER, (toolId, funcName, funcArgs) => {
       this.screenPrinter.logInfo(`I have finished using tool ${funcName}`)

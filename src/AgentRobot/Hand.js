@@ -58,7 +58,7 @@ export default class Hand extends EventEmitterSuper {
               }
             }
           }
-          this.emit(HandEvent.USE_TOOL_REPORT, toolId, toolContent)
+          this.emit(HandEvent.USE_TOOL_REPORT, toolId, funcName, toolContent)
         } catch (error) {
           this.emit(HandEvent.USE_TOOL_ERROR, toolId, funcName, { error: error.message })
         }
