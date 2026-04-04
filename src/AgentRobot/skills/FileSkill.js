@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-04 15:10:59
+ * @LastEditTime: 2026-04-04 15:28:29
  * @FilePath: \deepfish\src\AgentRobot\skills\FileSkill.js
  * @Description: 文件处理扩展函数
  * @
@@ -10,6 +10,9 @@
 import path from 'path'
 import fs from 'fs-extra'
 import AdmZip from 'adm-zip'
+import { getDirname } from '../utils/normal.js'
+
+const currentDir = getDirname(import.meta.url)
 
 async function createFile(filePath, content) {
   try {
@@ -584,7 +587,7 @@ const FileSkill = {
   name: 'FileSkill',
   extensionDescription:
     '提供文件和目录的创建、读取、修改、删除、移动、重命名、信息获取等文件系统操作功能',
-  filePath: __dirname, // 扩展文件路径，默认为当前文件所在目录
+  filePath: currentDir, // 扩展文件路径，默认为当前文件所在目录
   descriptions,
   functions,
 }

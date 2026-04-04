@@ -1,16 +1,13 @@
 import path from 'path'
 import os from 'os'
 import fs from 'fs-extra'
-import { createRequire } from 'module'
 import { exec } from 'child_process'
 import lodash from 'lodash'
 import { defaultConfig } from './DefaultConfig.js'
 import { logSuccess, logError, logInfo } from '../core/utils/log.js'
 import { GlobalVariable } from '../core/GlobalVariable.js'
 import { openDirectory } from '../core/utils/normal.js'
-
-const importModule = createRequire(import.meta.url)
-const { merge } = lodash
+import { importModule } from '../AgentRobot/utils/normal.js'
 
 class ConfigManager {
   config = null
@@ -158,25 +155,31 @@ class ConfigManager {
     console.log('Resetting configuration file:', this.configPath)
     this.writeConfig()
     this.config = this.getConfig()
-    logError('Configuration file has been reset to default settings.')
+    logSuccess('Configuration file has been reset to default settings.')
   }
 
   // 查看ai详情
   viewAiConfigDetail(aiName) {
     if (this.isAiListEmpty()) {
-      logError('No AI configurations found. Please add an AI configuration first.')
+      logError(
+        'No AI configurations found. Please add an AI configuration first.',
+      )
       return
     }
     if (!aiName) {
       aiName = this.config.currentAi
       if (!aiName) {
-        logError('No current AI configuration set. Please input "ai config use <name>" to set a current configuration.')
+        logError(
+          'No current AI configuration set. Please input "ai config use <name>" to set a current configuration.',
+        )
         return
       }
     }
     const aiConfig = this._getAiConfig(aiName)
     if (!aiConfig) {
-      logError('AI configuration not found. Please check the name and try again.')
+      logError(
+        'AI configuration not found. Please check the name and try again.',
+      )
       return
     }
     logSuccess('AI Configuration Details')
@@ -225,19 +228,26 @@ class ConfigManager {
   }
 
   getConfig() {
-    const resolvedConfigPath = importModule.resolve(this.configPath)
-    delete importModule.cache[resolvedConfigPath]
     const config = importModule(this.configPath)
-    const mergedConfig = merge(defaultConfig, config)
-    const aiConfig = mergedConfig.ai.find((item) => item.name === mergedConfig.currentAi)
-    mergedConfig.aiConfig = aiConfig
+    return lodash.merge(lodash.cloneDeep(defaultConfig), config)
+  }
+
+  getAppConfig() {
+    const config = importModule(this.configPath)
+    const mergedConfig = lodash.merge(lodash.cloneDeep(defaultConfig), config)
+    if (mergedConfig.currentAi) {
+      const aiConfig = mergedConfig.ai.find(
+        (item) => item.name === mergedConfig.currentAi,
+      )
+      mergedConfig.aiConfig = aiConfig
+    }
     return mergedConfig
   }
 
   // 写入配置
   writeConfig(config) {
     if (!config) {
-      config = defaultConfig
+      config = lodash.cloneDeep(defaultConfig)
     }
     fs.writeFileSync(
       this.configPath,

@@ -1,13 +1,13 @@
 import path from 'path'
 import os from 'os'
-import { v4 as uuidv4 } from 'uuid'
-import FileSkill from './skills/FileSkill'
-import InquirerSkill from './skills/InquirerSkill'
-import SystemSkill from './skills/SystemSkill'
-import { cloneDeep } from 'lodash'
-import Brain, { BrainEvent } from './Brain'
-import ScreenPrinter from './ScreenPrinter'
-import Hand, { HandEvent } from './Hand'
+import fs from 'fs-extra'
+import FileSkill from './skills/FileSkill.js'
+import InquirerSkill from './skills/InquirerSkill.js'
+import SystemSkill from './skills/SystemSkill.js'
+import lodash from 'lodash'
+import Brain, { BrainEvent } from './Brain.js'
+import ScreenPrinter from './ScreenPrinter.js'
+import Hand, { HandEvent } from './Hand.js'
 
 export default class AgentRobot {
   id = '' // 机器人id
@@ -16,8 +16,8 @@ export default class AgentRobot {
 
   brain = null // 大脑，负责思考、记忆、决策
   hand = null // 手，负责使用工具
-  innateSkills = null // 天赋技能, 机器人自带的技能
-  attachSkills = null // 附加技能, 机器人后续安装的技能
+  innateSkills = null // 天赋技能, 机器人自带的技能(工具函数)
+  attachSkills = null // 附加技能, 机器人后续安装的技能(工具函数)
   heart = null // 心脏，负责心跳、连接
   sender = null // 发送器，负责发送消息
   receiver = null // 接收器，负责接收消息
@@ -31,7 +31,7 @@ export default class AgentRobot {
   constructor(
     opt = {
       name: '',
-      workspace: path.pwd(), // 工作空间，目录
+      workspace: process.cwd(), // 工作空间，目录
       basespace: path.join(os.homedir(), '.deepfish-ai'), // 记忆空间，目录
       maxIterations: -1, // 思考的最大迭代次数
       maxMemoryExpireTime: 30, // 最大记忆过期时间，单位天
@@ -51,17 +51,25 @@ export default class AgentRobot {
         stream: true,
       },
     },
+    type = 'main',
   ) {
-    opt = cloneDeep(opt)
-    this.originOpt = cloneDeep(opt)
-    this.id = uuidv4()
+    opt = lodash.cloneDeep(opt)
+    this.originOpt = lodash.cloneDeep(opt)
+    this.id = Date.now().toString()
     this.name = opt.name || 'AgentRobot'
 
-    this.workspace = opt.workspace || path.pwd() // 工作空间，目录
+    this.workspace = opt.workspace || process.cwd() // 工作空间，目录
     this.basespace = opt.basespace || path.join(os.homedir(), '.deepfish-ai') // 记忆空间，目录
     this.memerySpace = path.join(this.basespace, 'memery') // 记忆空间，目录
-    this.agentSpace = path.join(this.memerySpace, this.id) // 机器人空间，目录
+    if (type === 'main') {
+      this.agentSpace = path.join(this.memerySpace, this.id) // 机器人空间，目录
+    } else if (type === 'sub') {
+      this.agentSpace = path.join(this.memerySpace, this.root.id, this.id) // 机器人空间，目录
+    }
+    
+    this.memoryFilePath = path.join(this.agentSpace, 'memory.json')
 
+    fs.ensureDirSync(this.agentSpace)
     this.opt = opt
     this.config = opt
     this.innateSkills = this._getInnateSkills() // 天赋技能
@@ -76,7 +84,7 @@ export default class AgentRobot {
   _initEvents() {
     const aiConfig = this.opt.aiConfig
     let stopLoading = null
-    this.brain.on(BrainEvent.THINK_BEFORE)
+    this.brain.on(BrainEvent.THINK_BEFORE, () => {})
     this.brain.on(BrainEvent.SUB_THINK_BEFORE, () => {
       if (!aiConfig.stream) {
         if (stopLoading) {
@@ -91,25 +99,27 @@ export default class AgentRobot {
         stopLoading = null
         const lastMessage = messages[messages.length - 1]
         this.screenPrinter.logInfo(lastMessage.content)
+      } else {
+        this.screenPrinter.streamLineBreak()
       }
     })
     this.brain.on(BrainEvent.SUB_STREAM_THINK_OUTPUT, (messages, output) => {
-      this.screenPrinter.streamOutput(output)
+      this.screenPrinter.streamOutput(output, '#47854a')
     })
     this.brain.on(BrainEvent.SUB_STREAM_CONTENT_OUTPUT, (messages, content) => {
-      this.screenPrinter.streamOutput(content)
+      this.screenPrinter.streamOutput(content, '#c2a654')
     })
     this.brain.on(
       BrainEvent.SUB_STREAM_TOOL_CALLS_OUTPUT,
       (messages, toolCalls) => {
-        this.screenPrinter.streamOutput(toolCalls)
+        this.screenPrinter.streamOutput(toolCalls, '#47854a')
       },
     )
     this.brain.on(BrainEvent.SUB_STREAM_END, () => {
       this.screenPrinter.streamLineBreak()
     })
     this.brain.on(BrainEvent.SUB_USE_TOOL, (toolCalls) => {
-      return this.agentRobot.hand.useTools(toolCalls)
+      return this.hand.useTools(toolCalls)
     })
     this.brain.on(
       BrainEvent.COMPRESS_MESSAGES_BEFORE,
@@ -125,9 +135,11 @@ export default class AgentRobot {
       )
     })
     this.brain.on(BrainEvent.THINK_AFTER, (content) => {
-      this.screenPrinter.logSuccess('I have finished thinking.')
+      this.screenPrinter.logSuccess(content)
     })
-    this.brain.on(BrainEvent.SUB_THINK_ERROR)
+    this.brain.on(BrainEvent.SUB_THINK_ERROR, (messages, error) => {
+      this.screenPrinter.logError(`I have an error during thinking: ${error.error}`)
+    })
     this.hand.on(HandEvent.USE_TOOL_BEFORE, (toolId, funcName, funcArgs) => {
       this.screenPrinter.logInfo(`I'm using tool ${funcName}`)
     })
@@ -137,7 +149,7 @@ export default class AgentRobot {
     this.hand.on(HandEvent.USE_TOOL_ERROR, (toolId, funcName, error) => {
       this.brain.storeToolReport(toolId, error)
       this.screenPrinter.logError(
-        `I have an error when using tool ${funcName}: ${error}`,
+        `I have an error when using tool ${funcName}: ${error.error}`,
       )
     })
     this.hand.on(HandEvent.USE_TOOL_AFTER, (toolId, funcName, funcArgs) => {
@@ -216,7 +228,7 @@ export default class AgentRobot {
 
   // 创建子机器人
   createSubAgent() {
-    const subAgent = new AgentRobot(this.originOpt)
+    const subAgent = new AgentRobot(this.originOpt, 'sub')
     subAgent.parent = this
     subAgent.root = this.root || this
     this.children.push(subAgent)

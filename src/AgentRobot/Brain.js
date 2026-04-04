@@ -1,9 +1,9 @@
 import fs from 'fs-extra'
 import path from 'path'
 import { EventEmitterSuper } from 'eventemitter-super'
-import MessageCompresser from './utils/MessageCompresser'
-import { creatClient, think, thinkByTool } from './utils/AIRequest'
-import { cloneDeep } from 'lodash'
+import MessageCompresser from './utils/MessageCompresser.js'
+import { creatClient, think, thinkByTool } from './utils/AIRequest.js'
+import lodash from 'lodash'
 
 export class BrainEvent {
   static THINK_BEFORE = '1' // 思考前事件，参数为当前消息列表
@@ -26,11 +26,12 @@ export default class Brain extends EventEmitterSuper {
     this.messages = []
     this.maxIterations = agentRobot.opt.maxIterations
     this.maxContextLength = agentRobot.opt.aiConfig.maxContextLength
-    this.memoryFilePath = path.join(agentRobot.agentSpace, 'memory.json')
+    this.memoryFilePath = agentRobot.memoryFilePath
     this.systemPrompt = agentRobot.systemPrompt // 系统提示词
     this.messageCompresser = new MessageCompresser(this)
     this.aiConfig = agentRobot.opt.aiConfig
     this.aiClient = creatClient(agentRobot.opt.aiConfig)
+    this.agentRobot = agentRobot
     this.restoreMemory()
   }
   // 恢复记忆
@@ -127,7 +128,9 @@ export default class Brain extends EventEmitterSuper {
           break
         }
       } catch (error) {
-        this.emit(BrainEvent.SUB_THINK_ERROR, messages, error)
+        this.emit(BrainEvent.SUB_THINK_ERROR, messages, {
+          error: error.message,
+        })
       }
     }
     const lastMessageContent = messages[messages.length - 1]?.content || ''
@@ -147,7 +150,7 @@ export default class Brain extends EventEmitterSuper {
       },
     ]
     try {
-      const aiConfig = cloneDeep(this.aiConfig)
+      const aiConfig = lodash.cloneDeep(this.aiConfig)
       if (temperature) {
         aiConfig.temperature = temperature
       }
@@ -184,7 +187,9 @@ export default class Brain extends EventEmitterSuper {
       )
       return result
     } catch (error) {
-      this.emit(BrainEvent.SUB_THINK_ERROR, messages, error)
+      this.emit(BrainEvent.SUB_THINK_ERROR, messages, {
+        error: error.message,
+      })
       return `AI response error: ${error.message}`
     }
   }

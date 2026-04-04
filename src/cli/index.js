@@ -58,7 +58,7 @@ async function main() {
       )
       return
     }
-    const cli = new AICLI(configManager.config)
+    const cli = new AICLI(configManager.getAppConfig())
     if (options.interactive) {
       cli.startInteractive()
       return

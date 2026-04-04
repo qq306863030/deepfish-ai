@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-19 11:45:10
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-01 16:32:11
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-04-04 16:15:11
  * @FilePath: \deepfish\src\cli\ai-config.js
  * @Description: ai config 相关命令
  * @
@@ -145,7 +145,7 @@ configCommand
             if (answers.model === 'deepseek-chat') {
               return 8192
             } else if (answers.model === 'deepseek-reasoner') {
-              return 65536
+              return 8192
             }
           }
           return aiCliConfig[answers.Type].maxTokens

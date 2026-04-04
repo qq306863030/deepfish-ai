@@ -166,12 +166,18 @@ async function _streamToNonStream(
       // 2. 处理普通文本内容
       const reasoning_content = delta.reasoning_content
       if (reasoning_content) {
+        if (finalResponse.choices[0].message.reasoning_content.length === 0) {
+          streamThinkOutput('[Thinking...]')
+        }
         finalResponse.choices[0].message.reasoning_content += reasoning_content
         // 流式输出
         streamThinkOutput(reasoning_content)
       }
       const content = delta.content
       if (content) {
+        if (finalResponse.choices[0].message.content.length === 0) {
+          streamContentOutput('\r\n')
+        }
         finalResponse.choices[0].message.content += content
         // 流式输出
         streamContentOutput(content)
@@ -199,6 +205,9 @@ async function _streamToNonStream(
             const id = toolCallIndexMap.get(index)
             const toolCall = toolCallBuffers.get(id)
             if (toolCall && toolCallChunk.function?.arguments) {
+              if (toolCall.function.arguments.length === 0) {
+                streamToolCallsOutput('\r\n[ToolCalls...]')
+              }
               toolCall.function.arguments += toolCallChunk.function.arguments
               streamToolCallsOutput(toolCallChunk.function.arguments)
             }

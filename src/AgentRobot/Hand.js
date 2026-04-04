@@ -31,10 +31,9 @@ export default class Hand extends EventEmitterSuper {
       const { toolId, funcArgs, funcName } = this._parseToolCalls(toolCall)
       const toolFunctions = this.tools
       this.emit(HandEvent.USE_TOOL_BEFORE, toolId, funcName, funcArgs)
-      const toolFunction = toolFunctions[funcName]
-      if (toolFunction) {
+      if (toolFunctions[funcName]) {
         try {
-          let result = await toolFunction(...Object.values(funcArgs))
+          let result = await toolFunctions[funcName](...Object.values(funcArgs))
           let toolContent = JSON.stringify(result)
           if (funcName !== 'requestAI') {
             const MAX_CONTENT_SIZE = this.maxBlockFileSize * 1024

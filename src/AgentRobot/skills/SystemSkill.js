@@ -1,24 +1,23 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-03 11:19:04
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-04-04 17:09:16
  * @FilePath: \deepfish\src\AgentRobot\skills\SystemSkill.js
  * @Description: 默认扩展函数
  * @
  */
 import path from 'path'
+import fs from 'fs-extra'
 import iconv from 'iconv-lite'
 import lodash from 'lodash'
 import { createRequire } from 'module'
-import { fileURLToPath } from 'url'
 import { spawnSync } from 'child_process'
-import { logError, logInfo, logSuccess } from '../../core/utils/log'
-import { detectEncoding } from '../utils/normal'
+import { logError, logInfo, logSuccess } from '../../core/utils/log.js'
+import { detectEncoding, getDirname } from '../utils/normal.js'
 
 const require = createRequire(import.meta.url)
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const currentDir = getDirname(import.meta.url)
 const { cloneDeep } = lodash
 
 // 执行系统命令
@@ -136,7 +135,8 @@ async function executeJSCode(code) {
 // 了解自己
 function getSelfInfo() {
   // 返回自己的代码路径、package.json路径、readme路径等基本信息，供AI有选择的了解自己，回答用户的问题
-  const homeDir = path.resolve(__dirname, '../../../')
+  const homeDir = path.resolve(currentDir, '../../../')
+  const packageJson = fs.readJSONSync(path.resolve(homeDir, 'package.json'))
   return {
     config: {
       description: 'DeepFish AI程序代码配置项',
@@ -160,7 +160,7 @@ function getSelfInfo() {
     },
     version: {
       description: 'DeepFish AI程序版本',
-      value: 'v' + require(path.resolve(homeDir, 'package.json')).version,
+      value: 'v' + packageJson.version,
     },
   }
 }
@@ -239,7 +239,7 @@ const SystemSkill = {
   name: 'SystemSkill',
   extensionDescription:
     '提供系统命令执行、AI请求、JS代码执行、扩展文件生成规则、AI配置管理、Skill加载执行等核心系统功能',
-  filePath: __dirname, // 扩展文件路径，默认为当前文件所在目录
+  filePath: currentDir, // 扩展文件路径，默认为当前文件所在目录
   descriptions,
   functions,
 }

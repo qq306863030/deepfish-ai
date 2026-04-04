@@ -3,8 +3,22 @@ import fs from 'fs-extra'
 import chardet from 'chardet'
 import os from 'os'
 import { spawn } from 'child_process'
-import { logError } from './log.js'
+import { fileURLToPath } from 'url'
+import { createRequire } from 'module'
 
+const require = createRequire(import.meta.url)
+
+// 动态加载模块
+function importModule(modulePath) {
+  const targetPath =
+    modulePath.startsWith('.') || path.isAbsolute(modulePath)
+      ? path.resolve(process.cwd(), modulePath)
+      : modulePath
+  const resolvedModulePath = require.resolve(targetPath)
+  delete require.cache[resolvedModulePath]
+  const mod = require(resolvedModulePath)
+  return mod?.default ?? mod
+}
 // 对象字符串转对象
 function objStrToObj(str) {
   try {
@@ -20,6 +34,11 @@ function objStrToObj(str) {
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// 在 ESM 中安全获取当前模块目录
+function getDirname(metaUrl) {
+  return path.dirname(fileURLToPath(metaUrl))
 }
 
 // 遍历目录和子目录下所有文件
@@ -76,7 +95,7 @@ function openDirectory(dirPath) {
     stdio: 'ignore',
   })
   child.on('error', (error) => {
-    logError(`Error opening directory "${dirPath}": ${error.message}`)
+    console.error(`Error opening directory "${dirPath}": ${error.message}`)
   })
   child.unref()
 }
@@ -99,8 +118,10 @@ function detectEncoding(buffer) {
 }
 
 export {
+  importModule,
   objStrToObj,
   delay,
+  getDirname,
   traverseFiles,
   openDirectory,
   detectEncoding,
