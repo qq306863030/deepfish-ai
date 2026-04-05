@@ -77,6 +77,11 @@ export default class Brain extends EventEmitterSuper {
           content: goal,
         },
       ]
+    } else {
+      this.messages.push({
+        role: 'user',
+        content: goal,
+      })
     }
     let messages = this.messages
     if (maxIterations === -1) {

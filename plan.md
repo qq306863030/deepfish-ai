@@ -1,12 +1,15 @@
 ### .deepfish-ai目录
 -config.js
--clawSkills.json // openclaw的技能数据
+-clawSkills
+    -skill // 扩展技能
+        -SKILL.md
+    -clawSkills.json // openclaw的技能数据
 -memery
     -agentRecord.json // 记录文件目录与主agent编号的映射，创建时间
     -主agent编号
         -memery.json // 主agent的记忆数据
         -memery-子agent编号.json // 子agent的记忆数据,如果执行完毕则删除
-        -agentOrganization.json // 主agent的组织架构数据,每次子agent创建或者销毁都要更新这个文件
+        -agentTree.json // 主agent的组织架构数据,每次子agent创建或者销毁都要更新这个文件
             -{
                 "agentId": "主agent编号",
                 "children": [
@@ -17,7 +20,7 @@
                     ...
                 ]
             }
-        -log // 日志目录
+        -logs // 日志目录
             -log-{YYYY-MM-DD HH}.txt // 以小时为单位的日志文件
 
 1. 文件创建结构调整

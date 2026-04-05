@@ -37,8 +37,12 @@ function delay(ms) {
 }
 
 // 在 ESM 中安全获取当前模块目录
-function getDirname(metaUrl) {
-  return path.dirname(fileURLToPath(metaUrl))
+function getPath(metaUrl) {
+  const filePath = fileURLToPath(metaUrl)
+  return {
+    fileDir: path.dirname(filePath),
+    filePath,
+  }
 }
 
 // 遍历目录和子目录下所有文件
@@ -121,7 +125,7 @@ export {
   importModule,
   objStrToObj,
   delay,
-  getDirname,
+  getPath,
   traverseFiles,
   openDirectory,
   detectEncoding,

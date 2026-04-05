@@ -8,11 +8,12 @@ import lodash from 'lodash'
 import Brain, { BrainEvent } from './Brain.js'
 import ScreenPrinter from './ScreenPrinter.js'
 import Hand, { HandEvent } from './Hand.js'
+import dayjs from 'dayjs'
+import Logger from './Logger.js'
 
-export default class AgentRobot {
+export default class BaseAgentRobot {
   id = '' // 机器人id
   name = '' // 机器人名字
-  agentSpace = '' // 机器人的初始化空间，目录
 
   brain = null // 大脑，负责思考、记忆、决策
   hand = null // 手，负责使用工具
@@ -27,16 +28,27 @@ export default class AgentRobot {
   parent = null // 父机器人，能分配任务
   root = null // 根机器人
   state = 0 // 机器人状态，-1表示销毁 0表示空闲，1表示思考中 2表示工作中
+  type = 'main' // 机器人类型，main表示主机器人，sub表示子机器人，task表示任务机器人
+
+  workspace = null
+  basespace = null
+  memerySpace = null
+  agentRecordFilePath = null
+  agentSpace = null
+  agentTreeFilePath = null
+  memoryFilePath = null
+  logDirPath = null
 
   constructor(
     opt = {
+      id: '',
       name: '',
       workspace: process.cwd(), // 工作空间，目录
       basespace: path.join(os.homedir(), '.deepfish-ai'), // 记忆空间，目录
-      maxIterations: -1, // 思考的最大迭代次数
-      maxMemoryExpireTime: 30, // 最大记忆过期时间，单位天
-      maxLogExpireTime: 3, // 最大日志过期时间，单位天
-      maxBlockFileSize: 20, // 大文件分块阈值，单位KB
+      maxIterations: -1, // 思考的最大迭代次数，-1表示无限制
+      maxMemoryExpireTime: 30, // 最大记忆过期时间，单位天，-1表示无限制, 0表示不记录
+      maxLogExpireTime: 3, // 最大日志过期时间，单位天, -1表示无限制，0表示不记录
+      maxBlockFileSize: 20, // 大文件分块阈值，单位KB；超过该大小的文件需要分块处理
       systemPrompt: '', // 系统提示语
       encoding: 'auto', // 命令行编码格式, 可设置为utf-8、gbk等, 也可以设置成auto或空值自动判断
       aiConfig: {
@@ -51,27 +63,15 @@ export default class AgentRobot {
         stream: true,
       },
     },
-    type = 'main',
   ) {
     opt = lodash.cloneDeep(opt)
     this.originOpt = lodash.cloneDeep(opt)
-    this.id = Date.now().toString()
-    this.name = opt.name || 'AgentRobot'
-
-    this.workspace = opt.workspace || process.cwd() // 工作空间，目录
-    this.basespace = opt.basespace || path.join(os.homedir(), '.deepfish-ai') // 记忆空间，目录
-    this.memerySpace = path.join(this.basespace, 'memery') // 记忆空间，目录
-    if (type === 'main') {
-      this.agentSpace = path.join(this.memerySpace, this.id) // 机器人空间，目录
-    } else if (type === 'sub') {
-      this.agentSpace = path.join(this.memerySpace, this.root.id, this.id) // 机器人空间，目录
-    }
-    
-    this.memoryFilePath = path.join(this.agentSpace, 'memory.json')
-
-    fs.ensureDirSync(this.agentSpace)
     this.opt = opt
     this.config = opt
+    this.id = opt.id || Date.now().toString()
+    this.name = opt.name || 'AgentRobot'
+    this._initFiles(opt) // 初始化文件
+
     this.originalTools = this._getOriginalTools() // 天赋技能
     this.attachTools = this._getAttachTools() // 附加技能
     this.systemPrompt = opt.systemPrompt || this._getDefaultSystemPrompt(opt) // 系统提示语
@@ -79,6 +79,37 @@ export default class AgentRobot {
     this.brain = new Brain(this) // 初始化大脑
     this.hand = new Hand(this) // 初始化手
     this._initEvents() // 初始化大脑事件
+  }
+
+  // 初始化文件
+  _initFiles(opt) {
+    this.root = opt.root
+    this.parent = opt.parent
+    this.workspace = opt.workspace || process.cwd() // 工作空间，目录
+    this.basespace = opt.basespace || path.join(os.homedir(), '.deepfish-ai') // 记忆空间，目录
+    this.memerySpace = path.join(this.basespace, 'memery') // 记忆空间，目录
+    this.agentRecordFilePath = path.join(this.memerySpace, 'agentRecord.json')
+    this.agentSpace = path.join(this.memerySpace, this.root.id) // 机器人空间，目录
+    this.agentTreeFilePath = path.join(this.agentSpace, 'agentTree.json')
+    this.memoryFilePath = path.join(this.agentSpace, `memory-${this.id}.json`)
+    this.logDirPath = path.join(this.agentSpace, 'logs')
+    let agentRecord = fs.readJsonSync(this.agentRecordFilePath)
+    // 自动清除过期的记忆和日志
+    const currentDate = dayjs()
+    agentRecord = agentRecord.filter((record) => {
+      if (
+        currentDate.diff(dayjs(record.updateTime), 'day') >
+        opt.maxMemoryExpireTime
+      ) {
+        // 删除机器人空间
+        fs.removeSync(path.join(this.memerySpace, record.agentId))
+        return false
+      }
+      return true
+    })
+    fs.writeJsonSync(this.agentRecordFilePath, agentRecord, { spaces: 2 })
+    this.logger = new Logger(this) // 初始化日志系统
+    this.logger.clearAllLogs()
   }
 
   _initEvents() {
@@ -99,6 +130,7 @@ export default class AgentRobot {
         stopLoading = null
         const lastMessage = messages[messages.length - 1]
         this.screenPrinter.logInfo(lastMessage.content)
+        this.logger.logMessage(lastMessage)
       } else {
         this.screenPrinter.streamLineBreak()
       }
@@ -118,8 +150,8 @@ export default class AgentRobot {
     this.brain.on(BrainEvent.SUB_STREAM_END, () => {
       this.screenPrinter.streamLineBreak()
     })
-    this.brain.on(BrainEvent.SUB_USE_TOOL, (toolCalls) => {
-      return this.hand.useTools(toolCalls)
+    this.brain.on(BrainEvent.SUB_USE_TOOL, async (toolCalls) => {
+      await this.hand.useTools(toolCalls)
     })
     this.brain.on(
       BrainEvent.COMPRESS_MESSAGES_BEFORE,
@@ -129,16 +161,23 @@ export default class AgentRobot {
         )
       },
     )
-    this.brain.on(BrainEvent.COMPRESS_MESSAGES_AFTER, (newMessages, currentLength) => {
-      this.screenPrinter.logInfo(
-        `compressed messages: new length ${currentLength}, count ${newMessages.length}`,
-      )
-    })
+    this.brain.on(
+      BrainEvent.COMPRESS_MESSAGES_AFTER,
+      (newMessages, currentLength) => {
+        this.screenPrinter.logInfo(
+          `compressed messages: new length ${currentLength}, count ${newMessages.length}`,
+        )
+        this.logger.logCompress(newMessages)
+      },
+    )
     this.brain.on(BrainEvent.THINK_AFTER, (content) => {
       this.screenPrinter.logSuccess(content)
     })
     this.brain.on(BrainEvent.SUB_THINK_ERROR, (messages, error) => {
-      this.screenPrinter.logError(`I have an error during thinking: ${error.error}`)
+      this.screenPrinter.logError(
+        `I have an error during thinking: ${error.error}`,
+      )
+      this.logger.logInfo(`I have an error during thinking: ${error.error}`)
     })
     this.hand.on(HandEvent.USE_TOOL_BEFORE, (toolId, funcName, funcArgs) => {
       this.screenPrinter.logInfo(`I'm using tool ${funcName}`)
@@ -151,9 +190,13 @@ export default class AgentRobot {
       this.screenPrinter.logError(
         `I have an error when using tool ${funcName}: ${error.error}`,
       )
+      this.logger.logInfo(
+        `I have an error when using tool ${funcName}: ${error.error}`,
+      )
     })
     this.hand.on(HandEvent.USE_TOOL_AFTER, (toolId, funcName, funcArgs) => {
       this.screenPrinter.logInfo(`I have finished using tool ${funcName}`)
+      this.logger.logInfo(`I have finished using tool ${funcName}`)
     })
   }
 
@@ -181,15 +224,55 @@ export default class AgentRobot {
     return [FileSkill, InquirerSkill, SystemSkill]
   }
 
-  // 获取附加技能
+  // 获取附加工具
   _getAttachTools() {
     // 从文件中加载附加技能
+    // 1.搜索程序所在目录下的以deepfish-ai-开头的文件夹
+    // 2.搜索程序所在目录下以@deepfish-ai开头的文件夹里的目录
+    // 3.工作目录下node_modules目录下以deepfish-ai-开头的文件夹
+    // 4.工作目录下node_modules目录下以@deepfish-ai开头的文件夹里的目录
+    // 5.工作目录下以deepfish-ai-开头的文件夹
+
+    /**
+     * 附加工具结构：
+     * name: 'BaseSkill',
+     * description: '基础扩展模板，提供扩展的基本结构定义',
+     * location: currentDir, // 扩展文件路径，默认为当前文件所在目录
+     * platform: 'all', // 扩展支持的平台(process.platform)，all或空表示所有平台, win32表示仅支持 Windows, darwin表示仅支持MacOS, linux表示仅支持Linux
+     * descriptions,
+     * functions,
+     */
+    // 1. 子agent创建时，不能再创建相同tool的agent
+    // 2. 使用platform过滤
     return []
+  }
+
+  _getAttachToolPrompt() {
+    const table = this.attachTools
+      .map(
+        (s) =>
+          `| ${s.name} | ${s.description} | ${s.location} | ${s.filePath} |`,
+      )
+      .join('\n')
+    return `
+### 可以使用的Skill
+除了使用内置函数，还可以调用以下Skill来完成用户的请求，Skill的调用方式：当用户的请求匹配技能描述时，调用executeSkill函数加载对应Skill的SKILL.md说明文件，获取调用说明，通过仔细阅读说明文件学习Skill的使用方法，来完成任务。
+## Available Skills
+
+| Skill | Description | Location | FilePath |
+|-------|-------------|----------|----------|
+${table}
+
+## Skills Policy
+- 当用户请求匹配 skill description 时，调用 executeSkill 函数加载对应 SKILL.md
+- 一次只加载一个Skill，优先匹配最具体的Skill
+- 当用户请求不匹配任何Skill描述时，不加载任何Skill
+- Skill即你可以使用的技能`
   }
 
   _getDefaultSystemPrompt(opt) {
     const osType = process.platform
-    const workspace = opt.workspace
+    const workspace = this.workspace
     const maxBlockFileSize = opt.maxBlockFileSize || 20
     const id = this.id
     const name = this.name
@@ -226,14 +309,6 @@ export default class AgentRobot {
     await this.brain.thinkLoop(goal)
   }
 
-  // 创建子机器人
-  createSubAgent() {
-    const subAgent = new AgentRobot(this.originOpt, 'sub')
-    subAgent.parent = this
-    subAgent.root = this.root || this
-    this.children.push(subAgent)
-    return subAgent
-  }
   destroy() {
     this.brain.removeAllListeners()
     this.state = -1

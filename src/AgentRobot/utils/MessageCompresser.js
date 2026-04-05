@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-04 14:58:04
+ * @LastEditTime: 2026-04-05 23:06:27
  * @FilePath: \deepfish\src\AgentRobot\utils\MessageCompresser.js
  * @Description: 上下文管理-添加、自动压缩
  * @
@@ -56,9 +56,10 @@ export default class MessageCompresser {
           newMessages.push(messages[messages.length - 1])
         } else if (lastUserMessageIndex === messages.length - 1) {
           newMessages.push(messages[lastUserMessageIndex])
+        } else {
+          const summary = await this._getSummary([messages[1]])
+          newMessages.push(summary)
         }
-        const summary = await this._getSummary([messages[1]])
-        newMessages.push([messages[0], summary])
       }
       messages.splice(0, messages.length, ...newMessages)
       this.robotBrain.emit(

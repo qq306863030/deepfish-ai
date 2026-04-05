@@ -1,11 +1,11 @@
 import readline from 'readline'
 import { logError } from './utils/log.js'
-import AgentRobot from '../AgentRobot/index.js'
+import MainAgentRobot from '../AgentRobot/MainAgentRobot.js'
 
 class AICLI {
   constructor(config) {
     // 启动一个机器人
-    this.agentRobot = new AgentRobot(config)
+    this.agentRobot = new MainAgentRobot(config)
   }
 
   // 单轮对话

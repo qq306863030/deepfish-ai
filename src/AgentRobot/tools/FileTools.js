@@ -2,17 +2,17 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-04 15:28:29
- * @FilePath: \deepfish\src\AgentRobot\skills\FileSkill.js
+ * @LastEditTime: 2026-04-06 00:15:43
+ * @FilePath: \deepfish\src\AgentRobot\tools\FileTools.js
  * @Description: 文件处理扩展函数
  * @
  */
 import path from 'path'
 import fs from 'fs-extra'
 import AdmZip from 'adm-zip'
-import { getDirname } from '../utils/normal.js'
+import { getPath } from '../utils/normal.js'
 
-const currentDir = getDirname(import.meta.url)
+const { fileDir, filePath } = getPath(import.meta.url)
 
 async function createFile(filePath, content) {
   try {
@@ -67,19 +67,24 @@ async function readFile(filePath) {
  * @param {boolean} [isGlobal=true] 是否进行全局替换，默认开启
  * @returns {Promise<boolean>} 操作是否成功，成功返回 true，失败返回 false
  */
-async function replaceFileText(filePath, searchValue, replaceValue, isGlobal = true) {
+async function replaceFileText(
+  filePath,
+  searchValue,
+  replaceValue,
+  isGlobal = true,
+) {
   try {
-    const content = await readFile(filePath);
+    const content = await readFile(filePath)
     const replacedContent = content.replace(
-      typeof searchValue === 'string' 
-        ? new RegExp(searchValue, isGlobal ? 'g' : '') 
+      typeof searchValue === 'string'
+        ? new RegExp(searchValue, isGlobal ? 'g' : '')
         : searchValue,
-      replaceValue
-    );
-    await modifyFile(filePath, replacedContent);
-    return true;
+      replaceValue,
+    )
+    await modifyFile(filePath, replacedContent)
+    return true
   } catch (error) {
-    return false;
+    return false
   }
 }
 
@@ -248,20 +253,20 @@ async function clearDirectory(dirPath) {
 async function compressToZip(inputPath, outputZipPath) {
   try {
     // 检查源路径是否存在
-    await fs.access(inputPath);
-    const zip = new AdmZip();
-    const absoluteInput = path.resolve(inputPath);
+    await fs.access(inputPath)
+    const zip = new AdmZip()
+    const absoluteInput = path.resolve(inputPath)
     // 判断是文件还是文件夹
-    const stats = await fs.stat(absoluteInput);
+    const stats = await fs.stat(absoluteInput)
     if (stats.isDirectory()) {
       // 压缩文件夹（递归添加所有子文件）
-      zip.addLocalFolder(absoluteInput);
+      zip.addLocalFolder(absoluteInput)
     } else {
       // 压缩单个文件
-      zip.addLocalFile(absoluteInput);
+      zip.addLocalFile(absoluteInput)
     }
     // 写入 zip 文件
-    await zip.writeZipPromise(outputZipPath);
+    await zip.writeZipPromise(outputZipPath)
     return true
   } catch (err) {
     return false
@@ -276,12 +281,12 @@ async function compressToZip(inputPath, outputZipPath) {
  */
 async function extractZip(zipFilePath, extractToPath) {
   try {
-    await fs.access(zipFilePath);
-    const zip = new AdmZip(zipFilePath);
+    await fs.access(zipFilePath)
+    const zip = new AdmZip(zipFilePath)
     // 自动创建目标目录
-    await fs.mkdir(extractToPath, { recursive: true });
+    await fs.mkdir(extractToPath, { recursive: true })
     // 解压所有文件
-    zip.extractAllTo(extractToPath, true);
+    zip.extractAllTo(extractToPath, true)
     return true
   } catch (err) {
     return false
@@ -503,7 +508,8 @@ const descriptions = [
           },
           searchValue: {
             type: 'string',
-            description: '要查找的文本内容，支持按普通字符串或正则表达式字符串理解。',
+            description:
+              '要查找的文本内容，支持按普通字符串或正则表达式字符串理解。',
           },
           replaceValue: {
             type: 'string',
@@ -585,9 +591,10 @@ const functions = {
 
 const FileSkill = {
   name: 'FileSkill',
-  extensionDescription:
+  description:
     '提供文件和目录的创建、读取、修改、删除、移动、重命名、信息获取等文件系统操作功能',
-  filePath: currentDir, // 扩展文件路径，默认为当前文件所在目录
+  location: fileDir, // 扩展文件所在目录
+  filePath: filePath, // 扩展文件路径
   descriptions,
   functions,
 }
