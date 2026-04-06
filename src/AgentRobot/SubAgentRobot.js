@@ -1,7 +1,7 @@
 import path from 'path'
 import os from 'os'
-import BaseAgentRobot from './BaseAgentRobot.js'
-import Logger from './Logger.js'
+import BaseAgentRobot from './BaseAgentRobot/index.js'
+import Logger from './BaseAgentRobot/Logger.js'
 
 export default class SubAgentRobot extends BaseAgentRobot {
     // opt: { root, parent, ...MainAgentOpt }

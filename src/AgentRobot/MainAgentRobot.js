@@ -3,9 +3,9 @@ import os from 'os'
 import fs from 'fs-extra'
 import dayjs from 'dayjs'
 import SubAgentRobot from './SubAgentRobot.js'
-import Logger from './Logger.js'
-import BaseAgentRobot from './BaseAgentRobot.js'
-import AttachmentToolScanner from './utils/AttachmentToolScanner.js'
+import Logger from './BaseAgentRobot/Logger.js'
+import BaseAgentRobot from './BaseAgentRobot/index.js'
+import AttachmentToolScanner from './BaseAgentRobot/utils/AttachmentToolScanner.js'
 
 export default class MainAgentRobot extends BaseAgentRobot {
   // toolCollection = null // 工具集合，包含所有工具函数

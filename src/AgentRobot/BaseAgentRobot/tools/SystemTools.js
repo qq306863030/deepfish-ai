@@ -12,7 +12,7 @@ import fs from 'fs-extra'
 import iconv from 'iconv-lite'
 import { createRequire } from 'module'
 import { spawnSync } from 'child_process'
-import { logError, logInfo, logSuccess } from '../../core/utils/log.js'
+import { logError, logInfo, logSuccess } from '../../../core/utils/log.js'
 import { detectEncoding, getPath } from '../utils/normal.js'
 
 const require = createRequire(import.meta.url)

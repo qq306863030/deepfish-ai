@@ -2,8 +2,8 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-06 00:15:43
- * @FilePath: \deepfish\src\AgentRobot\tools\FileTools.js
+ * @LastEditTime: 2026-04-06 19:12:48
+ * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\FileTools.js
  * @Description: 文件处理扩展函数
  * @
  */

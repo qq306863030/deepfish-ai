@@ -7,7 +7,7 @@ import { defaultConfig } from './DefaultConfig.js'
 import { logSuccess, logError, logInfo } from '../core/utils/log.js'
 import { GlobalVariable } from '../core/GlobalVariable.js'
 import { openDirectory } from '../core/utils/normal.js'
-import { importModule } from '../AgentRobot/utils/normal.js'
+import { importModule } from '../AgentRobot/BaseAgentRobot/utils/normal.js'
 
 class ConfigManager {
   config = null

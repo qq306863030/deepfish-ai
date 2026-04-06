@@ -1,4 +1,4 @@
-import { askAny, askConfirm, askInput, askList, askNumber } from "../../core/utils/log.js"
+import { askAny, askConfirm, askInput, askList, askNumber } from "../utils/inquirer.js"
 import { getPath } from '../utils/normal.js'
 
 const { fileDir, filePath } = getPath(import.meta.url)
