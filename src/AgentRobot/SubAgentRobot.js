@@ -12,6 +12,7 @@ export default class SubAgentRobot extends BaseAgentRobot {
   _initFiles(opt) {
     this.root = opt.root
     this.parent = opt.parent
+    this.attachTools = opt.attachTools || []
     this.workspace = opt.workspace || process.cwd() // 工作空间，目录
     this.basespace = opt.basespace || path.join(os.homedir(), '.deepfish-ai') // 记忆空间，目录
     this.memerySpace = path.join(this.basespace, 'memery') // 记忆空间，目录
@@ -23,12 +24,13 @@ export default class SubAgentRobot extends BaseAgentRobot {
   }
 
   // 创建子机器人
-  createSubAgent(id) {
+  createSubAgent(id, attachTools = []) {
     const subAgent = new SubAgentRobot({
         ...this.originOpt,
         id,
         parent: this,
         root: this.root || this,
+        attachTools,
     })
     this.children.push(subAgent)
     return subAgent

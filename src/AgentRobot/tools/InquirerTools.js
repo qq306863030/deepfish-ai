@@ -227,8 +227,8 @@ const functions = {
   inquirerAny,
 }
 
-const InquirerSkill = {
-  name: 'InquirerSkill',
+const InquirerTool = {
+  name: 'InquirerTool',
   description:
     '提供用户交互功能，支持确认、列表选择、文本输入、数字输入等多种交互方式',
   location: fileDir, // 扩展文件所在目录
@@ -237,4 +237,4 @@ const InquirerSkill = {
   functions,
 }
 
-export default InquirerSkill
+export default InquirerTool

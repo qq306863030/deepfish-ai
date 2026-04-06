@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-06 00:16:01
+ * @LastEditTime: 2026-04-06 11:25:51
  * @FilePath: \deepfish\src\AgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -60,7 +60,7 @@ function executeCommand(command, timeout = -1) {
 async function requestAI(
   systemDescription,
   prompt,
-  temperature = this.agentRobot.aiConfig.temperature,
+  temperature = this.agentRobot.opt.aiConfig.temperature,
 ) {
   logSuccess(`Requesting AI`)
   if (
@@ -73,11 +73,6 @@ async function requestAI(
   try {
     logInfo(`aiSystem: ${systemDescription}`)
     logInfo(`aiPrompt: ${prompt}`)
-    let aiConfig = this.agentRobot.aiConfig
-    if (temperature !== aiConfig.temperature) {
-      aiConfig = cloneDeep(aiConfig)
-      aiConfig.temperature = temperature
-    }
     const response = await this.agentRobot.brain.think(
       systemDescription,
       prompt,
@@ -235,14 +230,14 @@ const functions = {
   getSelfInfo,
 }
 
-const SystemSkill = {
-  name: 'SystemSkill',
+const SystemTool = {
+  name: 'SystemTool',
   description:
-    '提供系统命令执行、AI请求、JS代码执行、扩展文件生成规则、AI配置管理、Skill加载执行等核心系统功能',
+    '提供系统命令执行、AI请求、JS代码执行、扩展文件生成规则、AI配置管理、Tool加载执行等核心系统功能',
   location: fileDir, // 扩展文件所在目录
   filePath: filePath, // 扩展文件路径
   descriptions,
   functions,
 }
 
-export default SystemSkill
+export default SystemTool

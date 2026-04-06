@@ -1,9 +1,10 @@
 import path from 'path'
 import os from 'os'
 import fs from 'fs-extra'
-import FileSkill from './tools/FileTools.js'
-import InquirerSkill from './tools/InquirerTools.js'
-import SystemSkill from './tools/SystemTools.js'
+import FileTools from './tools/FileTools.js'
+import InquirerTools from './tools/InquirerTools.js'
+import SystemTools from './tools/SystemTools.js'
+import CreateAgentTools from './tools/CreateAgentTools.js'
 import lodash from 'lodash'
 import Brain, { BrainEvent } from './Brain.js'
 import ScreenPrinter from './ScreenPrinter.js'
@@ -43,6 +44,7 @@ export default class BaseAgentRobot {
     opt = {
       id: '',
       name: '',
+      attachTools: [], // 附加工具, 机器人后续安装的工具函数
       workspace: process.cwd(), // 工作空间，目录
       basespace: path.join(os.homedir(), '.deepfish-ai'), // 记忆空间，目录
       maxIterations: -1, // 思考的最大迭代次数，-1表示无限制
@@ -73,8 +75,9 @@ export default class BaseAgentRobot {
     this._initFiles(opt) // 初始化文件
 
     this.originalTools = this._getOriginalTools() // 天赋技能
-    this.attachTools = this._getAttachTools() // 附加技能
+    this.attachTools = opt.attachTools || [] // 附加工具, 机器人后续安装的工具函数
     this.systemPrompt = opt.systemPrompt || this._getDefaultSystemPrompt(opt) // 系统提示语
+    console.log('系统提示语：', this.systemPrompt)
     this.screenPrinter = new ScreenPrinter() // 屏幕打印机
     this.brain = new Brain(this) // 初始化大脑
     this.hand = new Hand(this) // 初始化手
@@ -221,54 +224,9 @@ export default class BaseAgentRobot {
 
   // 获取天赋
   _getOriginalTools() {
-    return [FileSkill, InquirerSkill, SystemSkill]
+    return [FileTools, InquirerTools, SystemTools, CreateAgentTools]
   }
 
-  // 获取附加工具
-  _getAttachTools() {
-    // 从文件中加载附加技能
-    // 1.搜索程序所在目录下的以deepfish-ai-开头的文件夹
-    // 2.搜索程序所在目录下以@deepfish-ai开头的文件夹里的目录
-    // 3.工作目录下node_modules目录下以deepfish-ai-开头的文件夹
-    // 4.工作目录下node_modules目录下以@deepfish-ai开头的文件夹里的目录
-    // 5.工作目录下以deepfish-ai-开头的文件夹
-
-    /**
-     * 附加工具结构：
-     * name: 'BaseSkill',
-     * description: '基础扩展模板，提供扩展的基本结构定义',
-     * location: currentDir, // 扩展文件路径，默认为当前文件所在目录
-     * platform: 'all', // 扩展支持的平台(process.platform)，all或空表示所有平台, win32表示仅支持 Windows, darwin表示仅支持MacOS, linux表示仅支持Linux
-     * descriptions,
-     * functions,
-     */
-    // 1. 子agent创建时，不能再创建相同tool的agent
-    // 2. 使用platform过滤
-    return []
-  }
-
-  _getAttachToolPrompt() {
-    const table = this.attachTools
-      .map(
-        (s) =>
-          `| ${s.name} | ${s.description} | ${s.location} | ${s.filePath} |`,
-      )
-      .join('\n')
-    return `
-### 可以使用的Skill
-除了使用内置函数，还可以调用以下Skill来完成用户的请求，Skill的调用方式：当用户的请求匹配技能描述时，调用executeSkill函数加载对应Skill的SKILL.md说明文件，获取调用说明，通过仔细阅读说明文件学习Skill的使用方法，来完成任务。
-## Available Skills
-
-| Skill | Description | Location | FilePath |
-|-------|-------------|----------|----------|
-${table}
-
-## Skills Policy
-- 当用户请求匹配 skill description 时，调用 executeSkill 函数加载对应 SKILL.md
-- 一次只加载一个Skill，优先匹配最具体的Skill
-- 当用户请求不匹配任何Skill描述时，不加载任何Skill
-- Skill即你可以使用的技能`
-  }
 
   _getDefaultSystemPrompt(opt) {
     const osType = process.platform
@@ -282,12 +240,6 @@ ${table}
 当前工作目录：${workspace}
 操作系统类型：${osType}
 语言类型: 与用户输入语言一致
-
-### 工具使用规则
-1.系统中有两种工具可以调用：一种是系统内置的工具函数（扩展工具），另一种是Skill工具包。优先使用系统内置工具函数，只有在系统内置工具函数无法满足需求时才使用Skill工具包。
-2.创建工具函数时，需要先调用generateExtensionRule函数查看生成规则
-3.创建Skill工具包时，需要先调用generateSkillPackageRule函数查看生成规则
-4.工具调用需确保语法/指令符合当前操作系统规范（Windows/macOS/Linux 区分）。
 
 ### 大文本文件处理规则（分步执行）
 处理长文档等大文件（单文件＞${maxBlockFileSize}KB）时，必须按以下步骤分块处理：
@@ -305,8 +257,8 @@ ${table}
     `
   }
 
-  async executeTask(goal) {
-    await this.brain.thinkLoop(goal)
+  executeTask(goal) {
+    return this.brain.thinkLoop(goal)
   }
 
   destroy() {

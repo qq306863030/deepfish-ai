@@ -15,6 +15,7 @@
                 "children": [
                     {
                         "agentId": "子agent编号",
+                        "skillName": "子agent执行的技能",
                         "children": []
                     }
                     ...

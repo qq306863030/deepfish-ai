@@ -5,8 +5,10 @@ import dayjs from 'dayjs'
 import SubAgentRobot from './SubAgentRobot.js'
 import Logger from './Logger.js'
 import BaseAgentRobot from './BaseAgentRobot.js'
+import AttachmentToolScanner from './utils/AttachmentToolScanner.js'
 
 export default class MainAgentRobot extends BaseAgentRobot {
+  toolCollection = null // 工具集合，包含所有工具函数
   constructor(opt) {
     super(opt)
   }
@@ -48,7 +50,7 @@ export default class MainAgentRobot extends BaseAgentRobot {
       const agentTree = fs.readJsonSync(this.agentTreeFilePath)
       if (agentTree) {
         // 恢复子机器人
-        this._parseAgentTree(this, agentTree)
+        // this._parseAgentTree(this, agentTree)
       } else {
         agentTree.push({agentId: this.id, children: []})
         fs.writeJsonSync(this.agentTreeFilePath, agentTree, { spaces: 2 })
@@ -71,15 +73,22 @@ export default class MainAgentRobot extends BaseAgentRobot {
     fs.writeJsonSync(this.agentRecordFilePath, agentRecord, { spaces: 2 })
     this.logger = new Logger(this) // 初始化日志系统
     this.logger.clearAllLogs()
+    this.toolCollection = AttachmentToolScanner.getToolCollection(this.workspace) // 加载工具集合
+  }
+
+  _getDefaultSystemPrompt(opt) {
+    const systemPrompt = super._getDefaultSystemPrompt(opt)
+    return systemPrompt + '\n' + AttachmentToolScanner.getAttachToolPrompt(this.toolCollection)
   }
 
   // 创建子机器人
-  createSubAgent(id) {
+  createSubAgent(id, attachTools = []) {
     const subAgent = new SubAgentRobot({
         ...this.originOpt,
         id,
         parent: this,
         root: this.root || this,
+        attachTools,
     })
     this.children.push(subAgent)
     return subAgent
