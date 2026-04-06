@@ -51,7 +51,7 @@ export default class Logger {
       return false
     }
     const logFile = path.join(
-      this.logDir,
+      this.logDirPath,
       `log-${dayjs().format('YYYY-MM-DD HH')}.txt`,
     )
     try {
@@ -68,7 +68,7 @@ export default class Logger {
       return false
     }
     const logFile = path.join(
-      this.logDir,
+      this.logDirPath,
       `log-${dayjs().format('YYYY-MM-DD HH')}.txt`,
     )
     try {
@@ -88,7 +88,7 @@ export default class Logger {
       return false
     }
     const logFile = path.join(
-      this.logDir,
+      this.logDirPath,
       `log-${dayjs().format('YYYY-MM-DD HH')}.txt`,
     )
     try {

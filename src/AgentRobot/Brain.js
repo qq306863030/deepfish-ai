@@ -1,5 +1,4 @@
 import fs from 'fs-extra'
-import path from 'path'
 import { EventEmitterSuper } from 'eventemitter-super'
 import MessageCompresser from './utils/MessageCompresser.js'
 import { creatClient, think, thinkByTool } from './utils/AIRequest.js'
@@ -133,9 +132,8 @@ export default class Brain extends EventEmitterSuper {
           break
         }
       } catch (error) {
-        this.emit(BrainEvent.SUB_THINK_ERROR, messages, {
-          error: error.message,
-        })
+        this.emit(BrainEvent.SUB_THINK_ERROR, messages, error)
+        return `AI response error: ${error.message}`
       }
     }
     const lastMessageContent = messages[messages.length - 1]?.content || ''
@@ -192,9 +190,7 @@ export default class Brain extends EventEmitterSuper {
       )
       return result
     } catch (error) {
-      this.emit(BrainEvent.SUB_THINK_ERROR, messages, {
-        error: error.message,
-      })
+      this.emit(BrainEvent.SUB_THINK_ERROR, messages, error)
       return `AI response error: ${error.message}`
     }
   }

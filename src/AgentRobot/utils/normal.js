@@ -121,6 +121,10 @@ function detectEncoding(buffer) {
   }
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export {
   importModule,
   objStrToObj,
@@ -129,4 +133,5 @@ export {
   traverseFiles,
   openDirectory,
   detectEncoding,
+  sleep,
 }

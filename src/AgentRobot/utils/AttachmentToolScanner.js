@@ -36,7 +36,6 @@ export default class AttachmentToolScanner {
     const dir3 = path.resolve(workspace, './') // 工作目录
     const result = []
     const searchDirs = [...new Set([dir1, dir2, dir3])]
-    console.log('搜索附加工具的目录111：', searchDirs)
     for (const dirPath of searchDirs) {
       if (!fs.existsSync(dirPath)) {
         continue
@@ -76,7 +75,6 @@ export default class AttachmentToolScanner {
         }
       }
     })
-    console.log('搜索附加工具的目录222：', result)
     // 动态加载这些文件，获取工具对象
     const attachTools = []
     for (const filePath of result) {
@@ -84,6 +82,8 @@ export default class AttachmentToolScanner {
         const tool = importModule(filePath)
         if (tool) {
           tool.type = AttachmentToolType.BASE_SKILL
+          tool.location = tool.location || path.dirname(filePath)
+          tool.filePath = tool.filePath || filePath 
           attachTools.push(tool)
         }
       } catch (error) {
@@ -101,11 +101,11 @@ export default class AttachmentToolScanner {
       )
       .join('\n')
     if (!table) {
-      return ''
+      return '### 暂无可用的Skills'
     }
     return `
 ### 可以使用的Skills
-除了使用内置函数，还可以调用以下Skill来完成用户的请求，Skill的调用方式：
+可以调用以下Skill来完成用户的请求，Skill的调用方式：
 - 使用用户请求匹配 skill description，
 - 一次只加载一个Skill，优先匹配最具体的Skill
 - 当用户请求不匹配任何Skill描述时，不加载任何Skill

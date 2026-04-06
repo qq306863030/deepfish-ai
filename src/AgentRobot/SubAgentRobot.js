@@ -1,6 +1,7 @@
 import path from 'path'
 import os from 'os'
 import BaseAgentRobot from './BaseAgentRobot.js'
+import Logger from './Logger.js'
 
 export default class SubAgentRobot extends BaseAgentRobot {
     // opt: { root, parent, ...MainAgentOpt }
@@ -21,6 +22,7 @@ export default class SubAgentRobot extends BaseAgentRobot {
     this.agentTreeFilePath = path.join(this.agentSpace, 'agentTree.json')
     this.memoryFilePath = path.join(this.agentSpace, `memory-${this.id}.json`)
     this.logDirPath = path.join(this.agentSpace, 'logs')
+    this.logger = new Logger(this) // 初始化日志系统
   }
 
   // 创建子机器人
@@ -28,6 +30,7 @@ export default class SubAgentRobot extends BaseAgentRobot {
     const subAgent = new SubAgentRobot({
         ...this.originOpt,
         id,
+        name: `SubAgent-${attachTools[0].name}`,
         parent: this,
         root: this.root || this,
         attachTools,

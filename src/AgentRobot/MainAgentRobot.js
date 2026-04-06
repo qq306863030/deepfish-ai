@@ -8,9 +8,10 @@ import BaseAgentRobot from './BaseAgentRobot.js'
 import AttachmentToolScanner from './utils/AttachmentToolScanner.js'
 
 export default class MainAgentRobot extends BaseAgentRobot {
-  toolCollection = null // 工具集合，包含所有工具函数
+  // toolCollection = null // 工具集合，包含所有工具函数
   constructor(opt) {
     super(opt)
+    this.type = 'main'
   }
 
   // 初始化文件
@@ -78,7 +79,12 @@ export default class MainAgentRobot extends BaseAgentRobot {
 
   _getDefaultSystemPrompt(opt) {
     const systemPrompt = super._getDefaultSystemPrompt(opt)
-    return systemPrompt + '\n' + AttachmentToolScanner.getAttachToolPrompt(this.toolCollection)
+    return `
+${systemPrompt}
+### 工具调用
+对于复杂的任务，先从可以使用的Skills中查找并使用合适的Skill，如果没有合适的Skill，再使用内置工具函数，使用时请严格按照工具函数的调用方式进行调用。
+${AttachmentToolScanner.getAttachToolPrompt(this.toolCollection)}
+    `
   }
 
   // 创建子机器人
@@ -86,6 +92,7 @@ export default class MainAgentRobot extends BaseAgentRobot {
     const subAgent = new SubAgentRobot({
         ...this.originOpt,
         id,
+        name: `SubAgent-${attachTools[0].name}`,
         parent: this,
         root: this.root || this,
         attachTools,

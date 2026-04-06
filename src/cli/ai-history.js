@@ -10,16 +10,7 @@ extCommand
   .command('clear')
   .description('Clear the history messages for the current directory')
   .action(() => {
-    historyManager.clearMessage(1)
-    historyManager.clearMessage(2)
-    historyManager.clearMessage(3)
-  })
-
-extCommand
-  .command('output')
-  .description('Output the history messages to current directory')
-  .action(() => {
-    historyManager.outputMessage()
+    historyManager.clearMessage()
   })
 
 extCommand
@@ -29,9 +20,3 @@ extCommand
     historyManager.openDirectory()
   })
 
-extCommand
-  .command('reset')
-  .description('Reset all history for all directories')
-  .action(() => {
-    historyManager.reset()
-  })

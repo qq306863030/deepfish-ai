@@ -77,7 +77,6 @@ export default class BaseAgentRobot {
     this.originalTools = this._getOriginalTools() // 天赋技能
     this.attachTools = opt.attachTools || [] // 附加工具, 机器人后续安装的工具函数
     this.systemPrompt = opt.systemPrompt || this._getDefaultSystemPrompt(opt) // 系统提示语
-    console.log('系统提示语：', this.systemPrompt)
     this.screenPrinter = new ScreenPrinter() // 屏幕打印机
     this.brain = new Brain(this) // 初始化大脑
     this.hand = new Hand(this) // 初始化手
@@ -134,8 +133,6 @@ export default class BaseAgentRobot {
         const lastMessage = messages[messages.length - 1]
         this.screenPrinter.logInfo(lastMessage.content)
         this.logger.logMessage(lastMessage)
-      } else {
-        this.screenPrinter.streamLineBreak()
       }
     })
     this.brain.on(BrainEvent.SUB_STREAM_THINK_OUTPUT, (messages, output) => {
@@ -174,13 +171,17 @@ export default class BaseAgentRobot {
       },
     )
     this.brain.on(BrainEvent.THINK_AFTER, (content) => {
-      this.screenPrinter.logSuccess(content)
+      if (this.type === 'main') {
+        this.screenPrinter.logSuccess(content)
+      } else if (this.type === 'sub') {
+        this.screenPrinter.logSuccess(`${this.name} have finished thinking and got the result.`)
+      }
     })
     this.brain.on(BrainEvent.SUB_THINK_ERROR, (messages, error) => {
       this.screenPrinter.logError(
-        `I have an error during thinking: ${error.error}`,
+        `I have an error during thinking: ${error} ${error.message}:${error.stack || ''}`,
       )
-      this.logger.logInfo(`I have an error during thinking: ${error.error}`)
+      this.logger.logInfo(`I have an error during thinking: ${error.message}:${error.stack || ''}`)
     })
     this.hand.on(HandEvent.USE_TOOL_BEFORE, (toolId, funcName, funcArgs) => {
       this.screenPrinter.logInfo(`I'm using tool ${funcName}`)
@@ -191,10 +192,10 @@ export default class BaseAgentRobot {
     this.hand.on(HandEvent.USE_TOOL_ERROR, (toolId, funcName, error) => {
       this.brain.storeToolReport(toolId, error)
       this.screenPrinter.logError(
-        `I have an error when using tool ${funcName}: ${error.error}`,
+        `I have an error when using tool ${funcName}: ${error.message},${error.stack || ''}`,
       )
       this.logger.logInfo(
-        `I have an error when using tool ${funcName}: ${error.error}`,
+        `I have an error when using tool ${funcName}: ${error.message},${error.stack || ''}`,
       )
     })
     this.hand.on(HandEvent.USE_TOOL_AFTER, (toolId, funcName, funcArgs) => {
@@ -210,6 +211,11 @@ export default class BaseAgentRobot {
       Object.assign(toolFunctions, tool.functions)
     })
     toolFunctions.agentRobot = this
+    toolFunctions.Tools = toolFunctions
+    // 兼容老版本
+    toolFunctions.aiCli = {
+      Tools: toolFunctions,
+    }
     return toolFunctions
   }
 
@@ -217,7 +223,17 @@ export default class BaseAgentRobot {
     const tools = [...this.originalTools, ...this.attachTools]
     const toolDescriptions = []
     tools.forEach((tool) => {
-      toolDescriptions.push(...tool.descriptions)
+      const descriptions = tool.descriptions.map((item) => {
+          if (!item.type) {
+            return {
+              type: 'function',
+              function: item,
+            }
+          } else {
+            return item
+          }
+        })
+      toolDescriptions.push(...descriptions)
     })
     return toolDescriptions
   }

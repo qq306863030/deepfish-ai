@@ -51,7 +51,7 @@ async function think(
     await thinkAfter()
     return response.choices[0].message.content
   } catch (error) {
-    return `AI response error: ${error.message}`
+    throw new Error(`AI response error: ${error.message}`)
   }
 }
 /**
@@ -104,7 +104,7 @@ async function thinkByTool(
       message: response.choices[0].message,
     }
   } catch (error) {
-    return `AI response error: ${error.message}`
+    throw new Error(`AI response error: ${error.message}`)
   }
 }
 
@@ -206,7 +206,7 @@ async function _streamToNonStream(
             const toolCall = toolCallBuffers.get(id)
             if (toolCall && toolCallChunk.function?.arguments) {
               if (toolCall.function.arguments.length === 0) {
-                streamToolCallsOutput('\r\n[ToolCalls...]')
+                streamToolCallsOutput(`\r\n[ToolCalls...][${toolCall.function.name}]`)
               }
               toolCall.function.arguments += toolCallChunk.function.arguments
               streamToolCallsOutput(toolCallChunk.function.arguments)

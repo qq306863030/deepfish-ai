@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-06 11:25:51
+ * @LastEditTime: 2026-04-06 19:00:03
  * @FilePath: \deepfish\src\AgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -10,7 +10,6 @@
 import path from 'path'
 import fs from 'fs-extra'
 import iconv from 'iconv-lite'
-import lodash from 'lodash'
 import { createRequire } from 'module'
 import { spawnSync } from 'child_process'
 import { logError, logInfo, logSuccess } from '../../core/utils/log.js'
@@ -18,7 +17,6 @@ import { detectEncoding, getPath } from '../utils/normal.js'
 
 const require = createRequire(import.meta.url)
 const { fileDir, filePath } = getPath(import.meta.url)
-const { cloneDeep } = lodash
 
 // 执行系统命令
 // 执行系统命令（全平台兼容：Windows/PowerShell/CentOS）
@@ -78,8 +76,7 @@ async function requestAI(
       prompt,
       temperature,
     )
-    logInfo(`aiResponse: ${response}`)
-    return response
+    return response.choices[0].message.content
   } catch (error) {
     logError(`Error executing AI function: ${error.message}`)
     throw error
