@@ -54,7 +54,12 @@ function readTaskList(taskListPath) {
 
 // 更新任务列表
 function updateTaskList(taskListPath, list) {
-    return fs.writeFileSync(taskListPath || path.join(process.cwd(), 'tmp_tasklist.json'), JSON.stringify(list, null, 2), { encoding: 'utf-8' })
+    try {
+        fs.writeFileSync(taskListPath || path.join(process.cwd(), 'tmp_tasklist.json'), JSON.stringify(list, null, 2), { encoding: 'utf-8' })
+        return true
+    } catch (error) {
+        return { error: error.message }
+    }
 }
 
 // 从任务列表执行子任务
@@ -112,7 +117,7 @@ const descriptions = [
         function: {
             name: 'updateTaskList',
             description:
-                '将完整任务数组写入任务列表文件。用于任务状态、备注、时间字段的持久化更新。',
+                '将完整任务数组写入任务列表文件。用于任务状态、备注、时间字段的持久化更新。返回true表示写入成功，写入失败会抛出错误。',
             parameters: {
                 type: 'object',
                 properties: {
