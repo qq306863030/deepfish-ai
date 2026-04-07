@@ -77,7 +77,7 @@ export default class Logger {
     try {
       let logEntry = `[${new Date().toISOString()}][***COMPRESS START***] 
       ${messages.map(m => `[${m.role}] ${m.content}`).join('\n')}
-      [${new Date().toISOString()}][***COMPRESS END***] 
+      [***COMPRESS END***] 
       `
       fs.appendFileSync(logFile, logEntry)
       return true

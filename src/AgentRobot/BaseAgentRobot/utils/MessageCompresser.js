@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-07 19:17:20
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-04-08 00:11:25
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\utils\MessageCompresser.js
  * @Description: 上下文管理-添加、自动压缩
  * @
@@ -27,7 +27,6 @@ export default class MessageCompresser {
         messages,
         currentLength,
       )
-      let newMessages = messages
       if (messages.length > 2) {
         // 始终保留：第一条system、最后一条user、最后两条消息（有可能包含user）；其余区间压缩
         let firstSystemMessageIndex = 0
@@ -51,7 +50,7 @@ export default class MessageCompresser {
           .filter((index) => index >= 0 && index < messages.length)
           .sort((a, b) => a - b)
 
-        newMessages = []
+        let newMessages = []
         let startIndex = 0
 
         for (const keepIndex of keepIndexes) {
@@ -73,8 +72,12 @@ export default class MessageCompresser {
             newMessages.push(summary)
           }
         }
+        messages.splice(0, messages.length, ...newMessages)
+      } else if (messages.length === 2) {
+        // 消息过少时直接保留最后两条消息
+        const summary = await this._getSummary([messages[1]])
+        messages.splice(0, messages.length, messages[0], summary)
       }
-      messages.splice(0, messages.length, ...newMessages)
       this.robotBrain.emit(
         BrainEvent.COMPRESS_MESSAGES_AFTER,
         messages,
@@ -125,7 +128,7 @@ ${messages
         summaryPrompt,
       )
       return {
-        role: 'user',
+        role: 'system',
         content: summary,
       }
     } catch (error) {
@@ -143,7 +146,7 @@ ${messages
         }
       })
       return {
-        role: 'user',
+        role: 'system',
         content: manualSummary,
       }
     }

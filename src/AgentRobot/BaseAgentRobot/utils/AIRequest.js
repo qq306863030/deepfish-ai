@@ -43,10 +43,7 @@ async function think(
         streamEnd,
       )
       await thinkAfter()
-      return {
-        content: messageRes.choices[0].message.content,
-        message: messageRes.choices[0].message,
-      }
+      return messageRes.choices[0].message.content
     }
     await thinkAfter()
     return response.choices[0].message.content

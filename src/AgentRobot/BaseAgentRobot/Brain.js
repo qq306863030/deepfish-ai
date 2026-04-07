@@ -1,5 +1,5 @@
 import fs from 'fs-extra'
-import EventEmitterSuper  from 'eventemitter-super'
+import EventEmitterSuper from 'eventemitter-super'
 import MessageCompresser from './utils/MessageCompresser.js'
 import { creatClient, think, thinkByTool } from './utils/AIRequest.js'
 import lodash from 'lodash'
@@ -68,18 +68,16 @@ export default class Brain extends EventEmitterSuper {
     let maxIterations = this.maxIterations
     if (this.messages.length === 0) {
       // 初始化message
-      this.messages = [
-        {
-          role: 'system',
-          content: this.systemPrompt,
-        },
-        {
-          role: 'user',
-          content: goal,
-        },
-      ]
+      this.storeMemory({
+        role: 'system',
+        content: this.systemPrompt,
+      })
+      this.storeMemory({
+        role: 'user',
+        content: goal,
+      })
     } else {
-      this.messages.push({
+      this.storeMemory({
         role: 'user',
         content: goal,
       })
@@ -201,7 +199,11 @@ export default class Brain extends EventEmitterSuper {
     let lastMessage = messages[messages.length - 1]
     while (
       messages.length > 1 &&
-      !(lastMessage.role === 'assistant' && !lastMessage.tool_calls && lastMessage.content)
+      !(
+        lastMessage.role === 'assistant' &&
+        !lastMessage.tool_calls &&
+        lastMessage.content
+      )
     ) {
       messages.pop()
       lastMessage = messages[messages.length - 1]

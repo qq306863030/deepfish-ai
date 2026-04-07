@@ -76,7 +76,7 @@ async function requestAI(
       prompt,
       temperature,
     )
-    return response.message.content
+    return response
   } catch (error) {
     aiConsole.logError(`Error executing AI function: ${error.message}`)
     throw error

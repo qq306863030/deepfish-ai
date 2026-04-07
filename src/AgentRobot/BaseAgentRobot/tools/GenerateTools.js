@@ -47,9 +47,9 @@ async function generateSkillRule(goal) {
 创建一个任务列表，执行以下步骤：
 
 #### 第一步：项目初始化
-1. 目录创建：新建目录，目录名称以"deepfish-"开头,如"deepfish-「项目功能名称」"，作为NPM项目根目录，并作为当前项目的名称
+1. 目录创建：新建目录，目录名称以"deepfish-ai-"开头,如"deepfish-ai-「项目功能名称」"，作为NPM项目根目录，并作为当前项目的名称
 2. package.json配置：
-   - name字段值：与项目名称一致，即"deepfish-「项目功能名称」"
+   - name字段值：与项目名称一致，即"deepfish-ai-「项目功能名称」"
    - version字段值：初始版本设置为1.0.0
    - description字段值：用专业英文简要描述该项目的核心功能和价值, 以"A DeepFish AI extension tool for"开头
    - git仓库地址：固定为 https://github.com/qq306863030/deepfish-extensions.git
@@ -80,7 +80,7 @@ async function generateSkillRule(goal) {
 3. 内置工具函数调用：函数内可以使用内置工具函数requestAI来获取AI请求结果，在环境中通过this.Tools注入，示例：
    - this.Tools.requestAI(systemDescription, prompt, temperature)
 4. 函数数量：至少包含1个可被AI工作流调用的函数
-5. 尽量保持代码思路清晰，避免过度复杂的逻辑嵌套，必要时可以适当拆分函数、添加注释说明或拆分成多个文件
+5. 保持代码思路清晰，避免过度复杂的逻辑嵌套，如果文件过大，必须拆分成多个文件
 6. 对于大于5个的扩展功能，需要在functions中输出一个说明函数，只需返回一个markdown类型的英文字符串，专门用于解释当前扩展工具的使用方法、参数说明、示例等内容，函数名称为「readme」，如「systemFileManagement_readme」；函数描述需要强调调用该扩展模块前必须先阅读该规则文档。
 
 ##### 2.3 基础代码模板（必须遵循）
@@ -196,7 +196,7 @@ module.exports = functions
 2. 快速开始：
    - 明确说明安装步骤：
      ① 全局安装deepfish-ai：npm install deepfish-ai -g
-     ② 全局安装当前项目：npm install @deepfish-ai/项目功能名称 -g
+     ② 全局安装当前项目：npm install deepfish-ai-「项目功能名称」 -g
      ③ 在命令行中输入：ai 「扩展的某一个功能」。如：添加了一个查询天气的扩展。则输入：ai 查询一下今天的天气
 3. 函数列表及功能描述：
    - 列出当前项目中所有函数名称

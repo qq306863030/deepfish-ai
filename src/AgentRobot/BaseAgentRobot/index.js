@@ -76,12 +76,12 @@ export default class BaseAgentRobot {
     this.config = opt
     this.id = opt.id || Date.now().toString()
     this.name = opt.name || 'AgentRobot'
+    this.screenPrinter = new ScreenPrinter() // 屏幕打印机
     this._initFiles(opt) // 初始化文件
 
     this.originalTools = this._getOriginalTools() // 天赋技能
     this.attachTools = opt.attachTools || [] // 附加工具, 机器人后续安装的工具函数
     this.systemPrompt = opt.systemPrompt || this._getDefaultSystemPrompt(opt) // 系统提示语
-    this.screenPrinter = new ScreenPrinter() // 屏幕打印机
     this.brain = new Brain(this) // 初始化大脑
     this.hand = new Hand(this) // 初始化手
     this._initEvents() // 初始化大脑事件
