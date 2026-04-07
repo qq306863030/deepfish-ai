@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-06 16:07:24
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-04-07 15:17:03
  * @FilePath: \deepfish\src\cli\HistoryManager.js
  * @Description: 对话历史记录、恢复
  * @
@@ -14,7 +14,7 @@ import { logSuccess, logError, logInfo } from '../core/utils/log.js'
 import { openDirectory } from '../core/utils/normal.js'
 // cache => [history.json, id => [message.json, logs => [log.txt]]]
 // messageType:1.主会话 2.子会话（每次开始前自动清空上下文） 3.子任务会话（任务开始前，自动加载会话历史，或加载主会话历史）
-class HistoryManager {
+class MemeryManager {
   constructor() {
     this.configManager = GlobalVariable.configManager
     this.memeryDir = path.join(this.configManager.configDir, 'memery')
@@ -52,4 +52,4 @@ class HistoryManager {
   }
 }
 
-export default HistoryManager
+export default MemeryManager

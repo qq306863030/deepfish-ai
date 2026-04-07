@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-19 11:45:10
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-04 16:15:11
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-04-07 15:15:43
  * @FilePath: \deepfish\src\cli\ai-config.js
  * @Description: ai config 相关命令
  * @
@@ -139,18 +139,20 @@ configCommand
       {
         type: 'number',
         name: 'maxTokens',
-        message: 'Enter max tokens:',
+        message: 'Enter max tokens (KB):',
         default: (answers) => {
-          if (answers.Type === 'DeepSeek') {
-            if (answers.model === 'deepseek-chat') {
-              return 8192
-            } else if (answers.model === 'deepseek-reasoner') {
-              return 8192
-            }
-          }
           return aiCliConfig[answers.Type].maxTokens
         },
         validate: (value) => value > 0 || 'Max tokens must be greater than 0',
+      },
+      {
+        type: 'number',
+        name: 'maxContextLength',
+        message: 'Enter max context length (KB):',
+        default: (answers) => {
+          return aiCliConfig[answers.Type].maxContextLength
+        },
+        validate: (value) => value > 0 || 'Max context length must be greater than 0',
       },
       {
         type: 'confirm',
@@ -170,6 +172,7 @@ configCommand
       apiKey: answers.apiKey,
       temperature: answers.temperature,
       maxTokens: answers.maxTokens,
+      maxContextLength: answers.maxContextLength,
       stream: answers.stream,
     }
     return configManager.addAiConfig(aiConfig)

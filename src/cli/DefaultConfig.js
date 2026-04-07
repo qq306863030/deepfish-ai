@@ -20,7 +20,8 @@ const aiCliConfig = {
     type: 'deepseek',
     apiKey: '',
     temperature: 0.7,
-    maxTokens: 8192,
+    maxTokens: 8, // 单位KB
+    maxContextLength: 64, // 单位KB
     stream: true,
   },
   Ollama: {
@@ -32,7 +33,8 @@ const aiCliConfig = {
     type: 'ollama',
     apiKey: 'ollama',
     temperature: 0.7,
-    maxTokens: 8192,
+    maxTokens: 8, // 单位KB
+    maxContextLength: 64, // 单位KB
     stream: true,
   },
   OpenAI: {
@@ -43,8 +45,8 @@ const aiCliConfig = {
     },
     type: 'openai',
     apiKey: '',
-    temperature: 0.7,
-    maxTokens: 8192,
+    maxTokens: 8, // 单位KB
+    maxContextLength: 64, // 单位KB
     stream: true,
   },
 }

@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:07:51
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-25 16:03:48
+ * @LastEditTime: 2026-04-07 15:21:20
  * @FilePath: \deepfish\src\cli\ai-skill.js
  * @Description: AI skill management CLI
  * @
@@ -38,7 +38,7 @@ skillCommand
 
 skillCommand
   .command('dir')
-  .description('Open the history directory')
+  .description('Open the skill directory')
   .action(() => {
     skillConfigManager.openDirectory()
   })

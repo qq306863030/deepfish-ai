@@ -1,4 +1,6 @@
 import AICLI from './core/AICLI.js'
-import BaseExtension from './core/extension/BaseExtension.js'
+import MainAgentRobot from './AgentRobot/MainAgentRobot.js'
+import SubAgentRobot from './AgentRobot/SubAgentRobot.js'
+import SubSkillAgentRobot from './AgentRobot/SubSkillAgentRobot.js'
 
-export { AICLI, BaseExtension }
+export { AICLI, MainAgentRobot, SubAgentRobot, SubSkillAgentRobot }

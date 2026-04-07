@@ -4,9 +4,8 @@ import AICLI from '../core/AICLI.js'
 import { logError } from '../core/utils/log.js'
 import { GlobalVariable } from '../core/GlobalVariable.js'
 import './ai-config.js'
-import './ai-ext.js'
 import './ai-skill.js'
-import './ai-history.js'
+import './ai-memery.js'
 program
   .version('1.0.0')
   .description(
@@ -24,9 +23,8 @@ async function main() {
     if (
       (program.args &&
         (program.args[0] === 'config' ||
-          program.args[0] === 'ext' ||
           program.args[0] === 'skill')) ||
-      program.args[0] === 'history'
+          program.args[0] === 'memery'
     ) {
       return
     }

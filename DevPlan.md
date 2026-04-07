@@ -33,10 +33,6 @@
             -log-{YYYY-MM-DD HH}.txt // 以小时为单位的日志文件
 
 3. 子agent的记忆文件和结构跟随生命周期创建和删除
-4. agent上下文恢复
-5. 适配扩展技能，自动将扩展创建为子agent
-6. 扩展生成、任务列表、测试等子agent创建
-7. openclaw skill加载执行agent
 8. 守护进程
 9. agent连接
 10. 看板、对话界面

@@ -1,9 +1,9 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-05 23:06:27
- * @FilePath: \deepfish\src\AgentRobot\utils\MessageCompresser.js
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-04-07 15:14:34
+ * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\utils\MessageCompresser.js
  * @Description: 上下文管理-添加、自动压缩
  * @
  */
@@ -12,7 +12,7 @@ import { BrainEvent } from '../Brain.js'
 export default class MessageCompresser {
   constructor(robotBrain) {
     this.robotBrain = robotBrain
-    this.maxContextLength = this.robotBrain.maxContextLength * 1024 * 0.9 // 留出10%空间给工具调用等其他内容
+    this.maxContextLength = (this.robotBrain.maxContextLength || 32) * 1024 * 0.9 // 留出10%空间给工具调用等其他内容
   }
   /**
    * 压缩消息，根据配置压缩消息长度和数量
