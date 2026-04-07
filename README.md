@@ -109,7 +109,7 @@ npm link
 
 ```bash
 ai config add # Enter a name, then select deepseek, and enter your DeepSeek API key
-ai use [the_name_you_entered]
+ai config use [the_name_you_entered]
 ai "Help me write an article about future technology in the current directory, output in markdown format"
 ```
 
@@ -145,13 +145,6 @@ ai config view [name] # View details of the specified AI configuration
 ai config edit # Edit the configuration file manually
 ai config dir # Open the configuration file directory
 ai config reset # Reset configuration
-ai config clear # Delete the configuration file
-
-# Extension commands
-ai ext add <filename> # Add an extension tool
-ai ext del <filepath> # Remove an extension tool by file path
-ai ext del <index> # Remove an extension tool by index
-ai ext ls # List all extension tools
 
 # Skill commands
 ai skill ls # List all registered skills
@@ -162,11 +155,9 @@ ai skill enable <name|index> # Enable a skill by name or index, exp: ai skill en
 ai skill disable <name|index> # Disable a skill by name or index, exp: ai skill disable 1
 ai skill dir # Open the skill directory
 
-# History commands
-ai history clear # Clear the history messages for the current directory
-ai history output # Output the history messages to current directory
-ai history dir # Open the history directory
-ai history reset # Reset all history for all directories
+# Memory commands
+ai memery clear # Clear the history messages for the current directory
+ai memery dir # Open the memory directory
 ```
 
 ### Configuration File Structure
@@ -174,7 +165,7 @@ ai history reset # Reset all history for all directories
 The configuration file (`~/.deepfish-ai/config.js`) has the following structure:
 
 ```javascript
-module.exports = {
+export default {
   ai: [
     {
       name: "default", // AI configuration name
@@ -182,8 +173,9 @@ module.exports = {
       baseUrl: "https://api.deepseek.com", // API base URL
       model: "deepseek-reasoner", // AI model name
       apiKey: "", // API key (required for DeepSeek and OpenAI)
-      temperature: 1, // Response randomness (0-2)
-      maxTokens: 8192, // Maximum response length
+      temperature: 0.7, // Response randomness (0-2)
+      maxTokens: 8, // Maximum response length (KB)
+      maxContextLength: 64, // Maximum context length (KB)
       stream: true, // Enable/disable streaming output
     }
   ],
@@ -191,12 +183,11 @@ module.exports = {
   maxIterations: -1, // Maximum iterations for AI to complete the workflow, -1 for unlimited
   maxMessagesLength: 150000, // Maximum compression length, -1 for unlimited
   maxMessagesCount: 100, // Maximum compression count, -1 for unlimited
-  maxHistoryExpireTime: 30, // Maximum session expiration time in days, -1 for unlimited, 0 to disable recording
+  maxMemoryExpireTime: 30, // Maximum session expiration time in days, -1 for unlimited, 0 to disable recording
   maxLogExpireTime: 3, // Log expiration time in days, -1 for unlimited, 0 to disable recording
   maxBlockFileSize: 20, // Maximum block file size in KB; files exceeding this size need to be processed in blocks
-  extensions: [], // List of extension file paths
   skills: [], // List of skill configurations
-  encoding: "utf-8", // Command line encoding format, can be set to utf-8, gbk, etc., or auto/empty for auto-detection
+  encoding: "auto", // Command line encoding format, can be set to utf-8, gbk, etc., or auto/empty for auto-detection
 };
 ```
 
@@ -251,7 +242,6 @@ ai "Check disk usage for the current directory"
 
 ```bash
 ai "Create a weather.js extension tool for querying weather"
-ai ext add weather.js
 ```
 
 **Skill Management:**
@@ -341,20 +331,13 @@ module.exports = {
 
 ### Registering Extensions
 
-**Method 1: Using Command Line**
-
-```bash
-ai ext add <filename> # ai ext add weather.js
-ai ext add . # Traverse the current directory, automatically scan and add extensions
-```
-
-**Method 2: Manual Configuration**
+**Method 1: Manual Configuration**
 
 1. ai config edit
 2. Add it to your configuration:
 
 ```javascript
-module.exports = {
+export default {
   // ... other configurations
   extensions: [
     '/path/to/weather-extension.js'
@@ -362,19 +345,19 @@ module.exports = {
 };
 ```
 
-**Method 3: Automatic Scanning**
+**Method 2: Automatic Scanning**
 
 Rules for automatic scanning of extension modules upon program startup:
 
 1. Scanning locations:
-   - node_modules in the npm root directory
-   - node_modules in the command execution directory
-   - the command execution directory itself
+  - the DeepFish installation directory (where `deepfish-ai` is located)
+  - `node_modules` under the current working directory
+  - the current working directory itself
 
 2. Scanned files:
-   - Extension packages under the @deepfish-ai directory
-   - Extension packages starting with "deepfish-"
-   - JavaScript extension files in the command execution directory, which are automatically loaded if they contain the strings 'module.exports', 'descriptions', and 'functions'
+  - scoped packages under `@deepfish-ai/*` in the locations above
+  - packages starting with `deepfish-` in the locations above (excluding `deepfish-ai` itself)
+  - top-level `.js` / `.mjs` files in the current working directory are scanned additionally; files containing `module.exports`, `descriptions`, and `functions` are treated as auto-loadable extensions
   
 ## 7. Recommendations
 
@@ -401,12 +384,10 @@ AI always uses paths relative to the current working directory.
 
 Conversation history is created on a per-directory basis — each execution directory corresponds to its own Agent context. This means that conversations started in different directories are independent of each other.
 
-Conversation history will be automatically cleared after a configurable period (controlled by the `maxHistoryExpireTime` field in the configuration file, default is 30 days). You can also manage it manually:
+Conversation history will be automatically cleared after a configurable period (controlled by the `maxMemoryExpireTime` field in the configuration file, default is 30 days). You can also manage it manually:
 
-- `ai history dir` — Open the history directory to view stored conversation contexts
-- `ai history clear` — Manually clear the conversation history for the current directory
-- `ai history output` — Export the conversation history to the current directory
-- `ai history reset` — Reset all conversation history for all directories
+- `ai memery dir` — Open the memory directory to view stored conversation contexts
+- `ai memery clear` — Manually clear the conversation history for the current directory
 
 ## 9. Troubleshooting
 

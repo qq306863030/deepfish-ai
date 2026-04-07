@@ -4,7 +4,7 @@ import { DeepFishAI } from '../index.js'
 import { GlobalVariable } from './GlobalVariable.js'
 import './ai-config.js'
 import './ai-skill.js'
-import './ai-memery.js'
+import './ai-memory.js'
 import aiConsole from '../AgentRobot/BaseAgentRobot/utils/aiConsole.js'
 program
   .version('1.0.0')
@@ -24,7 +24,7 @@ async function main() {
       (program.args &&
         (program.args[0] === 'config' ||
           program.args[0] === 'skill')) ||
-          program.args[0] === 'memery'
+          program.args[0] === 'memory'
     ) {
       return
     }

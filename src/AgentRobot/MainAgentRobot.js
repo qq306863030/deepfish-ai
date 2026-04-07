@@ -21,9 +21,9 @@ export default class MainAgentRobot extends BaseAgentRobot {
   _initFiles(opt) {
     this.workspace = opt.workspace || process.cwd() // 工作空间，目录
     this.basespace = opt.basespace || path.join(os.homedir(), '.deepfish-ai') // 记忆空间，目录
-    this.memerySpace = path.join(this.basespace, 'memery') // 记忆空间，目录
-    this.agentRecordFilePath = path.join(this.memerySpace, 'agentRecord.json')
-    fs.ensureDirSync(this.memerySpace)
+    this.memorySpace = path.join(this.basespace, 'memory') // 记忆空间，目录
+    this.agentRecordFilePath = path.join(this.memorySpace, 'agentRecord.json')
+    fs.ensureDirSync(this.memorySpace)
     // 查看agentRecord.json文件是否存在，不存在则创建
     if (!fs.pathExistsSync(this.agentRecordFilePath)) {
       fs.writeJsonSync(this.agentRecordFilePath, [], { spaces: 2 })
@@ -47,7 +47,7 @@ export default class MainAgentRobot extends BaseAgentRobot {
       })
     }
     fs.writeJsonSync(this.agentRecordFilePath, agentRecord, { spaces: 2 })
-    this.agentSpace = path.join(this.memerySpace, this.id) // 机器人空间，目录
+    this.agentSpace = path.join(this.memorySpace, this.id) // 机器人空间，目录
     fs.ensureDirSync(this.agentSpace)
     this.agentTreeFilePath = path.join(this.agentSpace, 'agentTree.json')
     if (!fs.pathExistsSync(this.agentTreeFilePath)) {
@@ -78,7 +78,7 @@ export default class MainAgentRobot extends BaseAgentRobot {
         opt.maxMemoryExpireTime
       ) {
         // 删除机器人空间
-        fs.removeSync(path.join(this.memerySpace, record.agentId))
+        fs.removeSync(path.join(this.memorySpace, record.agentId))
         return false
       }
       return true

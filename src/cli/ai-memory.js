@@ -1,22 +1,22 @@
 import { program } from 'commander'
-import MemeryManager from './MemeryManager.js'
+import MemoryManager from './MemoryManager.js'
 
-const memeryManager = new MemeryManager()
+const memoryManager = new MemoryManager()
 const extCommand = program
-  .command('memery')
+  .command('memory')
   .description('Memory management commands')
 
 extCommand
   .command('clear')
   .description('Clear the memory messages for the current directory')
   .action(() => {
-    memeryManager.clearMessage()
+    memoryManager.clearMessage()
   })
 
 extCommand
   .command('dir')
   .description('Open the memory directory')
   .action(() => {
-    memeryManager.openDirectory()
+    memoryManager.openDirectory()
   })
 

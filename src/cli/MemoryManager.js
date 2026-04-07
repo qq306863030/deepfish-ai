@@ -14,11 +14,11 @@ import aiConsole from '../AgentRobot/BaseAgentRobot/utils/aiConsole.js'
 import { openDirectory } from '../AgentRobot/BaseAgentRobot/utils/normal.js'
 // cache => [history.json, id => [message.json, logs => [log.txt]]]
 // messageType:1.主会话 2.子会话（每次开始前自动清空上下文） 3.子任务会话（任务开始前，自动加载会话历史，或加载主会话历史）
-class MemeryManager {
+class MemoryManager {
   constructor() {
     this.configManager = GlobalVariable.configManager
-    this.memeryDir = path.join(this.configManager.configDir, 'memery')
-    this.agentRecordFilePath = path.join(this.memeryDir, 'agentRecord.json')
+    this.memoryDir = path.join(this.configManager.configDir, 'memory')
+    this.agentRecordFilePath = path.join(this.memoryDir, 'agentRecord.json')
     this.workspace = process.cwd()
   }
 
@@ -32,7 +32,7 @@ class MemeryManager {
       return aiConsole.logError('No history found for the current directory.')
     }
     const agentId = agent.agentId
-    const dir = path.join(this.memeryDir, agentId)
+    const dir = path.join(this.memoryDir, agentId)
     openDirectory(dir)
   }
 
@@ -45,11 +45,11 @@ class MemeryManager {
     if (!~agentIndex) {
       return aiConsole.logError('No history found for the current directory.')
     }
-    fs.removeSync(path.join(this.memeryDir, agentRecord[agentIndex].agentId))
+    fs.removeSync(path.join(this.memoryDir, agentRecord[agentIndex].agentId))
     agentRecord.splice(agentIndex, 1)
     fs.writeJSONSync(this.agentRecordFilePath, agentRecord, { spaces: 2 })
     aiConsole.logSuccess('History cleared.')
   }
 }
 
-export default MemeryManager
+export default MemoryManager

@@ -7,15 +7,15 @@ export default class Logger {
     this.logDirPath = agentRobot.logDirPath
     this.screenPrinter = agentRobot.screenPrinter
     this.maxLogExpireTime = agentRobot.config.maxLogExpireTime
-    this.memerySpace = agentRobot.memerySpace
+    this.memorySpace = agentRobot.memorySpace
     this.logTimeMap = new Map()
   }
   clearAllLogs() {
-    const fileNames = fs.readdirSync(this.memerySpace)
+    const fileNames = fs.readdirSync(this.memorySpace)
     const currentDate = dayjs()
     fileNames.forEach((fileName) => {
       // 如果是目录则进入logs目录，清除日志文件
-      const filePath = path.join(this.memerySpace, fileName)
+      const filePath = path.join(this.memorySpace, fileName)
       if (fs.statSync(filePath).isDirectory()) {
         const logDir = path.join(filePath, 'logs')
         if (fs.existsSync(logDir) && fs.statSync(logDir).isDirectory()) {

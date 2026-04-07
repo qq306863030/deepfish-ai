@@ -107,7 +107,7 @@ npm link
 
 ```bash
 ai config add # 输入名称, 然后选择deepseek，并输入你的deepseek api key
-ai use 你输入的名称
+ai config use 你输入的名称
 ai ”帮我在当前目录写一篇关于未来科技的文章，用markdown格式输出“
 ```
 
@@ -143,13 +143,6 @@ ai config view [name] # 查看指定AI配置的详细信息
 ai config edit # 编辑配置文件手动编辑配置文件
 ai config dir # 打开配置文件所在目录
 ai config reset # 重置配置
-ai config clear # 删除配置文件
-
-# 扩展命令
-ai ext add <filename> # 添加扩展工具
-ai ext del <filepath> # 通过文件路径移除扩展工具
-ai ext del <index> # 通过索引移除扩展工具
-ai ext ls # 列出所有扩展工具
 
 # Skill 命令
 ai skill ls # 列出所有已注册的 skill
@@ -160,11 +153,9 @@ ai skill enable <name|index> # 通过名称或索引启用 skill, exp: ai skill 
 ai skill disable <name|index> # 通过名称或索引禁用 skill, exp: ai skill disable 1
 ai skill dir # 打开 skill 目录
 
-# 历史记录命令
-ai history clear # 清除当前目录的对话历史
-ai history output # 将历史消息输出到当前目录
-ai history dir # 打开历史记录目录
-ai history reset # 清除所有目录的对话历史
+# 记忆命令
+ai memery clear # 清除当前目录的对话历史
+ai memery dir # 打开记忆目录
 ```
 
 ### 配置文件结构
@@ -172,7 +163,7 @@ ai history reset # 清除所有目录的对话历史
 配置文件 (`~/.deepfish-ai/config.js`) 具有以下结构：
 
 ```javascript
-module.exports = {
+export default {
   ai: [
     {
       name: "default", // AI配置名称
@@ -180,8 +171,9 @@ module.exports = {
       baseUrl: "https://api.deepseek.com", // API基础URL
       model: "deepseek-reasoner", // AI模型名称
       apiKey: "", // API密钥（DeepSeek和OpenAI需要）
-      temperature: 1, // 响应随机性（0-2）
-      maxTokens: 8192, // 最大响应长度
+      temperature: 0.7, // 响应随机性（0-2）
+      maxTokens: 8, // 最大响应长度（KB）
+      maxContextLength: 64, // 最大上下文长度（KB）
       stream: true, // 启用/禁用流式输出
     }
   ],
@@ -189,12 +181,11 @@ module.exports = {
   maxIterations: -1, // ai完成工作流的最大迭代次数，-1表示无限制
   maxMessagesLength: 150000, // 最大压缩长度，-1表示无限制
   maxMessagesCount: 100, // 最大压缩数量，-1表示无限制
-  maxHistoryExpireTime: 30, // 整个会话的最大过期时间，单位天，-1表示无限制，0表示不记录
+  maxMemoryExpireTime: 30, // 整个会话的最大过期时间，单位天，-1表示无限制，0表示不记录
   maxLogExpireTime: 3, // 日志过期时间，单位天，-1表示无限制，0表示不记录
   maxBlockFileSize: 20, // 最大分块文件大小，单位KB；超过该大小的文件需要分块处理
-  extensions: [], // 扩展文件路径列表
   skills: [], // 技能配置列表
-  encoding: "utf-8", // 命令行编码格式，可设置为utf-8、gbk等，也可以设置成auto或空值自动判断
+  encoding: "auto", // 命令行编码格式，可设置为utf-8、gbk等，也可以设置成auto或空值自动判断
 };
 ```
 
@@ -249,7 +240,6 @@ ai "检查当前目录的磁盘使用情况"
 
 ```bash
 ai "创建一个用于查询天气的扩展工具weather.js"
-ai ext add weather.js
 ```
 
 **Skill 管理：**
@@ -339,20 +329,13 @@ module.exports = {
 
 ### 注册扩展
 
-**方法1：使用命令行**
-
-```bash
-ai ext add <filename> # ai ext add weather.js
-ai ext add . # 遍历当前目录，自动扫描并添加扩展
-```
-
-**方法2：手动配置**
+**方法1：手动配置**
 
 1. ai config edit
 2. 将其添加到您的配置中：
 
 ```javascript
-module.exports = {
+export default {
   // ... 其他配置
   extensions: [
     '/path/to/weather-extension.js'
@@ -360,17 +343,17 @@ module.exports = {
 };
 ```
 
-**方法3：自动扫描**
+**方法2：自动扫描**
 
 程序启动时自动扫描扩展模块的规则:
 1. 扫描位置:
-    - npm根目录的node_modules
-    - 命令执行目录的node_modules
-    - 命令执行目录
+  - 程序安装目录（deepfish-ai 程序所在目录）
+  - 当前工作目录的 node_modules 目录
+  - 当前工作目录
 2. 扫描文件:
-    - @deepfish-ai目录下的扩展包
-    - deepfish-开头的扩展包
-    - 命令执行目录的js扩展文件，js文件内包含'module.exports'、'descriptions'和'functions'字符串则视为扩展文件自动加载
+  - 在以上目录中扫描 `@deepfish-ai/*` 作用域包
+  - 在以上目录中扫描 `deepfish-` 开头的包（排除 `deepfish-ai` 本体）
+  - 在当前工作目录额外扫描顶层 `.js` / `.mjs` 文件, 文件内容包含 `module.exports`、`descriptions`、`functions` 字符串时视为可自动加载扩展
 
 ## 7. 建议
 
@@ -397,12 +380,10 @@ AI始终使用相对于当前工作目录的相对路径。
 
 对话历史是以程序执行目录为单位创建的，每个程序的执行目录会对应一个独立的 Agent 上下文。这意味着在不同目录下启动的对话是相互独立的。
 
-对话历史会在一定时间内自动清除（通过配置文件中的 `maxHistoryExpireTime` 字段控制，默认为 30 天）。您也可以手动管理对话历史：
+对话历史会在一定时间内自动清除（通过配置文件中的 `maxMemoryExpireTime` 字段控制，默认为 30 天）。您也可以手动管理对话历史：
 
-- `ai history dir` — 打开历史记录目录，查看已存储的对话上下文
-- `ai history clear` — 清除当前目录的对话历史
-- `ai history output` — 将对话历史导出到当前目录
-- `ai history reset` — 清除所有目录的对话历史
+- `ai memery dir` — 打开记忆目录，查看已存储的对话上下文
+- `ai memery clear` — 清除当前目录的对话历史
 
 ## 9. 故障排除
 
