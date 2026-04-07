@@ -1,4 +1,4 @@
-import { AttachmentToolType } from "../utils/AttachmentToolScanner"
+import { AttachmentToolType } from "../utils/AttachmentToolScanner.js"
 
 // 创建子 agent 并让其仅携带指定 skill 执行任务
 async function createSubSkillAgent(skillName, skillType, workGoal) {

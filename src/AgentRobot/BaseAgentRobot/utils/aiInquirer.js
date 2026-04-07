@@ -66,11 +66,13 @@ function askAny(questions) {
   return inquirer.prompt(questions)
 }
 
-
-export {
+const aiInquirer = {
   askAny,
   askConfirm,
   askList,
   askInput,
   askNumber,
 }
+
+
+export default aiInquirer

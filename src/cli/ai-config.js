@@ -9,8 +9,8 @@
  */
 import { program } from 'commander'
 import { aiCliConfig } from './DefaultConfig.js'
-import { askConfirm, askAny } from '../core/utils/log.js'
 import ConfigManager from './ConfigManager.js'
+import aiInquirer from '../AgentRobot/BaseAgentRobot/utils/aiInquirer.js'
 
 const configManager = new ConfigManager()
 const configCommand = program
@@ -35,7 +35,7 @@ configCommand
   .command('reset')
   .description('Reset configuration file')
   .action(async () => {
-    const isReset = await askConfirm(
+    const isReset = await aiInquirer.askConfirm(
       'isReset',
       'Are you sure you want to reset the configuration file?',
       false,
@@ -163,7 +163,7 @@ configCommand
         },
       },
     ]
-    const answers = await askAny(questions)
+    const answers = await aiInquirer.askAny(questions)
     const aiConfig = {
       name: answers.name,
       type: aiCliConfig[answers.Type].type,

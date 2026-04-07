@@ -1,5 +1,5 @@
 import fs from 'fs-extra'
-import { EventEmitterSuper } from 'eventemitter-super'
+import EventEmitterSuper  from 'eventemitter-super'
 import MessageCompresser from './utils/MessageCompresser.js'
 import { creatClient, think, thinkByTool } from './utils/AIRequest.js'
 import lodash from 'lodash'

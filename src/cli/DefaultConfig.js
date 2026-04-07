@@ -45,6 +45,7 @@ const aiCliConfig = {
     },
     type: 'openai',
     apiKey: '',
+    temperature: 0.7,
     maxTokens: 8, // 单位KB
     maxContextLength: 64, // 单位KB
     stream: true,

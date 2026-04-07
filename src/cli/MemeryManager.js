@@ -9,9 +9,9 @@
  */
 import fs from 'fs-extra'
 import path from 'path'
-import { GlobalVariable } from '../core/GlobalVariable.js'
-import { logSuccess, logError, logInfo } from '../core/utils/log.js'
-import { openDirectory } from '../core/utils/normal.js'
+import { GlobalVariable } from './GlobalVariable.js'
+import aiConsole from '../AgentRobot/BaseAgentRobot/utils/aiConsole.js'
+import { openDirectory } from '../AgentRobot/BaseAgentRobot/utils/normal.js'
 // cache => [history.json, id => [message.json, logs => [log.txt]]]
 // messageType:1.主会话 2.子会话（每次开始前自动清空上下文） 3.子任务会话（任务开始前，自动加载会话历史，或加载主会话历史）
 class MemeryManager {
@@ -29,7 +29,7 @@ class MemeryManager {
       return item.workspace === this.workspace
     })
     if (!agent) {
-      return logError('No history found for the current directory.')
+      return aiConsole.logError('No history found for the current directory.')
     }
     const agentId = agent.agentId
     const dir = path.join(this.memeryDir, agentId)
@@ -43,12 +43,12 @@ class MemeryManager {
       return item.workspace === this.workspace
     })
     if (!~agentIndex) {
-      return logError('No history found for the current directory.')
+      return aiConsole.logError('No history found for the current directory.')
     }
     fs.removeSync(path.join(this.memeryDir, agentRecord[agentIndex].agentId))
     agentRecord.splice(agentIndex, 1)
     fs.writeJSONSync(this.agentRecordFilePath, agentRecord, { spaces: 2 })
-    logSuccess('History cleared.')
+    aiConsole.logSuccess('History cleared.')
   }
 }
 

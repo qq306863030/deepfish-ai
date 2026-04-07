@@ -1,28 +1,28 @@
-import { askAny, askConfirm, askInput, askList, askNumber } from "../utils/inquirer.js"
+import aiInquirer from "../utils/aiInquirer.js"
 
 // 判断问答
 async function inquirerConfirm(message, defaultVal = true, opt = {}) {
-  return askConfirm(message, defaultVal = true, opt = {})
+  return aiInquirer.askConfirm(message, defaultVal = true, opt = {})
 }
 
 // 选择问答
 function inquirerList(message, choices, defaultVal = 0, opt = {}) {
-  return askList(message, choices, defaultVal = 0, opt = {})
+  return aiInquirer.askList(message, choices, defaultVal = 0, opt = {})
 }
 
 // 输入问答
 async function inquirerInput(message, defaultVal = '', opt = {}) {
-  return askInput(message, defaultVal = '', opt = {})
+  return aiInquirer.askInput(message, defaultVal = '', opt = {})
 }
 
 // 输入数字
 async function inquirerNumber(message, defaultVal = 0, opt = {}) {
-  return askNumber(message, defaultVal = 0, opt = {})
+  return aiInquirer.askNumber(message, defaultVal = 0, opt = {})
 }
 
 // 输入任何
 function inquirerAny(questions) {
-  return askAny(questions)
+  return aiInquirer.askAny(questions)
 }
 
 const descriptions = [

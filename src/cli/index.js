@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { program } from 'commander'
-import AICLI from '../core/AICLI.js'
-import { logError } from '../core/utils/log.js'
-import { GlobalVariable } from '../core/GlobalVariable.js'
+import { DeepFishAI } from '../index.js'
+import { GlobalVariable } from './GlobalVariable.js'
 import './ai-config.js'
 import './ai-skill.js'
 import './ai-memery.js'
+import aiConsole from '../AgentRobot/BaseAgentRobot/utils/aiConsole.js'
 program
   .version('1.0.0')
   .description(
@@ -43,20 +43,20 @@ async function main() {
     const configManager = GlobalVariable.configManager
     // 判断当前列表是否为空
     if (configManager.isAiListEmpty()) {
-      logError('No AI configurations found.')
-      logError("Please use 'ai config add' to add a new AI configuration.")
+      aiConsole.logError('No AI configurations found.')
+      aiConsole.logError("Please use 'ai config add' to add a new AI configuration.")
       return
     }
     const currentAi = configManager.getCurrentAi()
     // 判断当前是否有设置当前配置
     if (!currentAi || currentAi.trim() === '') {
-      logError('No current AI configuration set.')
-      logError(
+      aiConsole.logError('No current AI configuration set.')
+      aiConsole.logError(
         "Please use 'ai config use <name>' to set a current configuration.",
       )
       return
     }
-    const cli = new AICLI(configManager.getAppConfig())
+    const cli = new DeepFishAI(configManager.getAppConfig())
     if (options.interactive) {
       cli.startInteractive()
       return
@@ -66,7 +66,7 @@ async function main() {
       cli.run(prompt)
     }
   } catch (error) {
-    logError(error.stack)
+    aiConsole.logError(error.stack)
   }
 }
 

@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-07 11:22:09
+ * @LastEditTime: 2026-04-07 15:49:00
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -12,8 +12,8 @@ import fs from 'fs-extra'
 import iconv from 'iconv-lite'
 import { createRequire } from 'module'
 import { spawnSync } from 'child_process'
-import { logError, logInfo, logSuccess } from '../../../core/utils/log.js'
 import { detectEncoding, getPath } from '../utils/normal.js'
+import aiConsole from '../utils/aiConsole.js'
 
 const require = createRequire(import.meta.url)
 const { fileDir } = getPath(import.meta.url)
@@ -21,7 +21,7 @@ const { fileDir } = getPath(import.meta.url)
 // 执行系统命令
 // 执行系统命令（全平台兼容：Windows/PowerShell/CentOS）
 function executeCommand(command, timeout = -1) {
-  logSuccess(
+  aiConsole.logSuccess(
     `Executing system command: ${command}; ${timeout > 0 ? `Timeout: ${timeout}ms` : 'No timeout limit'}`,
   )
   try {
@@ -43,13 +43,13 @@ function executeCommand(command, timeout = -1) {
     const code = result.status
     if (stderr && !stderr.trim().startsWith('WARNING')) {
       const error = new Error(`Command failed (code ${code}): ${stderr.trim()}`)
-      logError(`Execute error: ${error.message}`)
+      aiConsole.logError(`Execute error: ${error.message}`)
       return `Execute error: ${error.message}`
     }
-    logSuccess(`${stdout}\nCommand executed successfully`)
+    aiConsole.logSuccess(`${stdout}\nCommand executed successfully`)
     return stdout || 'Command executed successfully'
   } catch (decodeError) {
-    logError(`Encoding convert error: ${decodeError.message}`)
+    aiConsole.logError(`Encoding convert error: ${decodeError.message}`)
     return `Failed to parse command output: ${decodeError.message}`
   }
 }
@@ -60,7 +60,7 @@ async function requestAI(
   prompt,
   temperature = this.agentRobot.opt.aiConfig.temperature,
 ) {
-  logSuccess(`Requesting AI`)
+  aiConsole.logSuccess(`Requesting AI`)
   if (
     typeof systemDescription === 'object' &&
     systemDescription.systemDescription
@@ -69,8 +69,8 @@ async function requestAI(
     systemDescription = systemDescription.systemDescription || ''
   }
   try {
-    logInfo(`aiSystem: ${systemDescription}`)
-    logInfo(`aiPrompt: ${prompt}`)
+    aiConsole.logInfo(`aiSystem: ${systemDescription}`)
+    aiConsole.logInfo(`aiPrompt: ${prompt}`)
     const response = await this.agentRobot.brain.think(
       systemDescription,
       prompt,
@@ -78,15 +78,15 @@ async function requestAI(
     )
     return response.choices[0].message.content
   } catch (error) {
-    logError(`Error executing AI function: ${error.message}`)
+    aiConsole.logError(`Error executing AI function: ${error.message}`)
     throw error
   }
 }
 
 // 执行js代码
 async function executeJSCode(code) {
-  logSuccess('Executing JavaScript code: ')
-  logSuccess(code)
+  aiConsole.logSuccess('Executing JavaScript code: ')
+  aiConsole.logSuccess(code)
 
   try {
     const functions = this.agentRobot.getTools()
@@ -119,7 +119,7 @@ async function executeJSCode(code) {
 
     return result || ''
   } catch (error) {
-    logError(`Error executing code: ${error.stack}`)
+    aiConsole.logError(`Error executing code: ${error.stack}`)
     throw error
   }
 }

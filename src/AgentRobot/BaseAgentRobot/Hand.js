@@ -1,4 +1,4 @@
-import { EventEmitterSuper } from 'eventemitter-super'
+import EventEmitterSuper  from 'eventemitter-super'
 
 export const HandEvent = {
   USE_TOOL_BEFORE: '1',
