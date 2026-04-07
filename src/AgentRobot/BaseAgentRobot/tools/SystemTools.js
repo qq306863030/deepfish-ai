@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-07 18:12:21
+ * @LastEditTime: 2026-04-07 19:49:22
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -127,7 +127,7 @@ async function executeJSCode(code) {
 // 了解自己
 function getSelfInfo() {
   // 返回自己的代码路径、package.json路径、readme路径等基本信息，供AI有选择的了解自己，回答用户的问题
-  const homeDir = path.resolve(fileDir, '../../../')
+  const homeDir = path.resolve(fileDir, '../../../../')
   const packageJson = fs.readJSONSync(path.resolve(homeDir, 'package.json'))
   return {
     config: {

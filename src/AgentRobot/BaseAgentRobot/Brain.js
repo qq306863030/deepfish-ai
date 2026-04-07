@@ -16,6 +16,7 @@ export class BrainEvent {
   static SUB_THINK_ERROR = '1.8' // 子思考错误事件，参数为当前消息列表和错误信息
   static COMPRESS_MESSAGES_BEFORE = '1.9' // 压缩消息事件，参数为当前消息列表
   static COMPRESS_MESSAGES_AFTER = '1.10' // 压缩消息后事件，参数为压缩后的消息列表
+  static NEW_MESSAGE = '1.11' // 新增消息事件，参数为新增的消息
   static THINK_AFTER = '2' // 思考后事件，参数为当前消息列表
 }
 
@@ -45,6 +46,7 @@ export default class Brain extends EventEmitterSuper {
   storeMemory(message) {
     this.messages.push(message)
     fs.writeJsonSync(this.memoryFilePath, this.messages, { spaces: 2 })
+    this.emit(BrainEvent.NEW_MESSAGE, message)
   }
   storeToolReport(toolId, toolReport) {
     if (typeof toolReport === 'object') {

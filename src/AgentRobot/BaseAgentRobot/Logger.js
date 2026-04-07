@@ -34,6 +34,9 @@ export default class Logger {
   }
 
   logExecTime(id, description = '') {
+    if (this.maxLogExpireTime === 0) {
+      return false
+    }
     if (this.logTimeMap.has(id)) {
       const startTime = this.logTimeMap.get(id)
       const duration = dayjs().diff(startTime, 'second')

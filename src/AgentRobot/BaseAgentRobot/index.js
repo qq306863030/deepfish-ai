@@ -122,7 +122,7 @@ export default class BaseAgentRobot {
     const aiConfig = this.opt.aiConfig
     let stopLoading = null
     this.brain.on(BrainEvent.THINK_BEFORE, () => {})
-    this.brain.on(BrainEvent.SUB_THINK_BEFORE, () => {
+    this.brain.on(BrainEvent.SUB_THINK_BEFORE, (messages) => {
       if (!aiConfig.stream) {
         if (stopLoading) {
           stopLoading('I have finished thinking.')
@@ -135,8 +135,7 @@ export default class BaseAgentRobot {
         stopLoading('I have finished thinking.')
         stopLoading = null
         const lastMessage = messages[messages.length - 1]
-        this.screenPrinter.logInfo(lastMessage.content)
-        this.logger.logMessage(lastMessage)
+        this.screenPrinter.logInfo(lastMessage?.content)
       }
     })
     this.brain.on(BrainEvent.SUB_STREAM_THINK_OUTPUT, (messages, output) => {
@@ -178,14 +177,21 @@ export default class BaseAgentRobot {
       if (this.type === 'main') {
         this.screenPrinter.logSuccess(content)
       } else if (this.type === 'sub') {
-        this.screenPrinter.logSuccess(`${this.name} have finished thinking and got the result.`)
+        this.screenPrinter.logSuccess(
+          `${this.name} have finished thinking and got the result.`,
+        )
       }
     })
     this.brain.on(BrainEvent.SUB_THINK_ERROR, (messages, error) => {
       this.screenPrinter.logError(
         `I have an error during thinking: ${error} ${error.message}:${error.stack || ''}`,
       )
-      this.logger.logInfo(`I have an error during thinking: ${error.message}:${error.stack || ''}`)
+      this.logger.logInfo(
+        `I have an error during thinking: ${error.message}:${error.stack || ''}`,
+      )
+    })
+    this.brain.on(BrainEvent.NEW_MESSAGE, (message) => {
+      this.logger.logMessage(message)
     })
     this.hand.on(HandEvent.USE_TOOL_BEFORE, (toolId, funcName, funcArgs) => {
       this.screenPrinter.logInfo(`I'm using tool ${funcName}`)
@@ -214,7 +220,7 @@ export default class BaseAgentRobot {
       fs,
       axios,
       dayjs,
-      lodash
+      lodash,
     }
     tools.forEach((tool) => {
       Object.assign(toolFunctions, tool.functions)
@@ -233,15 +239,15 @@ export default class BaseAgentRobot {
     const toolDescriptions = []
     tools.forEach((tool) => {
       const descriptions = tool.descriptions.map((item) => {
-          if (!item.type) {
-            return {
-              type: 'function',
-              function: item,
-            }
-          } else {
-            return item
+        if (!item.type) {
+          return {
+            type: 'function',
+            function: item,
           }
-        })
+        } else {
+          return item
+        }
+      })
       toolDescriptions.push(...descriptions)
     })
     return toolDescriptions
@@ -249,9 +255,16 @@ export default class BaseAgentRobot {
 
   // 获取原装工具
   _getOriginalTools() {
-    return [FileTools, InquirerTools, SystemTools, CreateAgentTools, GenerateTools, TaskTools, TestTools]
+    return [
+      FileTools,
+      InquirerTools,
+      SystemTools,
+      CreateAgentTools,
+      GenerateTools,
+      TaskTools,
+      TestTools,
+    ]
   }
-
 
   _getDefaultSystemPrompt(opt) {
     const osType = process.platform
@@ -282,8 +295,12 @@ export default class BaseAgentRobot {
     `
   }
 
-  executeTask(goal) {
-    return this.brain.thinkLoop(goal)
+  async executeTask(goal) {
+    const taskId = `task-${Date.now()}`
+    this.logger.logExecTime(taskId, 'execute task goal')
+    const res = await this.brain.thinkLoop(goal)
+    this.logger.logExecTime(taskId, 'execute task end')
+    return res
   }
 
   destroy() {

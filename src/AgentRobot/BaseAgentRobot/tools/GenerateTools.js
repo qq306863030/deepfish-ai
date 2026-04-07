@@ -9,7 +9,7 @@ const descriptions = [
     function: {
       name: 'generateSkillRule',
       description:
-        '如果用户需要为本程序ai工作流生成一个或多个工具函数作为一个工作流执行过程中调用的扩展工具，则需要先调用此函数获取生成扩展文件的规则;示例：生成一个扩展工具: 能够产生一个随机数的函数;',
+        '生成一个扩展工具，则需要先调用此函数获取生成扩展文件的规则;示例：生成一个能够产生一个随机数的函数扩展工具。注意是扩展工具，并非Skill工具包。',
       parameters: {
         type: 'object',
         properties: {
@@ -24,7 +24,7 @@ const descriptions = [
     function: {
       name: 'generateClawSkillRule',
       description:
-        '如果用户需要生成一个兼容OpenClaw规范的Skill工具包，则先调用此函数获取生成Skill工具包的完整规则和提示词;示例：生成一个Skill工具包: 能够抓取网页内容并提取关键信息;',
+        '生成一个兼容OpenClaw规范的Skill工具包，则先调用此函数获取生成Skill工具包的完整规则和提示词;示例：生成一个能够抓取网页内容并提取关键信息Skill工具包。注意是Skill工具包，并非扩展工具。',
       parameters: {
         type: 'object',
         properties: {
@@ -210,7 +210,7 @@ module.exports = functions
 async function generateClawSkillRule(goal) {
   const newGoal = `
 ### 任务目标
-基于OpenClaw Skill规范创建一个标准化的Skill工具包，实现用户目标：${goal}，最终输出可被DeepFish AI直接加载使用。
+基于OpenClaw Skill规范创建一个标准化的Skill工具包，实现用户目标：${goal}，最终输出可被你直接加载使用。
 
 ### 任务步骤
 创建一个任务列表，执行以下步骤：
