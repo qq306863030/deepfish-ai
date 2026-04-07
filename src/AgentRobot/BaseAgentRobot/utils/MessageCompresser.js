@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-08 00:11:25
+ * @LastEditTime: 2026-04-08 00:50:20
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\utils\MessageCompresser.js
  * @Description: 上下文管理-添加、自动压缩
  * @
@@ -106,7 +106,7 @@ export default class MessageCompresser {
   // 合并消息
   async _getSummary(messages) {
     const summaryPrompt = `总结以下对话历史，重点：
-  1. 只需要关注用户输入的任务目标和AI的执行结果，删除过程中的细节描述和执行过程中的失败信息等无用信息;
+  1. 只需要关注用户输入的任务目标和执行结果，删除过程中的细节描述和执行过程中的失败信息等无用信息;
   2. 删除不需要的信息，如程序报错、冗余表述、语气词、闲聊等信息;
   3. 保留和总结后续任务所需的重要背景信息并以及所需要的内容;
   4. 保持摘要简短且全面，保证后续任务有效进行.

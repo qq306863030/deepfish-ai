@@ -54,7 +54,7 @@ async function generateSkillRule(goal) {
    - description字段值：用专业英文简要描述该项目的核心功能和价值, 以"A DeepFish AI extension tool for"开头
    - git仓库地址：固定为 https://github.com/qq306863030/deepfish-extensions.git
    - author设置为"DeepFish AI"
-   - type字段设置为"commonjs"，确保模块系统兼容
+   - type字段设置为"module"，确保模块系统兼容
 3. 文件结构
    - 主文件：项目入口文件必须命名为index.js
    - 子文件：复杂的逻辑可以拆分到其他.js文件中;将descriptions、functions拆分到子文件;
