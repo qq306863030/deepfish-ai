@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-07 15:49:00
+ * @LastEditTime: 2026-04-07 18:12:21
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -76,7 +76,7 @@ async function requestAI(
       prompt,
       temperature,
     )
-    return response.choices[0].message.content
+    return response.message.content
   } catch (error) {
     aiConsole.logError(`Error executing AI function: ${error.message}`)
     throw error

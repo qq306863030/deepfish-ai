@@ -112,7 +112,7 @@ const descriptions = [
         function: {
             name: 'updateTaskList',
             description:
-                '将完整任务数组写入任务列表文件。taskListPath可选，默认写入当前目录tmp_tasklist.json；用于任务状态、备注、时间字段的持久化更新。',
+                '将完整任务数组写入任务列表文件。用于任务状态、备注、时间字段的持久化更新。',
             parameters: {
                 type: 'object',
                 properties: {

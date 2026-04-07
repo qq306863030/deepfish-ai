@@ -197,14 +197,12 @@ export default class Brain extends EventEmitterSuper {
 
   _initMessages(messages) {
     let lastMessage = messages[messages.length - 1]
-    if (lastMessage.role === 'assistant' && !lastMessage.tool_calls) {
-      return messages
-    } else {
-      messages.push({
-        role: 'assistant',
-        content: '上次对话未完成，请重新输入。',
-        reasoning_content: '',
-      })
+    while (
+      messages.length > 1 &&
+      !(lastMessage.role === 'assistant' && !lastMessage.tool_calls && lastMessage.content)
+    ) {
+      messages.pop()
+      lastMessage = messages[messages.length - 1]
     }
     return messages
   }

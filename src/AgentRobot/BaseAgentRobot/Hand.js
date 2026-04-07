@@ -59,11 +59,11 @@ export default class Hand extends EventEmitterSuper {
           }
           this.emit(HandEvent.USE_TOOL_REPORT, toolId, funcName, toolContent)
         } catch (error) {
-          this.emit(HandEvent.USE_TOOL_ERROR, toolId, funcName, { error: error.message })
+          this.emit(HandEvent.USE_TOOL_ERROR, toolId, funcName, { message: error.message, stack: error.stack })
         }
         this.emit(HandEvent.USE_TOOL_AFTER, toolId, funcName, funcArgs)
       } else {
-        this.emit(HandEvent.USE_TOOL_ERROR, toolId, funcName, { error: `Tool ${funcName} not found` })
+        this.emit(HandEvent.USE_TOOL_ERROR, toolId, funcName, { message: `Tool ${funcName} not found` })
       }
     }
   }
