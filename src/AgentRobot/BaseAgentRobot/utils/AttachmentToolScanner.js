@@ -93,11 +93,26 @@ export default class AttachmentToolScanner {
     return attachTools
   }
 
-  static getAttachToolPrompt(toolCollection) {
-    const table = toolCollection
+  static getClawSkillCollection(basespace) {
+    const skillFilePath = path.join(basespace, './clawSkills/clawSkills.json')
+    if (!fs.pathExistsSync(skillFilePath)) {
+      return []
+    } else {
+      const skillJson = fs.readJSONSync(skillFilePath)
+      return (skillJson.skills || []).filter(skill => skill.enable).map((skill) => {
+        return {
+          ...skill,
+          type: AttachmentToolType.CLAW_SKILL
+        }
+      })
+    }
+  }
+
+  static getAttachToolPrompt(toolCollection, clawSkillCollection) {
+    const table = ([].concat(toolCollection).concat(clawSkillCollection))
       .map(
         (s) =>
-          `| ${s.name} | ${s.type} | ${s.description || s.extensionDescription} | ${s.location} | ${s.filePath} |`,
+          `| ${s.name} | ${s.type} | ${s.description || s.extensionDescription} | ${s.location} | ${s.filePath || s.skillFilePath} |`,
       )
       .join('\n')
     if (!table) {
@@ -109,8 +124,7 @@ export default class AttachmentToolScanner {
 - 使用用户请求匹配 skill description，
 - 一次只加载一个Skill，优先匹配最具体的Skill
 - 当用户请求不匹配任何Skill描述时，不加载任何Skill
-- 匹配到的Type等于${AttachmentToolType.BASE_SKILL}时，调用 createSubAgent 函数创建子Agent来执行任务
-- 匹配到的Type等于${AttachmentToolType.CLAW_SKILL}时，调用 executeSkill 函数加载对应 SKILL.md，获取调用说明，通过仔细阅读说明文件学习Skill的使用方法，来完成任务 
+- 调用 createSubSkillAgent 函数创建子Agent来执行任务
 ## Available Skills
 
 | Skill | Type | Description | Location | FilePath |
@@ -120,6 +134,28 @@ ${table}
 `
   }
 
+  static getClawSkillPrompt(clawSkills) {
+    const table = clawSkills
+      .map(
+        (s) =>
+          `| ${s.name} | ${s.type} | ${s.description} | ${s.location} | ${s.skillFilePath} |`,
+      )
+      .join('\n')
+    return `
+    ### 可以使用的Skills
+可以调用以下Skill来完成用户的请求，Skill的调用方式：
+- 使用用户请求匹配 skill description，
+- 一次只加载一个Skill，优先匹配最具体的Skill
+- 当用户请求不匹配任何Skill描述时，不加载任何Skill
+- 使用Skill前先使用readFile函数读取SKILL.md文件获取调用说明，通过仔细阅读说明文件学习Skill的使用方法，来完成任务 
+## Available Skills
+
+| Skill | Type | Description | Location | SkillFilePath |
+|-------|------|-------------|----------|---------------|
+${table}
+|-------|------|-------------|----------|---------------|
+`
+  }
 
   // 扫描包
   static _scanDeepFishPackage(parentDir, packageName) {

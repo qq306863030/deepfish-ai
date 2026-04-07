@@ -11,6 +11,10 @@ import ScreenPrinter from './ScreenPrinter.js'
 import Hand, { HandEvent } from './Hand.js'
 import dayjs from 'dayjs'
 import Logger from './Logger.js'
+import GenerateTools from './tools/GenerateTools.js'
+import TaskTools from './tools/TaskTools.js'
+import TestTools from './tools/TestTools.js'
+import axios from 'axios'
 
 export default class BaseAgentRobot {
   id = '' // 机器人id
@@ -29,7 +33,7 @@ export default class BaseAgentRobot {
   parent = null // 父机器人，能分配任务
   root = null // 根机器人
   state = 0 // 机器人状态，-1表示销毁 0表示空闲，1表示思考中 2表示工作中
-  type = 'main' // 机器人类型，main表示主机器人，sub表示子机器人，task表示任务机器人
+  type = 'main' // 机器人类型，main表示主机器人，sub表示子机器人，sub-skill表示子技能机器人
 
   workspace = null
   basespace = null
@@ -206,7 +210,12 @@ export default class BaseAgentRobot {
 
   getTools() {
     const tools = [...this.originalTools, ...this.attachTools]
-    const toolFunctions = {}
+    const toolFunctions = {
+      fs,
+      axios,
+      dayjs,
+      lodash
+    }
     tools.forEach((tool) => {
       Object.assign(toolFunctions, tool.functions)
     })
@@ -238,9 +247,9 @@ export default class BaseAgentRobot {
     return toolDescriptions
   }
 
-  // 获取天赋
+  // 获取原装工具
   _getOriginalTools() {
-    return [FileTools, InquirerTools, SystemTools, CreateAgentTools]
+    return [FileTools, InquirerTools, SystemTools, CreateAgentTools, GenerateTools, TaskTools, TestTools]
   }
 
 

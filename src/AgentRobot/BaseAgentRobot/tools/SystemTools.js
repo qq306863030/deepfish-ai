@@ -1,9 +1,9 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-06 19:00:03
- * @FilePath: \deepfish\src\AgentRobot\tools\SystemTools.js
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-04-07 11:22:09
+ * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
  */
@@ -16,7 +16,7 @@ import { logError, logInfo, logSuccess } from '../../../core/utils/log.js'
 import { detectEncoding, getPath } from '../utils/normal.js'
 
 const require = createRequire(import.meta.url)
-const { fileDir, filePath } = getPath(import.meta.url)
+const { fileDir } = getPath(import.meta.url)
 
 // 执行系统命令
 // 执行系统命令（全平台兼容：Windows/PowerShell/CentOS）
@@ -231,8 +231,6 @@ const SystemTool = {
   name: 'SystemTool',
   description:
     '提供系统命令执行、AI请求、JS代码执行、扩展文件生成规则、AI配置管理、Tool加载执行等核心系统功能',
-  location: fileDir, // 扩展文件所在目录
-  filePath: filePath, // 扩展文件路径
   descriptions,
   functions,
 }

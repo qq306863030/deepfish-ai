@@ -2,10 +2,13 @@ import path from 'path'
 import os from 'os'
 import fs from 'fs-extra'
 import dayjs from 'dayjs'
-import SubAgentRobot from './SubAgentRobot.js'
+import SubSkillAgentRobot from './SubSkillAgentRobot.js'
 import Logger from './BaseAgentRobot/Logger.js'
 import BaseAgentRobot from './BaseAgentRobot/index.js'
-import AttachmentToolScanner from './BaseAgentRobot/utils/AttachmentToolScanner.js'
+import AttachmentToolScanner, {
+  AttachmentToolType,
+} from './BaseAgentRobot/utils/AttachmentToolScanner.js'
+import SubAgentRobot from './SubAgentRobot.js'
 
 export default class MainAgentRobot extends BaseAgentRobot {
   // toolCollection = null // 工具集合，包含所有工具函数
@@ -27,7 +30,9 @@ export default class MainAgentRobot extends BaseAgentRobot {
     }
     // 判断是否已经存在workspace
     let agentRecord = fs.readJsonSync(this.agentRecordFilePath)
-    const record = agentRecord.find((record) => record.workspace === this.workspace)
+    const record = agentRecord.find(
+      (record) => record.workspace === this.workspace,
+    )
     if (record) {
       this.id = record.agentId
       this.name = record.name
@@ -46,14 +51,18 @@ export default class MainAgentRobot extends BaseAgentRobot {
     fs.ensureDirSync(this.agentSpace)
     this.agentTreeFilePath = path.join(this.agentSpace, 'agentTree.json')
     if (!fs.pathExistsSync(this.agentTreeFilePath)) {
-      fs.writeJsonSync(this.agentTreeFilePath, {agentId: this.id, children: []}, { spaces: 2 })
+      fs.writeJsonSync(
+        this.agentTreeFilePath,
+        { agentId: this.id, children: [] },
+        { spaces: 2 },
+      )
     } else {
       const agentTree = fs.readJsonSync(this.agentTreeFilePath)
       if (agentTree) {
         // 恢复子机器人
         // this._parseAgentTree(this, agentTree)
       } else {
-        agentTree.push({agentId: this.id, children: []})
+        agentTree.push({ agentId: this.id, children: [] })
         fs.writeJsonSync(this.agentTreeFilePath, agentTree, { spaces: 2 })
       }
     }
@@ -64,7 +73,10 @@ export default class MainAgentRobot extends BaseAgentRobot {
     // 自动清除过期的记忆和日志
     const currentDate = dayjs()
     agentRecord = agentRecord.filter((record) => {
-      if (currentDate.diff(dayjs(record.updateTime), 'day') > opt.maxMemoryExpireTime) {
+      if (
+        currentDate.diff(dayjs(record.updateTime), 'day') >
+        opt.maxMemoryExpireTime
+      ) {
         // 删除机器人空间
         fs.removeSync(path.join(this.memerySpace, record.agentId))
         return false
@@ -74,7 +86,12 @@ export default class MainAgentRobot extends BaseAgentRobot {
     fs.writeJsonSync(this.agentRecordFilePath, agentRecord, { spaces: 2 })
     this.logger = new Logger(this) // 初始化日志系统
     this.logger.clearAllLogs()
-    this.toolCollection = AttachmentToolScanner.getToolCollection(this.workspace) // 加载工具集合
+    this.toolCollection = AttachmentToolScanner.getToolCollection(
+      this.workspace,
+    ) // 加载工具集合
+    this.clawSkillCollection = AttachmentToolScanner.getClawSkillCollection(
+      this.basespace,
+    ) // 加载Claw技能集合
   }
 
   _getDefaultSystemPrompt(opt) {
@@ -83,31 +100,49 @@ export default class MainAgentRobot extends BaseAgentRobot {
 ${systemPrompt}
 ### 工具调用
 对于复杂的任务，先从可以使用的Skills中查找并使用合适的Skill，如果没有合适的Skill，再使用内置工具函数，使用时请严格按照工具函数的调用方式进行调用。
-${AttachmentToolScanner.getAttachToolPrompt(this.toolCollection)}
+${AttachmentToolScanner.getAttachToolPrompt(this.toolCollection, this.clawSkillCollection)}
     `
   }
 
-  // 创建子机器人
-  createSubAgent(id, attachTools = []) {
-    const subAgent = new SubAgentRobot({
-        ...this.originOpt,
-        id,
-        name: `SubAgent-${attachTools[0].name}`,
-        parent: this,
-        root: this.root || this,
-        attachTools,
+  // 创建子技能机器人
+  createSubSkillAgent(id, attachTools = []) {
+    const baseSkill = []
+    const clawSkill = []
+    for (const tool of attachTools) {
+      if (tool.type === AttachmentToolType.BASE_SKILL) {
+        baseSkill.push(tool)
+      } else if (tool.type === AttachmentToolType.CLAW_SKILL) {
+        clawSkill.push(tool)
+      }
+    }
+    const subAgent = new SubSkillAgentRobot({
+      ...this.originOpt,
+      id,
+      name: `SubSkillAgent-${attachTools[0].name}`,
+      parent: this,
+      root: this.root || this,
+      attachTools: baseSkill,
     })
+    if (clawSkill.length > 0) {
+      this.systemPrompt =
+        this.systemPrompt +
+        '\n' +
+        AttachmentToolScanner.getClawSkillPrompt(clawSkill)
+    }
     this.children.push(subAgent)
     return subAgent
   }
 
-  
-  _parseAgentTree(agentRobot, agentJson) {
-    if (agentJson && agentJson.children && agentJson.children.length > 0) {
-      agentJson.children.forEach(childJson => {
-        const subAgentRobot = agentRobot.createSubAgent(childJson.agentId)
-        this._parseAgentTree(subAgentRobot, childJson)
-      })
-    }
+  // 创建子机器人
+  createSubAgent(id) {
+    const subAgent = new SubAgentRobot({
+      ...this.originOpt,
+      id,
+      name: `SubAgent-${id}`,
+      parent: this,
+      root: this.root || this,
+    })
+    this.children.push(subAgent)
+    return subAgent
   }
 }

@@ -2,14 +2,14 @@ import path from 'path'
 import os from 'os'
 import BaseAgentRobot from './BaseAgentRobot/index.js'
 import Logger from './BaseAgentRobot/Logger.js'
+import SubAgentRobot from './SubAgentRobot.js'
 import AttachmentToolScanner, { AttachmentToolType } from './BaseAgentRobot/utils/AttachmentToolScanner.js'
-import SubSkillAgentRobot from './SubSkillAgentRobot.js'
 
-export default class SubAgentRobot extends BaseAgentRobot {
+export default class SubSkillAgentRobot extends BaseAgentRobot {
   // opt: { root, parent, ...MainAgentOpt }
   constructor(opt) {
     super(opt)
-    this.type = 'sub'
+    this.type = 'sub-skill'
   }
 
   _initFiles(opt) {
@@ -25,22 +25,6 @@ export default class SubAgentRobot extends BaseAgentRobot {
     this.memoryFilePath = path.join(this.agentSpace, `memory-${this.id}.json`)
     this.logDirPath = path.join(this.agentSpace, 'logs')
     this.logger = new Logger(this) // 初始化日志系统
-    this.toolCollection = AttachmentToolScanner.getToolCollection(
-      this.workspace,
-    ) // 加载工具集合
-    this.clawSkillCollection = AttachmentToolScanner.getClawSkillCollection(
-      this.basespace,
-    ) // 加载Claw技能集合
-  }
-
-  _getDefaultSystemPrompt(opt) {
-    const systemPrompt = super._getDefaultSystemPrompt(opt)
-    return `
-  ${systemPrompt}
-  ### 工具调用
-  对于复杂的任务，先从可以使用的Skills中查找并使用合适的Skill，如果没有合适的Skill，再使用内置工具函数，使用时请严格按照工具函数的调用方式进行调用。
-  ${AttachmentToolScanner.getAttachToolPrompt(this.toolCollection, this.clawSkillCollection)}
-      `
   }
 
   // 创建子技能机器人
@@ -63,7 +47,10 @@ export default class SubAgentRobot extends BaseAgentRobot {
       attachTools: baseSkill,
     })
     if (clawSkill.length > 0) {
-      this.systemPrompt = this.systemPrompt + '\n' + AttachmentToolScanner.getClawSkillPrompt(clawSkill)
+      this.systemPrompt =
+        this.systemPrompt +
+        '\n' +
+        AttachmentToolScanner.getClawSkillPrompt(clawSkill)
     }
     this.children.push(subAgent)
     return subAgent

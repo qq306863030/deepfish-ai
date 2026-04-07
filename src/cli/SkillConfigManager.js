@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:23:42
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-05 16:42:43
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-04-07 11:44:19
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */
@@ -22,7 +22,7 @@ class SkillConfigManager {
     this.configManager = GlobalVariable.configManager
     // skill目录
     this.skillDir = path.join(this.configManager.configDir, './clawSkills')
-    this.skillFilePath = path.join(this.configManager.configDir, './clawSkills.json')
+    this.skillFilePath = path.join( this.skillDir, './clawSkills.json')
     this.init()
     GlobalVariable.skillConfigManager = this
   }

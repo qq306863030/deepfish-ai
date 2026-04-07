@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
- * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-06 19:12:48
+ * @LastEditors: Roman 306863030@qq.com
+ * @LastEditTime: 2026-04-07 14:06:37
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\FileTools.js
  * @Description: 文件处理扩展函数
  * @
@@ -10,10 +10,6 @@
 import path from 'path'
 import fs from 'fs-extra'
 import AdmZip from 'adm-zip'
-import { getPath } from '../utils/normal.js'
-
-const { fileDir, filePath } = getPath(import.meta.url)
-
 async function createFile(filePath, content) {
   try {
     const fullPath = path.resolve(process.cwd(), filePath)
@@ -153,6 +149,25 @@ async function rename(oldPath, newPath) {
 
     if (fs.existsSync(fullOldPath)) {
       fs.renameSync(fullOldPath, fullNewPath)
+    }
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
+async function copyFile(sourcePath, destinationPath) {
+  try {
+    const fullSourcePath = path.resolve(process.cwd(), sourcePath)
+    const fullDestPath = path.resolve(process.cwd(), destinationPath)
+    const destDirPath = path.dirname(fullDestPath)
+
+    fs.ensureDirSync(destDirPath)
+
+    if (fs.existsSync(fullSourcePath)) {
+      fs.copyFileSync(fullSourcePath, fullDestPath)
+    } else {
+      return `Source file does not exist: ${fullSourcePath}`
     }
     return true
   } catch (error) {
@@ -435,6 +450,22 @@ const descriptions = [
   {
     type: 'function',
     function: {
+      name: 'copyFile',
+      description:
+        '复制文件，返回布尔值表示操作是否成功。如果目标目录不存在会自动创建。如果源文件不存在也会返回错误信息。',
+      parameters: {
+        type: 'object',
+        properties: {
+          sourcePath: { type: 'string' },
+          destinationPath: { type: 'string' },
+        },
+        required: ['sourcePath', 'destinationPath'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'moveFile',
       description:
         '移动文件，返回布尔值表示操作是否成功。如果目标目录不存在会自动创建。如果源文件不存在也会返回true。',
@@ -587,14 +618,13 @@ const functions = {
   clearDirectory,
   compressToZip,
   extractZip,
+  copyFile
 }
 
 const FileTool = {
   name: 'FileTool',
   description:
     '提供文件和目录的创建、读取、修改、删除、移动、重命名、信息获取等文件系统操作功能',
-  location: fileDir, // 扩展文件所在目录
-  filePath: filePath, // 扩展文件路径
   descriptions,
   functions,
 }
