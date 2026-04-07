@@ -44,7 +44,7 @@ async function generateSkillRule(goal) {
 基于指定规则创建一个标准化的Node.js NPM项目，实现用户目标：${goal}，最终输出符合AI工作流调用规范的函数模块，并配套中英文说明文档。
 
 ### 任务步骤
-创建一个任务列表，执行以下步骤：
+按照以下步骤，通过内置函数创建一个任务列表，并逐步完成项目开发：
 
 #### 第一步：项目初始化
 1. 目录创建：新建目录，目录名称以"deepfish-ai-"开头,如"deepfish-ai-「项目功能名称」"，作为NPM项目根目录，并作为当前项目的名称
@@ -80,7 +80,7 @@ async function generateSkillRule(goal) {
 3. 内置工具函数调用：函数内可以使用内置工具函数requestAI来获取AI请求结果，在环境中通过this.Tools注入，示例：
    - this.Tools.requestAI(systemDescription, prompt, temperature)
 4. 函数数量：至少包含1个可被AI工作流调用的函数
-5. 保持代码思路清晰，避免过度复杂的逻辑嵌套，如果文件过大，必须拆分成多个文件
+5. 拆分成多个文件,保持文件结构清晰
 6. 对于大于5个的扩展功能，需要在functions中输出一个说明函数，只需返回一个markdown类型的英文字符串，专门用于解释当前扩展工具的使用方法、参数说明、示例等内容，函数名称为「readme」，如「systemFileManagement_readme」；函数描述需要强调调用该扩展模块前必须先阅读该规则文档。
 
 ##### 2.3 基础代码模板（必须遵循）
@@ -213,7 +213,7 @@ async function generateClawSkillRule(goal) {
 基于OpenClaw Skill规范创建一个标准化的Skill工具包，实现用户目标：${goal}，最终输出可被你直接加载使用。
 
 ### 任务步骤
-创建一个任务列表，执行以下步骤：
+按照以下步骤，通过内置函数创建一个任务列表，并逐步完成项目开发：
 
 #### 第一步：项目初始化
 1. 目录创建：在当前工作目录下新建一个子目录，目录名称应简洁明了地反映Skill功能（如"web-scraper"、"code-reviewer"、"image-optimizer"等）
