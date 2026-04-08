@@ -64,7 +64,7 @@ function updateTaskList(taskListPath, list) {
 
 // 从任务列表执行子任务
 function executeSubTaskFromTaskList(subTaskGoalPrompt = "") {
-    return this.agentRobot.createSubAgent(subTaskGoalPrompt)
+    return this.Tools.createSubAgent(subTaskGoalPrompt)
 }
 
 const descriptions = [
