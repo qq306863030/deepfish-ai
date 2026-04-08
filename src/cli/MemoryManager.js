@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-16 09:18:05
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-08 18:29:23
+ * @LastEditTime: 2026-04-08 18:31:55
  * @FilePath: \deepfish\src\cli\MemoryManager.js
  * @Description: 对话历史记录、恢复
  * @
@@ -36,7 +36,7 @@ class MemoryManager {
 
   clearMessage() {
     // 根据路径查看id
-    const agentRecord = fs.readJSONSync(this.agentRecordFilePath, { throws: false }) || {}
+    const agentRecord = fs.readJSONSync(this.agentRecordFilePath, { throws: false }) || []
     const agentIndex = agentRecord?.findIndex(item => {
       return item.workspace === this.workspace
     })
