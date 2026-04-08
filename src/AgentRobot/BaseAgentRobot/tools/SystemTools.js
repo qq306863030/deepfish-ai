@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-07 19:49:22
+ * @LastEditTime: 2026-04-08 18:54:32
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -10,12 +10,10 @@
 import path from 'path'
 import fs from 'fs-extra'
 import iconv from 'iconv-lite'
-import { createRequire } from 'module'
 import { spawnSync } from 'child_process'
-import { detectEncoding, getPath } from '../utils/normal.js'
+import { detectEncoding, getPath, importModule } from '../utils/normal.js'
 import aiConsole from '../utils/aiConsole.js'
 
-const require = createRequire(import.meta.url)
 const { fileDir } = getPath(import.meta.url)
 
 // 执行系统命令
@@ -92,7 +90,7 @@ async function executeJSCode(code) {
     const functions = this.agentRobot.getTools()
     const Func = new Function(
       'Tools',
-      'require',
+      'importModule',
       `return (async () => {
           this.logMessages = []
           const originalLog = console.log
@@ -106,7 +104,7 @@ async function executeJSCode(code) {
           return this.logMessages.join('\\n')
         })()`,
     )
-    const originalRequire = require
+    const originalRequire = importModule
     const newRequire = (modulePath) => {
       if (modulePath.startsWith('./')) {
         const resolvedPath = path.resolve('.', modulePath)
@@ -196,7 +194,7 @@ const descriptions = [
     function: {
       name: 'executeJSCode',
       description:
-        '执行JavaScript代码，返回代码执行结果。代码中可通过Tools命名空间直接调用其他工具函数（如await Tools.createFile(),注意：不需要使用require引入）,Tools中引入了一些常用库可直接调用（Tools.fs="fs-extra", Tools.dayjs="dayjs", Tools.axios="axios", Tools.lodash="lodash"），支持引入自定义模块（需使用绝对路径）。注意：1.代码中不要使用__dirname获取当前目录，请使用path.resolve(".")来获取当前目录。2.执行失败时会抛出错误，成功时返回代码执行结果或空字符串。',
+        '执行JavaScript代码，返回代码执行结果。代码中可通过Tools命名空间直接调用其他工具函数（如await Tools.createFile(),注意：不需要使用require引入）,Tools中引入了一些常用库可直接调用（Tools.fs="fs-extra", Tools.dayjs="dayjs", Tools.axios="axios", Tools.lodash="lodash"），支持引入自定义模块（需使用绝对路径）。注意：1.代码中不要使用__dirname获取当前目录，请使用path.resolve(".")来获取当前目录。2.执行失败时会抛出错误，成功时返回代码执行结果或空字符串。3.使用importModule(modulePath)函数引入自定义模块，modulePath为模块路径字符串，支持相对路径（如"./myModule.js"）和绝对路径，返回引入的模块内容。',
       parameters: {
         type: 'object',
         properties: {

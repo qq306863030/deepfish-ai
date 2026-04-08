@@ -41,7 +41,7 @@ async function generateSkillRule(goal) {
   const packagePath = path.resolve(fileDir, '../../../index.js')
   const newGoal = `
 ### 任务目标
-基于指定规则创建一个标准化的Node.js NPM项目，实现用户目标：${goal}，最终输出符合AI工作流调用规范的函数模块，并配套中英文说明文档。
+基于指定规则创建一个标准化的Node.js NPM项目，使用es6的语法进行模块化开发，实现用户目标：${goal}，最终输出符合AI工作流调用规范的函数模块，并配套中英文说明文档。
 
 ### 任务步骤
 按照以下步骤，通过内置函数创建一个任务列表，并逐步完成项目开发：
