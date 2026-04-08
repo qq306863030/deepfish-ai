@@ -1,9 +1,8 @@
 import path from 'path'
 import os from 'os'
-import BaseAgentRobot from './BaseAgentRobot/index.js'
-import Logger from './BaseAgentRobot/Logger.js'
-import AttachmentToolScanner, { AttachmentToolType } from './BaseAgentRobot/utils/AttachmentToolScanner.js'
-import SubSkillAgentRobot from './SubSkillAgentRobot.js'
+import BaseAgentRobot from '../BaseAgentRobot/index.js'
+import Logger from '../BaseAgentRobot/Logger.js'
+import AttachmentToolScanner from '../BaseAgentRobot/utils/AttachmentToolScanner.js'
 
 export default class SubAgentRobot extends BaseAgentRobot {
   // opt: { root, parent, ...MainAgentOpt }
@@ -41,44 +40,5 @@ export default class SubAgentRobot extends BaseAgentRobot {
   对于复杂的任务，先从可以使用的Skills中查找并使用合适的Skill，如果没有合适的Skill，再使用内置工具函数，使用时请严格按照工具函数的调用方式进行调用。
   ${AttachmentToolScanner.getAttachToolPrompt(this.toolCollection, this.clawSkillCollection)}
       `
-  }
-
-  // 创建子技能机器人
-  createSubSkillAgent(id, attachTools = []) {
-    const baseSkill = []
-    const clawSkill = []
-    for (const tool of attachTools) {
-      if (tool.type === AttachmentToolType.BASE_SKILL) {
-        baseSkill.push(tool)
-      } else if (tool.type === AttachmentToolType.CLAW_SKILL) {
-        clawSkill.push(tool)
-      }
-    }
-    const subAgent = new SubSkillAgentRobot({
-      ...this.originOpt,
-      id,
-      name: `SubSkillAgent-${attachTools[0].name}`,
-      parent: this,
-      root: this.root || this,
-      attachTools: baseSkill,
-    })
-    if (clawSkill.length > 0) {
-      this.systemPrompt = this.systemPrompt + '\n' + AttachmentToolScanner.getClawSkillPrompt(clawSkill)
-    }
-    this.children.push(subAgent)
-    return subAgent
-  }
-
-  // 创建子机器人
-  createSubAgent(id) {
-    const subAgent = new SubAgentRobot({
-      ...this.originOpt,
-      id,
-      name: `SubAgent-${id}`,
-      parent: this,
-      root: this.root || this,
-    })
-    this.children.push(subAgent)
-    return subAgent
   }
 }

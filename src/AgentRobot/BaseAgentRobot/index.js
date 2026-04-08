@@ -15,6 +15,7 @@ import GenerateTools from './tools/GenerateTools.js'
 import TaskTools from './tools/TaskTools.js'
 import TestTools from './tools/TestTools.js'
 import axios from 'axios'
+import { importModule } from './utils/normal.js'
 
 export default class BaseAgentRobot {
   id = '' // 机器人id
@@ -301,6 +302,26 @@ export default class BaseAgentRobot {
     const res = await this.brain.thinkLoop(goal)
     this.logger.logExecTime(taskId, 'execute task end')
     return res
+  }
+
+  _getAgentRobotFactory() {
+    if (!this._agentRobotFactory) {
+      const AgentRobotFactory = importModule('../AgentRobotFactory/index.js')
+      this._agentRobotFactory = new AgentRobotFactory()
+    }
+    return this._agentRobotFactory
+  }
+
+  // 创建子技能机器人
+  createSubSkillAgent(id, attachTools = []) {
+    const agentRobotFactory = this._getAgentRobotFactory()
+    return agentRobotFactory.createSubSkillAgent(this, id, attachTools)
+  }
+
+  // 创建子机器人
+  createSubAgent(id) {
+    const agentRobotFactory = this._getAgentRobotFactory()
+    return agentRobotFactory.createSubAgent(this, id)
   }
 
   destroy() {

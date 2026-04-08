@@ -1,6 +1,6 @@
-import MainAgentRobot from './AgentRobot/MainAgentRobot.js'
-import SubAgentRobot from './AgentRobot/SubAgentRobot.js'
-import SubSkillAgentRobot from './AgentRobot/SubSkillAgentRobot.js'
+import MainAgentRobot from './AgentRobot/AgentRobotFactory/MainAgentRobot.js'
+import SubAgentRobot from './AgentRobot/AgentRobotFactory/SubAgentRobot.js'
+import SubSkillAgentRobot from './AgentRobot/AgentRobotFactory/SubSkillAgentRobot.js'
 import readline from 'readline'
 
 class DeepFishAI {
