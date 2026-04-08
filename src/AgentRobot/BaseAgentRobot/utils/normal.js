@@ -10,10 +10,9 @@ const require = createRequire(import.meta.url)
 
 // 动态加载模块
 function importModule(modulePath) {
-  const targetPath =
-    modulePath.startsWith('.') || path.isAbsolute(modulePath)
-      ? path.resolve(process.cwd(), modulePath)
-      : modulePath
+  const targetPath = modulePath.startsWith('.')
+    ? path.resolve(process.cwd(), modulePath)
+    : modulePath
   const resolvedModulePath = require.resolve(targetPath)
   delete require.cache[resolvedModulePath]
   const mod = require(resolvedModulePath)

@@ -15,7 +15,7 @@ import GenerateTools from './tools/GenerateTools.js'
 import TaskTools from './tools/TaskTools.js'
 import TestTools from './tools/TestTools.js'
 import axios from 'axios'
-import { importModule } from './utils/normal.js'
+import { getPath, importModule } from './utils/normal.js'
 
 export default class BaseAgentRobot {
   id = '' // 机器人id
@@ -306,7 +306,8 @@ export default class BaseAgentRobot {
 
   _getAgentRobotFactory() {
     if (!this._agentRobotFactory) {
-      const AgentRobotFactory = importModule('../AgentRobotFactory/index.js')
+      const { fileDir } = getPath(import.meta.url)
+      const AgentRobotFactory = importModule(path.join(fileDir, '../AgentRobotFactory/index.js'))
       this._agentRobotFactory = new AgentRobotFactory()
     }
     return this._agentRobotFactory
