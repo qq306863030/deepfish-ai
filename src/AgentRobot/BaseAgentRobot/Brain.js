@@ -1,24 +1,9 @@
 const fs = require('fs-extra')
 const { EventEmitterSuper } = require('eventemitter-super')
+const BrainEvent = require('./BrainEvent.js')
 const MessageCompresser = require('./utils/MessageCompresser.js')
 const { creatClient, think, thinkByTool } = require('./utils/AIRequest.js')
 const lodash = require('lodash')
-
-class BrainEvent {
-  static THINK_BEFORE = '1' // 思考前事件，参数为当前消息列表
-  static SUB_THINK_BEFORE = '1.1' // 子思考前事件，参数为当前消息列表
-  static SUB_THINK_AFTER = '1.2' // 子思考后事件，参数为当前消息列表和思考结果
-  static SUB_STREAM_THINK_OUTPUT = '1.3' // 子思考输出事件，参数为当前消息列表和思考输出
-  static SUB_STREAM_CONTENT_OUTPUT = '1.4' // 子思考内容输出事件，参数为当前消息列表和内容输出
-  static SUB_STREAM_TOOL_CALLS_OUTPUT = '1.5' // 子思考工具调用输出事件，参数为当前消息列表和工具调用输出
-  static SUB_STREAM_END = '1.6' // 子思考结束事件，参数为当前消息列表
-  static SUB_USE_TOOL = '1.7' // 使用工具事件，参数为工具调用信息
-  static SUB_THINK_ERROR = '1.8' // 子思考错误事件，参数为当前消息列表和错误信息
-  static COMPRESS_MESSAGES_BEFORE = '1.9' // 压缩消息事件，参数为当前消息列表
-  static COMPRESS_MESSAGES_AFTER = '1.10' // 压缩消息后事件，参数为压缩后的消息列表
-  static NEW_MESSAGE = '1.11' // 新增消息事件，参数为新增的消息
-  static THINK_AFTER = '2' // 思考后事件，参数为当前消息列表
-}
 
 class Brain extends EventEmitterSuper {
   constructor(agentRobot) {
@@ -212,5 +197,7 @@ class Brain extends EventEmitterSuper {
   }
 }
 
-module.exports = Brain
-module.exports.BrainEvent = BrainEvent
+module.exports = {
+  Brain,
+  BrainEvent
+}

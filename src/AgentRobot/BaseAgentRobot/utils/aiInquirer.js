@@ -1,4 +1,4 @@
-const inquirer = require('inquirer')
+const inquirer = require('inquirer').default
 
 // 判断问答
 async function askConfirm(message, defaultVal = true, opt = {}) {

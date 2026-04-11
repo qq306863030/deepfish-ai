@@ -18,7 +18,16 @@ class Hand extends EventEmitterSuper {
   _parseToolCalls(tool_call) {
     const { id, function: func } = tool_call
     const { name, arguments: args } = func
-    const parsedArgs = typeof args === 'string' ? JSON.parse(args) : args
+    let parsedArgs
+    try {
+      parsedArgs = typeof args === 'string' ? JSON.parse(args) : args
+    } catch (error) {
+      if (typeof args === 'string') {
+        parsedArgs = {
+          value: args,
+        }
+      }
+    }
     return {
       toolId: id,
       funcArgs: parsedArgs,
@@ -69,5 +78,7 @@ class Hand extends EventEmitterSuper {
   }
 }
 
-module.exports = Hand
-module.exports.HandEvent = HandEvent
+module.exports = {
+  Hand,
+  HandEvent
+}

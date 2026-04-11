@@ -7,7 +7,7 @@
  * @Description: 上下文管理-添加、自动压缩
  * @
  */
-const { BrainEvent } = require('../Brain.js')
+const BrainEvent = require('../BrainEvent.js')
 
 class MessageCompresser {
   constructor(robotBrain) {
