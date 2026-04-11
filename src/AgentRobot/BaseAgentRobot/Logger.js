@@ -1,8 +1,8 @@
-import dayjs from 'dayjs'
-import path from 'path'
-import fs from 'fs-extra'
+const dayjs = require('dayjs')
+const path = require('path')
+const fs = require('fs-extra')
 
-export default class Logger {
+class Logger {
   constructor(agentRobot) {
     this.logDirPath = agentRobot.logDirPath
     this.screenPrinter = agentRobot.screenPrinter
@@ -104,3 +104,5 @@ export default class Logger {
     }
   }
 }
+
+module.exports = Logger

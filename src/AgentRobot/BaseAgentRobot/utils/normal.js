@@ -1,23 +1,9 @@
-import path from 'path'
-import fs from 'fs-extra'
-import chardet from 'chardet'
-import os from 'os'
-import { spawn } from 'child_process'
-import { fileURLToPath } from 'url'
-import { createRequire } from 'module'
+const path = require('path')
+const fs = require('fs-extra')
+const chardet = require('chardet')
+const os = require('os')
+const { spawn } = require('child_process')
 
-const require = createRequire(import.meta.url)
-
-// 动态加载模块
-function importModule(modulePath) {
-  const targetPath = modulePath.startsWith('.')
-    ? path.resolve(process.cwd(), modulePath)
-    : modulePath
-  const resolvedModulePath = require.resolve(targetPath)
-  delete require.cache[resolvedModulePath]
-  const mod = require(resolvedModulePath)
-  return mod?.default ?? mod
-}
 // 对象字符串转对象
 function objStrToObj(str) {
   try {
@@ -33,15 +19,6 @@ function objStrToObj(str) {
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-// 在 ESM 中安全获取当前模块目录
-function getPath(metaUrl) {
-  const filePath = fileURLToPath(metaUrl)
-  return {
-    fileDir: path.dirname(filePath),
-    filePath,
-  }
 }
 
 // 遍历目录和子目录下所有文件
@@ -124,11 +101,9 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export {
-  importModule,
+module.exports = {
   objStrToObj,
   delay,
-  getPath,
   traverseFiles,
   openDirectory,
   detectEncoding,

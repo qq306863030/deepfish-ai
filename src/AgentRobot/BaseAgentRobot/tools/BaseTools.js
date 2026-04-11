@@ -9,4 +9,4 @@ const BaseTool = {
   functions,
 }
 
-export default BaseTool
+module.exports = BaseTool

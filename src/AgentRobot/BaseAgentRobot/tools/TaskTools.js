@@ -1,5 +1,5 @@
-import fs from 'fs-extra'
-import path from 'path'
+const fs = require('fs-extra')
+const path = require('path')
 
 // 生成/创建任务列表
 function createTaskListRules() {
@@ -172,6 +172,6 @@ const TaskTools = {
     functions,
 }
 
-export default TaskTools
+module.exports = TaskTools
 
 

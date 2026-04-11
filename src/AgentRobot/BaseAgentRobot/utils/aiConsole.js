@@ -1,4 +1,4 @@
-import chalk from 'chalk'
+const chalk = require('chalk')
 
 const aiConsole = {
   // 日志相关工具函数
@@ -71,4 +71,4 @@ const aiConsole = {
   },
 }
 
-export default aiConsole
+module.exports = aiConsole

@@ -7,8 +7,8 @@
  * @Description: AI skill management CLI
  * @
  */
-import { program } from 'commander'
-import SkillConfigManager from './SkillConfigManager.js'
+const { program } = require('commander')
+const SkillConfigManager = require('./SkillConfigManager.js')
 const skillConfigManager = new SkillConfigManager()
 // ai skill command
 const skillCommand = program

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-import { program } from 'commander'
-import { DeepFishAI } from '../index.js'
-import { GlobalVariable } from './GlobalVariable.js'
-import './ai-config.js'
-import './ai-skill.js'
-import './ai-memory.js'
-import aiConsole from '../AgentRobot/BaseAgentRobot/utils/aiConsole.js'
+const { program } = require('commander')
+const { DeepFishAI } = require('../index.js')
+const { GlobalVariable } = require('./GlobalVariable.js')
+require('./ai-config.js')
+require('./ai-skill.js')
+require('./ai-memory.js')
+const aiConsole = require('../AgentRobot/BaseAgentRobot/utils/aiConsole.js')
 program
   .version('1.0.0')
   .description(

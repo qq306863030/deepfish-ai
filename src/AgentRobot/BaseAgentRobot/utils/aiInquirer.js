@@ -1,4 +1,4 @@
-import inquirer from 'inquirer'
+const inquirer = require('inquirer')
 
 // 判断问答
 async function askConfirm(message, defaultVal = true, opt = {}) {
@@ -75,4 +75,4 @@ const aiInquirer = {
 }
 
 
-export default aiInquirer
+module.exports = aiInquirer

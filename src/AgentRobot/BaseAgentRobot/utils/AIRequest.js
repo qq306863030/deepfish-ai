@@ -1,4 +1,4 @@
-import { OpenAI } from 'openai'
+const { OpenAI } = require('openai')
 
 function creatClient(aiConfig) {
   return new OpenAI({
@@ -236,4 +236,4 @@ async function _streamToNonStream(
 }
 
 
-export { creatClient, think, thinkByTool }
+module.exports = { creatClient, think, thinkByTool }

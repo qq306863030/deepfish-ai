@@ -1,12 +1,12 @@
-import path from 'path'
-import os from 'os'
-import fs from 'fs-extra'
-import { exec } from 'child_process'
-import lodash from 'lodash'
-import { defaultConfig } from './DefaultConfig.js'
-import { GlobalVariable } from './GlobalVariable.js'
-import { importModule, openDirectory } from '../AgentRobot/BaseAgentRobot/utils/normal.js'
-import aiConsole from '../AgentRobot/BaseAgentRobot/utils/aiConsole.js'
+const path = require('path')
+const os = require('os')
+const fs = require('fs-extra')
+const { exec } = require('child_process')
+const lodash = require('lodash')
+const { defaultConfig } = require('./DefaultConfig.js')
+const { GlobalVariable } = require('./GlobalVariable.js')
+const { openDirectory } = require('../AgentRobot/BaseAgentRobot/utils/normal.js')
+const aiConsole = require('../AgentRobot/BaseAgentRobot/utils/aiConsole.js')
 
 class ConfigManager {
   config = null
@@ -227,12 +227,12 @@ class ConfigManager {
   }
 
   getConfig() {
-    const config = importModule(this.configPath)
+    const config = require(this.configPath)
     return lodash.merge(lodash.cloneDeep(defaultConfig), config)
   }
 
   getAppConfig() {
-    const config = importModule(this.configPath)
+    const config = require(this.configPath)
     const mergedConfig = lodash.merge(lodash.cloneDeep(defaultConfig), config)
     if (mergedConfig.currentAi) {
       const aiConfig = mergedConfig.ai.find(
@@ -250,10 +250,10 @@ class ConfigManager {
     }
     fs.writeFileSync(
       this.configPath,
-      `export default ${JSON.stringify(config, null, 2)}`,
+      `module.exports = ${JSON.stringify(config, null, 2)}`,
     )
     this.config = config
   }
 }
 
-export default ConfigManager
+module.exports = ConfigManager

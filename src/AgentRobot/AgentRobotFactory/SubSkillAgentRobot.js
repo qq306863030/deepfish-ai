@@ -1,9 +1,9 @@
-import path from 'path'
-import os from 'os'
-import BaseAgentRobot from '../BaseAgentRobot/index.js'
-import Logger from '../BaseAgentRobot/Logger.js'
+const path = require('path')
+const os = require('os')
+const BaseAgentRobot = require('../BaseAgentRobot/index.js')
+const Logger = require('../BaseAgentRobot/Logger.js')
 
-export default class SubSkillAgentRobot extends BaseAgentRobot {
+class SubSkillAgentRobot extends BaseAgentRobot {
   // opt: { root, parent, ...MainAgentOpt }
   constructor(opt) {
     super(opt)
@@ -25,3 +25,5 @@ export default class SubSkillAgentRobot extends BaseAgentRobot {
     this.logger = new Logger(this) // 初始化日志系统
   }
 }
+
+module.exports = SubSkillAgentRobot

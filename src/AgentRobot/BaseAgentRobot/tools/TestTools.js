@@ -96,4 +96,4 @@ const TestTools = {
   functions,
 }
 
-export default TestTools
+module.exports = TestTools

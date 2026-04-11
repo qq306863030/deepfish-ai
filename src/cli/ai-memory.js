@@ -1,5 +1,5 @@
-import { program } from 'commander'
-import MemoryManager from './MemoryManager.js'
+const { program } = require('commander')
+const MemoryManager = require('./MemoryManager.js')
 
 const memoryManager = new MemoryManager()
 const extCommand = program

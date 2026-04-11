@@ -1,13 +1,13 @@
-import EventEmitterSuper  from 'eventemitter-super'
+const { EventEmitterSuper } = require('eventemitter-super')
 
-export const HandEvent = {
+const HandEvent = {
   USE_TOOL_BEFORE: '1',
   USE_TOOL_REPORT: '1.1',
   USE_TOOL_ERROR: '1.2',
   USE_TOOL_AFTER: '2',
 }
 
-export default class Hand extends EventEmitterSuper {
+class Hand extends EventEmitterSuper {
   constructor(agentRobot) {
     super()
     this.agentRobot = agentRobot
@@ -68,3 +68,6 @@ export default class Hand extends EventEmitterSuper {
     }
   }
 }
+
+module.exports = Hand
+module.exports.HandEvent = HandEvent

@@ -1,4 +1,4 @@
-import aiInquirer from "../utils/aiInquirer.js"
+const aiInquirer = require("../utils/aiInquirer.js")
 
 // 判断问答
 async function inquirerConfirm(message, defaultVal = true, opt = {}) {
@@ -232,4 +232,4 @@ const InquirerTool = {
   functions,
 }
 
-export default InquirerTool
+module.exports = InquirerTool

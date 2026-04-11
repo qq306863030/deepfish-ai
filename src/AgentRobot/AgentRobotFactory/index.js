@@ -1,9 +1,9 @@
-import AttachmentToolScanner, { AttachmentToolType } from '../BaseAgentRobot/utils/AttachmentToolScanner.js'
-import MainAgentRobot from './MainAgentRobot.js'
-import SubAgentRobot from './SubAgentRobot.js'
-import SubSkillAgentRobot from './SubSkillAgentRobot.js'
+const { AttachmentToolScanner, AttachmentToolType } = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
+const MainAgentRobot = require('./MainAgentRobot.js')
+const SubAgentRobot = require('./SubAgentRobot.js')
+const SubSkillAgentRobot = require('./SubSkillAgentRobot.js')
 
-export default class AgentRobotFactory {
+class AgentRobotFactory {
   createMainAgent(opt) {
     return new MainAgentRobot(opt)
   }
@@ -49,3 +49,5 @@ export default class AgentRobotFactory {
     return subAgent
   }
 }
+
+module.exports = AgentRobotFactory

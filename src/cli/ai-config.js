@@ -7,10 +7,10 @@
  * @Description: ai config 相关命令
  * @
  */
-import { program } from 'commander'
-import { aiCliConfig } from './DefaultConfig.js'
-import ConfigManager from './ConfigManager.js'
-import aiInquirer from '../AgentRobot/BaseAgentRobot/utils/aiInquirer.js'
+const { program } = require('commander')
+const { aiCliConfig } = require('./DefaultConfig.js')
+const ConfigManager = require('./ConfigManager.js')
+const aiInquirer = require('../AgentRobot/BaseAgentRobot/utils/aiInquirer.js')
 
 const configManager = new ConfigManager()
 const configCommand = program

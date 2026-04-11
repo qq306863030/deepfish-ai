@@ -1,6 +1,6 @@
-import { execSync } from 'child_process'
-import path from 'path'
-import fs from 'fs'
+const { execSync } = require('child_process')
+const path = require('path')
+const fs = require('fs')
 
 /**
  * 辅助函数：安全执行 shell 命令（避免执行失败导致程序崩溃）
@@ -126,7 +126,7 @@ function getGlobalNodeModulesPath() {
   return null
 }
 
-export {
+module.exports = {
   safeExec,
   resolveValidPath,
   getNvmGlobalPath,
@@ -135,4 +135,4 @@ export {
   getGlobalNodeModulesPath // 主函数
 }
 
-export default getGlobalNodeModulesPath
+module.exports.default = getGlobalNodeModulesPath

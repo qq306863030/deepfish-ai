@@ -1,7 +1,4 @@
-import path from 'path'
-import { getPath } from '../utils/normal.js'
-
-const { fileDir } = getPath(import.meta.url)
+const path = require('path')
 
 const descriptions = [
   {
@@ -38,7 +35,7 @@ const descriptions = [
 
 // 生成一个Skill工具包
 async function generateSkillRule(goal) {
-  const packagePath = path.resolve(fileDir, '../../../index.js')
+  const packagePath = path.resolve(__filename, '../../../index.js')
   const newGoal = `
 ### 任务目标
 基于指定规则创建一个标准化的Node.js NPM项目，使用es6的语法进行模块化开发，实现用户目标：${goal}，最终输出符合AI工作流调用规范的函数模块，并配套中英文说明文档。
@@ -388,4 +385,4 @@ const GenerateTools = {
   functions,
 }
 
-export default GenerateTools
+module.exports = GenerateTools

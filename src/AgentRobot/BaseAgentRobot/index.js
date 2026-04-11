@@ -1,23 +1,24 @@
-import path from 'path'
-import os from 'os'
-import fs from 'fs-extra'
-import FileTools from './tools/FileTools.js'
-import InquirerTools from './tools/InquirerTools.js'
-import SystemTools from './tools/SystemTools.js'
-import CreateAgentTools from './tools/CreateAgentTools.js'
-import lodash from 'lodash'
-import Brain, { BrainEvent } from './Brain.js'
-import ScreenPrinter from './ScreenPrinter.js'
-import Hand, { HandEvent } from './Hand.js'
-import dayjs from 'dayjs'
-import Logger from './Logger.js'
-import GenerateTools from './tools/GenerateTools.js'
-import TaskTools from './tools/TaskTools.js'
-import TestTools from './tools/TestTools.js'
-import axios from 'axios'
-import { getPath, importModule } from './utils/normal.js'
+const path = require('path')
+const os = require('os')
+const fs = require('fs-extra')
+const FileTools = require('./tools/FileTools.js')
+const InquirerTools = require('./tools/InquirerTools.js')
+const SystemTools = require('./tools/SystemTools.js')
+const CreateAgentTools = require('./tools/CreateAgentTools.js')
+const lodash = require('lodash')
+const Brain = require('./Brain.js')
+const { BrainEvent } = require('./Brain.js')
+const ScreenPrinter = require('./ScreenPrinter.js')
+const Hand = require('./Hand.js')
+const { HandEvent } = require('./Hand.js')
+const dayjs = require('dayjs')
+const Logger = require('./Logger.js')
+const GenerateTools = require('./tools/GenerateTools.js')
+const TaskTools = require('./tools/TaskTools.js')
+const TestTools = require('./tools/TestTools.js')
+const axios = require('axios')
 
-export default class BaseAgentRobot {
+class BaseAgentRobot {
   id = '' // 机器人id
   name = '' // 机器人名字
 
@@ -306,8 +307,7 @@ export default class BaseAgentRobot {
 
   _getAgentRobotFactory() {
     if (!this._agentRobotFactory) {
-      const { fileDir } = getPath(import.meta.url)
-      const AgentRobotFactory = importModule(path.join(fileDir, '../AgentRobotFactory/index.js'))
+      const AgentRobotFactory = require(path.join(__dirname, '../AgentRobotFactory/index.js'))
       this._agentRobotFactory = new AgentRobotFactory()
     }
     return this._agentRobotFactory
@@ -330,3 +330,5 @@ export default class BaseAgentRobot {
     this.state = -1
   }
 }
+
+module.exports = BaseAgentRobot

@@ -7,9 +7,9 @@
  * @Description: 上下文管理-添加、自动压缩
  * @
  */
-import { BrainEvent } from '../Brain.js'
+const { BrainEvent } = require('../Brain.js')
 
-export default class MessageCompresser {
+class MessageCompresser {
   constructor(robotBrain) {
     this.robotBrain = robotBrain
     this.maxContextLength = (this.robotBrain.maxContextLength || 32) * 1024 * 0.9 // 留出10%空间给工具调用等其他内容
@@ -152,3 +152,5 @@ ${messages
     }
   }
 }
+
+module.exports = MessageCompresser

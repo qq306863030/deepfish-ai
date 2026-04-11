@@ -6,15 +6,15 @@
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */
-import path from 'path'
-import fs from 'fs-extra'
-import axios from 'axios'
-import * as cheerio from 'cheerio'
-import extract from 'extract-zip'
-import { GlobalVariable } from './GlobalVariable.js'
-import { parseSkillMetadataYaml } from './SkillParser.js'
-import aiConsole from '../AgentRobot/BaseAgentRobot/utils/aiConsole.js'
-import { openDirectory } from '../AgentRobot/BaseAgentRobot/utils/normal.js'
+const path = require('path')
+const fs = require('fs-extra')
+const axios = require('axios')
+const cheerio = require('cheerio')
+const extract = require('extract-zip')
+const { GlobalVariable } = require('./GlobalVariable.js')
+const { parseSkillMetadataYaml } = require('./SkillParser.js')
+const aiConsole = require('../AgentRobot/BaseAgentRobot/utils/aiConsole.js')
+const { openDirectory } = require('../AgentRobot/BaseAgentRobot/utils/normal.js')
 
 // skill的数据结构: {name: string, enable: boolean, description: string, baseDir: string, skillDirName: string, location: string, skillFilePath: string, homepage: string, metadata: object}
 class SkillConfigManager {
@@ -371,4 +371,4 @@ ${table}
   }
 }
 
-export default SkillConfigManager
+module.exports = SkillConfigManager

@@ -1,7 +1,7 @@
-import MainAgentRobot from './AgentRobot/AgentRobotFactory/MainAgentRobot.js'
-import SubAgentRobot from './AgentRobot/AgentRobotFactory/SubAgentRobot.js'
-import SubSkillAgentRobot from './AgentRobot/AgentRobotFactory/SubSkillAgentRobot.js'
-import readline from 'readline'
+const MainAgentRobot = require('./AgentRobot/AgentRobotFactory/MainAgentRobot.js')
+const SubAgentRobot = require('./AgentRobot/AgentRobotFactory/SubAgentRobot.js')
+const SubSkillAgentRobot = require('./AgentRobot/AgentRobotFactory/SubSkillAgentRobot.js')
+const readline = require('readline')
 
 class DeepFishAI {
   constructor(config) {
@@ -51,4 +51,4 @@ class DeepFishAI {
   }
 }
 
-export { DeepFishAI, MainAgentRobot, SubAgentRobot, SubSkillAgentRobot }
+module.exports = { DeepFishAI, MainAgentRobot, SubAgentRobot, SubSkillAgentRobot }

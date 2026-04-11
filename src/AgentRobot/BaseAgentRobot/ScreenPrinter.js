@@ -1,6 +1,6 @@
-import aiConsole from "./utils/aiConsole.js"
+const aiConsole = require("./utils/aiConsole.js")
 
-export default class ScreenPrinter {
+class ScreenPrinter {
     // 日志相关工具函数
     logInfo(message) {
       aiConsole.logInfo(message)
@@ -45,3 +45,5 @@ export default class ScreenPrinter {
       aiConsole.log(msg, color)
     }
 }
+
+module.exports = ScreenPrinter

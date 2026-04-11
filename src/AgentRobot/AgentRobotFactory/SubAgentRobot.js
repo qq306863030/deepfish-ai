@@ -1,10 +1,10 @@
-import path from 'path'
-import os from 'os'
-import BaseAgentRobot from '../BaseAgentRobot/index.js'
-import Logger from '../BaseAgentRobot/Logger.js'
-import AttachmentToolScanner from '../BaseAgentRobot/utils/AttachmentToolScanner.js'
+const path = require('path')
+const os = require('os')
+const BaseAgentRobot = require('../BaseAgentRobot/index.js')
+const Logger = require('../BaseAgentRobot/Logger.js')
+const AttachmentToolScanner = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
 
-export default class SubAgentRobot extends BaseAgentRobot {
+class SubAgentRobot extends BaseAgentRobot {
   // opt: { root, parent, ...MainAgentOpt }
   constructor(opt) {
     super(opt)
@@ -42,3 +42,5 @@ export default class SubAgentRobot extends BaseAgentRobot {
       `
   }
 }
+
+module.exports = SubAgentRobot

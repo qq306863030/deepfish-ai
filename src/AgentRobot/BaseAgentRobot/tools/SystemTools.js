@@ -1,20 +1,18 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-08 18:54:32
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-04-11 22:26:50
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
  */
-import path from 'path'
-import fs from 'fs-extra'
-import iconv from 'iconv-lite'
-import { spawnSync } from 'child_process'
-import { detectEncoding, getPath, importModule } from '../utils/normal.js'
-import aiConsole from '../utils/aiConsole.js'
-
-const { fileDir } = getPath(import.meta.url)
+const path = require('path')
+const fs = require('fs-extra')
+const iconv = require('iconv-lite')
+const { spawnSync } = require('child_process')
+const { detectEncoding } = require('../utils/normal.js')
+const aiConsole = require('../utils/aiConsole.js')
 
 // 执行系统命令
 // 执行系统命令（全平台兼容：Windows/PowerShell/CentOS）
@@ -90,7 +88,7 @@ async function executeJSCode(code) {
     const functions = this.agentRobot.getTools()
     const Func = new Function(
       'Tools',
-      'importModule',
+      'require',
       `return (async () => {
           this.logMessages = []
           const originalLog = console.log
@@ -104,10 +102,10 @@ async function executeJSCode(code) {
           return this.logMessages.join('\\n')
         })()`,
     )
-    const originalRequire = importModule
+    const originalRequire = require
     const newRequire = (modulePath) => {
       if (modulePath.startsWith('./')) {
-        const resolvedPath = path.resolve('.', modulePath)
+        const resolvedPath = path.resolve(process.cwd(), modulePath)
         return originalRequire(resolvedPath)
       }
       return originalRequire(modulePath)
@@ -125,7 +123,7 @@ async function executeJSCode(code) {
 // 了解自己
 function getSelfInfo() {
   // 返回自己的代码路径、package.json路径、readme路径等基本信息，供AI有选择的了解自己，回答用户的问题
-  const homeDir = path.resolve(fileDir, '../../../../')
+  const homeDir = path.resolve(__filename, '../../../../')
   const packageJson = fs.readJSONSync(path.resolve(homeDir, 'package.json'))
   return {
     config: {
@@ -194,7 +192,7 @@ const descriptions = [
     function: {
       name: 'executeJSCode',
       description:
-        '执行JavaScript代码，返回代码执行结果。代码中可通过Tools命名空间直接调用其他工具函数（如await Tools.createFile(),注意：不需要使用require引入）,Tools中引入了一些常用库可直接调用（Tools.fs="fs-extra", Tools.dayjs="dayjs", Tools.axios="axios", Tools.lodash="lodash"），支持引入自定义模块（需使用绝对路径）。注意：1.代码中不要使用__dirname获取当前目录，请使用path.resolve(".")来获取当前目录。2.执行失败时会抛出错误，成功时返回代码执行结果或空字符串。3.使用importModule(modulePath)函数引入自定义模块，modulePath为模块路径字符串，支持相对路径（如"./myModule.js"）和绝对路径，返回引入的模块内容。',
+        '执行JavaScript代码，返回代码执行结果。代码中可通过Tools命名空间直接调用其他工具函数（如await Tools.createFile(),注意：不需要使用require引入）,Tools中引入了一些常用库可直接调用（Tools.fs="fs-extra", Tools.dayjs="dayjs", Tools.axios="axios", Tools.lodash="lodash"），支持引入自定义模块（需使用绝对路径）。注意：1.代码中不要使用__dirname获取当前目录，请使用path.resolve(".")来获取当前目录。2.执行失败时会抛出错误，成功时返回代码执行结果或空字符串。3.使用require(module_path)函数引入自定义模块，module_path为模块路径字符串，支持相对路径（如"./myModule.js"）和绝对路径，返回引入的模块内容。',
       parameters: {
         type: 'object',
         properties: {
@@ -233,4 +231,4 @@ const SystemTool = {
   functions,
 }
 
-export default SystemTool
+module.exports = SystemTool

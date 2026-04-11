@@ -5,4 +5,4 @@ const GlobalVariable = {
   memoryManager: null,
 }
 
-export { GlobalVariable }
+module.exports = { GlobalVariable }

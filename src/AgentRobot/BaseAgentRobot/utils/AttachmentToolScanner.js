@@ -1,13 +1,12 @@
-import fs from 'fs-extra'
-import path from 'path'
-import { getPath, importModule } from './normal.js'
+const fs = require('fs-extra')
+const path = require('path')
 
-export class AttachmentToolType {
+class AttachmentToolType {
   static BASE_SKILL = 'BaseSkill' // 基础技能，提供技能定义的基本结构
   static CLAW_SKILL = 'ClawSkill' // 爪子技能，提供技能执行的基本结构
 }
 
-export default class AttachmentToolScanner {
+class AttachmentToolScanner {
   // 获取附加工具
   static getToolCollection(workspace) {
     // 从文件中加载附加技能
@@ -30,8 +29,7 @@ export default class AttachmentToolScanner {
      */
     // 1. 子agent创建时，不能拥有其他附加能力
     // 2. 使用platform过滤
-    const { fileDir } = getPath(import.meta.url)
-    const dir1 = path.resolve(fileDir, '../../../../') // 程序所在目录
+    const dir1 = path.resolve(__dirname, '../../../../') // 程序所在目录
     const dir2 = path.resolve(workspace, './node_modules') // 工作目录下node_modules目录
     const dir3 = path.resolve(workspace, './') // 工作目录
     const result = []
@@ -79,7 +77,7 @@ export default class AttachmentToolScanner {
     const attachTools = []
     for (const filePath of result) {
       try {
-        const tool = importModule(filePath)
+        const tool = require(filePath)
         if (tool) {
           tool.type = AttachmentToolType.BASE_SKILL
           tool.location = tool.location || path.dirname(filePath)
@@ -185,3 +183,6 @@ ${table}
     return null
   }
 }
+
+module.exports = AttachmentToolScanner
+module.exports.AttachmentToolType = AttachmentToolType

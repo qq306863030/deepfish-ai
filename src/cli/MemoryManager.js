@@ -7,11 +7,11 @@
  * @Description: 对话历史记录、恢复
  * @
  */
-import fs from 'fs-extra'
-import path from 'path'
-import { GlobalVariable } from './GlobalVariable.js'
-import aiConsole from '../AgentRobot/BaseAgentRobot/utils/aiConsole.js'
-import { openDirectory } from '../AgentRobot/BaseAgentRobot/utils/normal.js'
+const fs = require('fs-extra')
+const path = require('path')
+const { GlobalVariable } = require('./GlobalVariable.js')
+const aiConsole = require('../AgentRobot/BaseAgentRobot/utils/aiConsole.js')
+const { openDirectory } = require('../AgentRobot/BaseAgentRobot/utils/normal.js')
 class MemoryManager {
   constructor() {
     this.configManager = GlobalVariable.configManager
@@ -50,4 +50,4 @@ class MemoryManager {
   }
 }
 
-export default MemoryManager
+module.exports = MemoryManager

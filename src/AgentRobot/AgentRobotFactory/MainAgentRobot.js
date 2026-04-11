@@ -1,13 +1,12 @@
-import path from 'path'
-import os from 'os'
-import fs from 'fs-extra'
-import dayjs from 'dayjs'
-import Logger from '../BaseAgentRobot/Logger.js'
-import BaseAgentRobot from '../BaseAgentRobot/index.js'
-import AttachmentToolScanner, {
-} from '../BaseAgentRobot/utils/AttachmentToolScanner.js'
+const path = require('path')
+const os = require('os')
+const fs = require('fs-extra')
+const dayjs = require('dayjs')
+const Logger = require('../BaseAgentRobot/Logger.js')
+const BaseAgentRobot = require('../BaseAgentRobot/index.js')
+const AttachmentToolScanner = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
 
-export default class MainAgentRobot extends BaseAgentRobot {
+class MainAgentRobot extends BaseAgentRobot {
   // toolCollection = null // 工具集合，包含所有工具函数
   constructor(opt) {
     super(opt)
@@ -101,3 +100,5 @@ ${AttachmentToolScanner.getAttachToolPrompt(this.toolCollection, this.clawSkillC
     `
   }
 }
+
+module.exports = MainAgentRobot

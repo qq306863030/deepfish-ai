@@ -1,10 +1,10 @@
-import fs from 'fs-extra'
-import EventEmitterSuper from 'eventemitter-super'
-import MessageCompresser from './utils/MessageCompresser.js'
-import { creatClient, think, thinkByTool } from './utils/AIRequest.js'
-import lodash from 'lodash'
+const fs = require('fs-extra')
+const { EventEmitterSuper } = require('eventemitter-super')
+const MessageCompresser = require('./utils/MessageCompresser.js')
+const { creatClient, think, thinkByTool } = require('./utils/AIRequest.js')
+const lodash = require('lodash')
 
-export class BrainEvent {
+class BrainEvent {
   static THINK_BEFORE = '1' // 思考前事件，参数为当前消息列表
   static SUB_THINK_BEFORE = '1.1' // 子思考前事件，参数为当前消息列表
   static SUB_THINK_AFTER = '1.2' // 子思考后事件，参数为当前消息列表和思考结果
@@ -20,7 +20,7 @@ export class BrainEvent {
   static THINK_AFTER = '2' // 思考后事件，参数为当前消息列表
 }
 
-export default class Brain extends EventEmitterSuper {
+class Brain extends EventEmitterSuper {
   constructor(agentRobot) {
     super()
     this.messages = []
@@ -211,3 +211,6 @@ export default class Brain extends EventEmitterSuper {
     return messages
   }
 }
+
+module.exports = Brain
+module.exports.BrainEvent = BrainEvent
