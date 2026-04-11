@@ -4,7 +4,7 @@ const descriptions = [
   {
     type: 'function',
     function: {
-      name: 'generateSkillRule',
+      name: 'getGenerateSkillRule',
       description:
         '生成一个扩展工具，则需要先调用此函数获取生成扩展文件的规则;示例：生成一个能够产生一个随机数的函数扩展工具。注意是扩展工具，并非Skill工具包。',
       parameters: {
@@ -19,7 +19,7 @@ const descriptions = [
   {
     type: 'function',
     function: {
-      name: 'generateClawSkillRule',
+      name: 'getGenerateClawSkillRule',
       description:
         '生成一个兼容OpenClaw规范的Skill工具包，则先调用此函数获取生成Skill工具包的完整规则和提示词;示例：生成一个能够抓取网页内容并提取关键信息Skill工具包。注意是Skill工具包，并非扩展工具。',
       parameters: {
@@ -34,7 +34,7 @@ const descriptions = [
 ]
 
 // 生成一个Skill工具包
-async function generateSkillRule(goal) {
+async function getGenerateSkillRule(goal) {
   const packagePath = path.resolve(__filename, '../../../index.js')
   const newGoal = `
 ### 任务目标
@@ -204,7 +204,7 @@ module.exports = functions
 }
 
 // 生成一个Skill工具包
-async function generateClawSkillRule(goal) {
+async function getGenerateClawSkillRule(goal) {
   const newGoal = `
 ### 任务目标
 基于OpenClaw Skill规范创建一个标准化的Skill工具包，实现用户目标：${goal}，最终输出可被你直接加载使用。
@@ -374,8 +374,8 @@ homepage: "https://github.com/example/file-translator"
 }
 
 const functions = {
-  generateClawSkillRule,
-  generateSkillRule,
+  getGenerateClawSkillRule,
+  getGenerateSkillRule,
 }
 
 const GenerateTools = {

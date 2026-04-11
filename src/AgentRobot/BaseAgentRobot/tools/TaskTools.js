@@ -2,7 +2,7 @@ const fs = require('fs-extra')
 const path = require('path')
 
 // 生成/创建任务列表
-function createTaskListRules() {
+function getCreateTaskListRules() {
     return `你需要先创建任务列表文件 tmp_tasklist_「你的编号」.json（位于当前目录）。
 
 创建规则：
@@ -23,7 +23,7 @@ function createTaskListRules() {
 }
 
 // 执行任务列表
-function executeTaskListRules() {
+function getExecuteTaskListRules() {
     return `你需要执行当前目录下的 tmp_tasklist_「你的编号」.json。
 
 执行规则：
@@ -71,7 +71,7 @@ const descriptions = [
     {
         type: 'function',
         function: {
-            name: 'createTaskListRules',
+            name: 'getCreateTaskListRules',
             description:
                 '获取任务列表创建规则。返回一段用于指导AI生成tmp_tasklist_「你的编号」.json的提示词，适用于需要先规划任务清单再逐步执行的场景。需要明确提出生成任务列表才会执行。',
             parameters: {
@@ -84,9 +84,9 @@ const descriptions = [
     {
         type: 'function',
         function: {
-            name: 'executeTaskListRules',
+            name: 'getExecuteTaskListRules',
             description:
-                '执行任务列表前需要获取执行规则提示词。返回一段用于指导AI逐步执行tmp_tasklist_「你的编号」.json的提示词',
+                '执行任务列表前必须获取执行规则说明。返回一段用于指导AI逐步执行tmp_tasklist_「你的编号」.json的规则说明',
             parameters: {
                 type: 'object',
                 properties: {},
@@ -142,13 +142,13 @@ const descriptions = [
         function: {
             name: 'executeSubTaskFromTaskList',
             description:
-                '启动子任务工作流执行单个子任务目标。subTaskGoalPrompt为子任务目标的提示词，建议传入“当前任务名称+验收标准+约束条件”。',
+                '启动子任务工作流执行单个子任务目标。subTaskGoalPrompt为子任务目标的提示词，传入“任务列表+当前进度+当前任务目标描述”。',
             parameters: {
                 type: 'object',
                 properties: {
                     subTaskGoalPrompt: {
                         type: 'string',
-                        description: '子任务目标描述',
+                        description: '子任务目标描述，传入“任务列表+当前进度+当前任务目标描述”',
                     },
                 },
                 required: ["subTaskGoalPrompt"],
@@ -158,8 +158,8 @@ const descriptions = [
 ]
 
 const functions = {
-    createTaskListRules,
-    executeTaskListRules,
+    getCreateTaskListRules,
+    getExecuteTaskListRules,
     readTaskList,
     updateTaskList,
     executeSubTaskFromTaskList,

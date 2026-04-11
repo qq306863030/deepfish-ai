@@ -306,7 +306,7 @@ class BaseAgentRobot {
 
   _getAgentRobotFactory() {
     if (!this._agentRobotFactory) {
-      const AgentRobotFactory = require(path.join(__dirname, '../AgentRobotFactory/index.js'))
+      const AgentRobotFactory = require('../AgentRobotFactory/index.js')
       this._agentRobotFactory = new AgentRobotFactory()
     }
     return this._agentRobotFactory
