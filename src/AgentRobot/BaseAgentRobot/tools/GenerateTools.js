@@ -4,9 +4,39 @@ const descriptions = [
   {
     type: 'function',
     function: {
+      name: 'getGenerateSkillRules',
+      description:
+        '根据用户目标生成扩展工具（NPM项目）的完整开发规则与提示词，返回可直接执行的规则文本。',
+      parameters: {
+        type: 'object',
+        properties: {
+          goal: { type: 'string' },
+        },
+        required: ['goal'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'generateSkill',
       description:
-        '生成一个扩展工具，则需要先调用此函数获取生成扩展文件的规则;示例：生成一个能够产生一个随机数的函数扩展工具。注意是扩展工具，并非Skill工具包。',
+        '基于已准备好的扩展工具规则文本执行任务清单，自动生成扩展工具项目文件。调用前应先通过 getGenerateSkillRules 获取规则。',
+      parameters: {
+        type: 'object',
+        properties: {
+          rules: { type: 'string' },
+        },
+        required: ['rules'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'getGenerateClawSkillRules',
+      description:
+        '根据用户目标生成兼容 OpenClaw 规范的 Skill 工具包开发规则与提示词，返回可直接执行的规则文本。',
       parameters: {
         type: 'object',
         properties: {
@@ -21,24 +51,23 @@ const descriptions = [
     function: {
       name: 'generateClawSkill',
       description:
-        '生成一个兼容OpenClaw规范的Skill工具包，则先调用此函数获取生成Skill工具包的完整规则和提示词;示例：生成一个能够抓取网页内容并提取关键信息Skill工具包。注意是Skill工具包，并非扩展工具。',
+        '基于已准备好的 OpenClaw Skill 规则文本执行任务清单，自动生成 Skill 工具包文件。调用前应先通过 getGenerateClawSkillRules 获取规则。',
       parameters: {
         type: 'object',
         properties: {
-          goal: { type: 'string' },
+          rules: { type: 'string' },
         },
-        required: ['goal'],
+        required: ['rules'],
       },
     },
   },
 ]
 
-// 生成一个Skill工具包
-async function generateSkill(goal) {
+async function getGenerateSkillRules(goal) {
   const packagePath = path.resolve(__filename, '../../../index.js')
   const newGoal = `
 ### 任务目标
-基于指定规则创建一个标准化的Node.js NPM项目，使用es6的语法进行模块化开发，实现用户目标：${goal}，最终输出符合AI工作流调用规范的函数模块，并配套中英文说明文档。
+基于指定规则创建一个标准化的Node.js NPM项目，实现用户目标：${goal}，最终输出符合AI工作流调用规范的函数模块，并配套中英文说明文档。
 
 ### 任务步骤
 
@@ -50,7 +79,7 @@ async function generateSkill(goal) {
    - description字段值：用专业英文简要描述该项目的核心功能和价值, 以"A DeepFish AI extension tool for"开头
    - git仓库地址：固定为 https://github.com/qq306863030/deepfish-extensions.git
    - author设置为"DeepFish AI"
-   - type字段设置为"module"，确保模块系统兼容
+   - type字段设置为"commonjs"，确保模块系统兼容
 3. 文件结构
    - 主文件：项目入口文件必须命名为index.js
    - 子文件：复杂的逻辑可以拆分到其他.js文件中;将descriptions、functions拆分到子文件;
@@ -199,13 +228,17 @@ module.exports = functions
    - 对应说明每个函数的核心功能
    - 无需编写各个函数的具体使用方法
   `
-  await this.Tools.createTaskList(newGoal)
-  return this.Tools.executeTaskList(newGoal)
+  return newGoal
 }
 
 // 生成一个Skill工具包
-async function generateClawSkill(goal) {
-  const newGoal = `
+async function generateSkill(rules) {
+  await this.Tools.createTaskList(rules)
+  return this.Tools.executeTaskList(rules)
+}
+
+async function getGenerateClawSkillRules(goal) {
+   const newGoal = `
 ### 任务目标
 基于OpenClaw Skill规范创建一个标准化的Skill工具包，实现用户目标：${goal}，最终输出可被你直接加载使用。
 
@@ -369,11 +402,17 @@ homepage: "https://github.com/example/file-translator"
    - 提供1-3个典型的使用场景示例
    - 说明用户输入和预期输出
   `
-  await this.Tools.createTaskList(newGoal)
-  return this.Tools.executeTaskList(newGoal)
+  return newGoal
+}
+// 生成一个Skill工具包
+async function generateClawSkill(rules) {
+  await this.Tools.createTaskList(rules)
+  return this.Tools.executeTaskList(rules)
 }
 
 const functions = {
+  getGenerateClawSkillRules,
+  getGenerateSkillRules,
   generateClawSkill,
   generateSkill,
 }
