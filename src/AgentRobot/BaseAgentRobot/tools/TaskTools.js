@@ -3,9 +3,9 @@ const path = require('path')
 
 // 生成/创建任务列表
 function createTaskList(userPrompt = '') {
-  const prompt = `创建一个任务列表文件 tmp_tasklist_「你的编号」.json（位于当前目录）。
+  const prompt = `创建一个任务列表文件 tmp_tasklist_${this.agentRobot.id}.json（位于当前目录）。
 创建规则：
-1. 如果 tmp_tasklist_「你的编号」.json 已存在，先询问用户是否覆盖；
+1. 如果 tmp_tasklist_${this.agentRobot.id}.json 已存在，先询问用户是否覆盖；
 2. 文件内容必须是 JSON 数组；
 3. 每个数组元素是一个任务对象，字段至少包含：
    - id: 任务唯一标识（字符串或数字）
@@ -28,7 +28,7 @@ ${userPrompt}
 
 // 执行任务列表
 function executeTaskList(userPrompt = '') {
-  const prompt = `你需要执行当前目录下的 tmp_tasklist_「你的编号」.json。
+  const prompt = `你需要执行当前目录下的 tmp_tasklist_${this.agentRobot.id}.json。
 
 执行规则：
 1. 读取任务列表，仅处理 status 为 "todo" 或 "doing" 的任务；
@@ -36,10 +36,11 @@ function executeTaskList(userPrompt = '') {
 3. 执行前将当前任务状态更新为 "doing" 并保存；
 4. 子任务执行成功后更新为 "done"，并写入 finishedAt（ISO 时间）；
 5. 子任务失败时保留为 "doing" 或回退为 "todo"，并在 note 记录失败原因摘要；
-6. 每完成一个子任务都必须立刻写回 tmp_tasklist_「你的编号」.json；
+6. 每完成一个子任务都必须立刻写回 tmp_tasklist_${this.agentRobot.id}.json；
 7. 当全部任务为 "done" 时，明确输出“任务列表执行完成”。
 8. 尽量交给子任务完成，主任务流不要参与过多思考和执行细节。
-9. 任务全部执行完成后，删除 tmp_tasklist_「你的编号」.json 文件。
+9. 告诉子任务任务列表的文件名称tmp_tasklist_${this.agentRobot.id}.json。
+10. 任务全部执行完成后，删除 tmp_tasklist_${this.agentRobot.id}.json 文件。
 
 输出要求：
 - 输出当前执行的任务 id/name、结果状态、下一步计划；
@@ -129,14 +130,14 @@ const descriptions = [
     function: {
       name: 'readTaskList',
       description:
-        '读取任务列表并返回任务数组。taskListPath可选，默认读取当前目录的tmp_tasklist_「你的编号」.json；文件不存在或读取失败时返回空数组。',
+        '读取任务列表并返回任务数组。读取以tmp_tasklist_开头的json文件，文件不存在或读取失败时返回空数组。',
       parameters: {
         type: 'object',
         properties: {
           taskListPath: {
             type: 'string',
             description:
-              '任务列表文件路径，默认值为当前目录下tmp_tasklist_「你的编号」.json',
+              '任务列表文件路径，以tmp_tasklist_开头的json文件',
           },
         },
         required: ['taskListPath'],
@@ -155,7 +156,7 @@ const descriptions = [
           taskListPath: {
             type: 'string',
             description:
-              '任务列表文件路径，默认值为当前目录下tmp_tasklist_「你的编号」.json',
+              '任务列表文件路径，以tmp_tasklist_开头的json文件',
           },
           list: {
             type: 'array',
@@ -174,14 +175,14 @@ const descriptions = [
     function: {
       name: 'executeSubTaskFromTaskList',
       description:
-        '启动子任务工作流执行单个子任务目标。subTaskGoalPrompt为子任务目标的提示词，传入“任务列表+当前进度+当前任务目标详细说明+用户的原始需求”。',
+        '启动子任务工作流执行单个子任务目标。subTaskGoalPrompt为子任务目标的提示词，传入“任务列表文件名称+任务列表+当前进度+当前任务目标详细说明+用户的原始需求”。',
       parameters: {
         type: 'object',
         properties: {
           subTaskGoalPrompt: {
             type: 'string',
             description:
-              '子任务目标描述，传入“任务列表+当前进度+当前任务目标详细说明+用户的原始需求”',
+              '子任务目标描述，传入“任务列表文件名称+任务列表+当前进度+当前任务目标详细说明+用户的原始需求”',
           },
         },
         required: ['subTaskGoalPrompt'],

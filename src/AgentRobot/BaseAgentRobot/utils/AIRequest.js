@@ -30,6 +30,7 @@ async function think(
   try {
     const opt = {
       messages: messages,
+      extra_body: {"reasoning_split": true},
       ...aiConfig,
     }
     await thinkBefore()
@@ -77,6 +78,7 @@ async function thinkByTool(
       messages: messages,
       tools: functionDescriptions,
       tool_choice: 'auto',
+      extra_body: {"reasoning_split": true},
       ...aiConfig,
     })
     if (aiConfig.stream) {
