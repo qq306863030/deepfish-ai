@@ -6,7 +6,7 @@ const descriptions = [
     function: {
       name: 'getGenerateSkillRules',
       description:
-        '根据用户目标生成扩展工具（NPM项目）的完整开发规则与提示词，返回可直接执行的规则文本。',
+        '根据用户目标生成扩展工具的完整开发规则与提示词，返回可直接执行的规则文本。',
       parameters: {
         type: 'object',
         properties: {
