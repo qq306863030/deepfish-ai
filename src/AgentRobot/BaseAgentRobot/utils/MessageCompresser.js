@@ -26,6 +26,9 @@ class MessageCompresser {
     // 空消息直接返回
     if (!messages || messages.length === 0) return messages
 
+    // 先清理工具调用消息序列，避免历史坏数据触发 400
+    this._normalizeInPlace(messages)
+
     const currentLength = this._getLength(messages)
     // 不需要压缩直接返回
     if (this.maxContextLength !== -1 && currentLength <= this.maxContextLength) {
@@ -50,9 +53,11 @@ class MessageCompresser {
       return [...messages]
     }
 
-    // 3. 中间需要压缩的区间：第1条 ~ 倒数第KEEP_LATEST_COUNT条
+    // 3. 中间需要压缩的区间：第1条 ~ 安全保留尾部起点
     const compressStart = 1
-    const compressEnd = totalMsg - this.KEEP_LATEST_COUNT
+    const minTailStart = Math.max(1, totalMsg - this.KEEP_LATEST_COUNT)
+    const safeTailStart = this._findSafeTailStart(messages, minTailStart)
+    const compressEnd = safeTailStart
     const middleMessages = messages.slice(compressStart, compressEnd)
 
     // 4. 压缩中间历史
@@ -61,15 +66,114 @@ class MessageCompresser {
       newMessages.push(summary)
     }
 
-    // 5. 保留最新 N 条消息（不压缩）
-    const latestMessages = messages.slice(-this.KEEP_LATEST_COUNT)
+    // 5. 保留最新消息（不压缩），并保证不会截断 tool_calls 对应关系
+    const latestMessages = messages.slice(safeTailStart)
     newMessages.push(...latestMessages)
 
-    // 替换原数组
-    messages.splice(0, messages.length, ...newMessages)
+    // 再做一次序列归一化，避免压缩后出现非法 tool 消息
+    const normalized = this._normalizeToolMessageSequence(newMessages)
 
-    this.robotBrain.emit(BrainEvent.COMPRESS_MESSAGES_AFTER, messages, this._getLength(newMessages))
+    // 替换原数组
+    messages.splice(0, messages.length, ...normalized)
+
+    this.robotBrain.emit(BrainEvent.COMPRESS_MESSAGES_AFTER, messages, this._getLength(normalized))
     return messages
+  }
+
+  /**
+   * 计算安全尾部起点，避免产生孤立的 tool 消息：
+   * - 如果起点落在 tool 消息上，向前回退到触发该 tool 的 assistant(tool_calls)
+   * - 如果 assistant(tool_calls) 后存在任意 tool 消息被保留，则 assistant(tool_calls) 必须一并保留
+   */
+  _findSafeTailStart(messages, minTailStart) {
+    let start = minTailStart
+    while (start > 1) {
+      const current = messages[start]
+      const prev = messages[start - 1]
+
+      if (current?.role === 'tool') {
+        start -= 1
+        continue
+      }
+
+      if (current?.role !== 'tool' && prev?.role === 'tool') {
+        start -= 1
+        continue
+      }
+
+      const hasToolMessagesAfter = messages
+        .slice(start + 1)
+        .some((msg) => msg?.role === 'tool')
+      if (current?.role === 'assistant' && current?.tool_calls && hasToolMessagesAfter) {
+        return start
+      }
+
+      break
+    }
+
+    while (start < messages.length) {
+      const msg = messages[start]
+      if (msg?.role !== 'tool') {
+        break
+      }
+      start += 1
+    }
+
+    return start
+  }
+
+  _normalizeInPlace(messages) {
+    const normalized = this._normalizeToolMessageSequence(messages)
+    if (normalized.length === messages.length && normalized.every((m, i) => m === messages[i])) {
+      return
+    }
+    messages.splice(0, messages.length, ...normalized)
+  }
+
+  _normalizeToolMessageSequence(messages) {
+    const normalized = []
+    let pending = null
+
+    const flushPending = () => {
+      if (!pending) return
+      const hasAllToolReports = pending.callIds.size > 0 && pending.respondedIds.size === pending.callIds.size
+      if (hasAllToolReports) {
+        normalized.push(pending.assistant)
+        normalized.push(...pending.toolReports)
+      }
+      pending = null
+    }
+
+    for (const msg of messages) {
+      if (msg?.role === 'assistant' && Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) {
+        flushPending()
+        pending = {
+          assistant: msg,
+          toolReports: [],
+          callIds: new Set(msg.tool_calls.map((item) => item?.id).filter(Boolean)),
+          respondedIds: new Set(),
+        }
+        continue
+      }
+
+      if (msg?.role === 'tool') {
+        if (!pending) {
+          continue
+        }
+        if (!msg.tool_call_id || !pending.callIds.has(msg.tool_call_id)) {
+          continue
+        }
+        pending.toolReports.push(msg)
+        pending.respondedIds.add(msg.tool_call_id)
+        continue
+      }
+
+      flushPending()
+      normalized.push(msg)
+    }
+
+    flushPending()
+    return normalized
   }
 
   // 计算消息总长度（稳健版）
