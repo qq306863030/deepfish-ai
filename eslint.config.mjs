@@ -19,7 +19,8 @@ export default defineConfig([
       "preserve-caught-error": "off"
     }
   },
-  { files: ["**/*.js"], languageOptions: { sourceType: "commonjs" } },
+  { files: ["**/*.js"], languageOptions: { sourceType: "module" } },
+  { files: ["**/*.cjs"], languageOptions: { sourceType: "commonjs" } },
   {
     files: ["**/*.json"],
     plugins: { json },

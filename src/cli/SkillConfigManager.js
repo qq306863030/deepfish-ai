@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:23:42
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-03-27 10:30:40
+ * @LastEditTime: 2026-04-07 15:56:35
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */
@@ -10,32 +10,44 @@ const path = require('path')
 const fs = require('fs-extra')
 const axios = require('axios')
 const cheerio = require('cheerio')
-const { GlobalVariable } = require('../core/globalVariable')
-const { logError, logSuccess } = require('../core/utils/log')
 const extract = require('extract-zip')
-const { parseSkillMetadataYaml } = require('./SkillParser')
-const { openDirectory } = require('../core/utils/normal')
+const { GlobalVariable } = require('./GlobalVariable.js')
+const { parseSkillMetadataYaml } = require('./SkillParser.js')
+const aiConsole = require('../AgentRobot/BaseAgentRobot/utils/aiConsole.js')
+const { openDirectory } = require('../AgentRobot/BaseAgentRobot/utils/normal.js')
 
 // skill的数据结构: {name: string, enable: boolean, description: string, baseDir: string, skillDirName: string, location: string, skillFilePath: string, homepage: string, metadata: object}
 class SkillConfigManager {
   constructor() {
     this.configManager = GlobalVariable.configManager
     // skill目录
-    this.skillDir = path.join(this.configManager.configDir, './skills')
-    // 自动创建skill目录
-    fs.ensureDirSync(this.skillDir)
+    this.skillDir = path.join(this.configManager.configDir, './clawSkills')
+    this.skillFilePath = path.join( this.skillDir, './clawSkills.json')
     this.init()
     GlobalVariable.skillConfigManager = this
   }
 
   init() {
-    const userConfig = this.configManager.config
-    if (!userConfig.skills) {
-      userConfig.skills = []
-      this.configManager.writeConfig(userConfig)
+    // 自动创建skill目录
+    fs.ensureDirSync(this.skillDir)
+    // 判断是否存在clawSkills.json，如果不存在则创建
+    if (!fs.existsSync(this.skillFilePath)) {
+      fs.writeJsonSync(this.skillFilePath, { skills: [] }, { spaces: 2 })
     }
     this._check()
   }
+
+  // 读取skill文件
+  readSkills() {
+    const skillsObj = fs.readJSONSync(this.skillFilePath, { throws: false }) || { skills: [] }
+    return skillsObj.skills
+  }
+
+  // 写入skill文件
+  writeSkills(skills) {
+    fs.writeJSONSync(this.skillFilePath, { skills }, { spaces: 2 })
+  }
+
 
   openDirectory() {
     // 打开目录
@@ -44,7 +56,7 @@ class SkillConfigManager {
 
   // 预加载skills，拼接提示词
   preLoadSkills() {
-    const skills = this.configManager.config.skills.filter((skill) => skill.enable)
+    const skills = this.readSkills().filter((skill) => skill.enable)
     if (skills.length === 0) {
         return '### 暂无可以使用的Skill'
     }
@@ -73,7 +85,7 @@ ${table}
   loadSkill(skillFilePath) {
     // 读取skill的SKILL.md，获取调用说明
     if (!fs.existsSync(skillFilePath)) {
-        logError(`Skill file "${skillFilePath}" does not exist.`)
+        aiConsole.logError(`Skill file "${skillFilePath}" does not exist.`)
         return null
     }
     return fs.readFileSync(skillFilePath, 'utf-8')
@@ -93,7 +105,7 @@ ${table}
 
   // 查看skills列表
   viewList() {
-    const skills = this.configManager.config.skills
+    const skills = this.readSkills()
     if (skills && Array.isArray(skills)) {
       console.log('='.repeat(50))
       // 打印扩展列表，并加上索引
@@ -107,13 +119,12 @@ ${table}
       }
       console.log('='.repeat(50))
     } else {
-      logError(`No skills in config.`)
+      aiConsole.logError(`No skills in config.`)
     }
   }
   _check() {
     // 如果数组的数量与目录中的数量不一致，则自动同步
-    const userConfig = this.configManager.config
-    const skills = userConfig.skills
+    const skills = this.readSkills()
     const skillDirs = fs.readdirSync(this.skillDir).filter((file) => {
       return fs.statSync(path.join(this.skillDir, file)).isDirectory()
     })
@@ -163,10 +174,10 @@ ${table}
         await extract(baseDir, { dir: extractPath })
         this._registerSkill(baseName)
       } else {
-        logError(`File "${file}" is not a directory or a zip file.`)
+        aiConsole.logError(`File "${file}" is not a directory or a zip file.`)
       }
     } else {
-      logError(
+      aiConsole.logError(
         `No skill named "${skillName}" found in current directory. Please download it from ClawHub (https://clawhub.ai/) and place it in the current directory.`,
       )
     }
@@ -176,7 +187,7 @@ ${table}
   async install(skillUrl) {
     // 从ClawHub下载zip并解压到skills目录下，并添加到config中
     if (!skillUrl || typeof skillUrl !== 'string') {
-      logError('Invalid skill URL. Please provide a valid ClawHub URL.')
+      aiConsole.logError('Invalid skill URL. Please provide a valid ClawHub URL.')
       return
     }
 
@@ -184,13 +195,13 @@ ${table}
     try {
       parsedUrl = new URL(skillUrl)
     } catch (error) {
-      logError('Invalid skill URL format.')
+      aiConsole.logError('Invalid skill URL format.')
       return
     }
 
     const host = parsedUrl.hostname.toLowerCase()
     if (host !== 'clawhub.ai' && host !== 'www.clawhub.ai') {
-      logError(
+      aiConsole.logError(
         'Only ClawHub URLs are supported, e.g. https://clawhub.ai/author/skill-name',
       )
       return
@@ -198,22 +209,22 @@ ${table}
 
     const segments = parsedUrl.pathname.split('/').filter(Boolean)
     if (segments.length < 2) {
-      logError(
+      aiConsole.logError(
         'Invalid ClawHub URL. Expected format: https://clawhub.ai/<author>/<skill-name>',
       )
       return
     }
 
     const skillName = path.basename(segments[1], '.zip')
-    const userConfig = this.configManager.config
-    if (userConfig.skills.some((skill) => skill.name === skillName)) {
-      logError(`Skill with name "${skillName}" already exists in config.`)
+    const skills = this.readSkills()
+    if (skills.some((skill) => skill.name === skillName)) {
+      aiConsole.logError(`Skill with name "${skillName}" already exists in config.`)
       return
     }
     // 查看目录是否存在当前的skill
     const skillPath = path.join(this.skillDir, skillName)
     if (fs.existsSync(skillPath)) {
-      logError(`Skill "${skillName}" already exists in the skills directory.`)
+      aiConsole.logError(`Skill "${skillName}" already exists in the skills directory.`)
       return
     }
     const zipFilePath = path.join(this.skillDir, `${skillName}.zip`)
@@ -236,7 +247,7 @@ ${table}
       const downloadHref = $('.skill-hero-cta a').first().attr('href')
 
       if (!downloadHref) {
-        logError(`No download link found for skill "${skillName}".`)
+        aiConsole.logError(`No download link found for skill "${skillName}".`)
         return
       }
 
@@ -252,9 +263,9 @@ ${table}
       fs.writeFileSync(zipFilePath, Buffer.from(zipResponse.data))
       await extract(zipFilePath, { dir: extractPath })
       this._registerSkill(skillName)
-      logSuccess(`Skill "${skillName}" installed successfully!`)
+      aiConsole.logSuccess(`Skill "${skillName}" installed successfully!`)
     } catch (error) {
-      logError(`Failed to install skill "${skillName}": ${error.message}`)
+      aiConsole.logError(`Failed to install skill "${skillName}": ${error.message}`)
     } finally {
       fs.removeSync(zipFilePath)
     }
@@ -262,8 +273,8 @@ ${table}
 
   // 根据名称或索引 删除skills
   remove(skillName) {
-    const userConfig = this.configManager.config
-    const skillObj = this._getSkill(skillName)
+    const skills = this.readSkills()
+    const skillObj = this._getSkill(skills, skillName)
     if (!skillObj) {
       return
     }
@@ -272,51 +283,50 @@ ${table}
     if (!skillPath) {
       skillPath = path.join(this.skillDir, skill.skillDirName)
     }
-    userConfig.skills = userConfig.skills.filter((_, i) => i !== index)
-    this.configManager.writeConfig(userConfig)
+    skills.splice(index, 1)
+    this.writeSkills(skills)
     if (fs.existsSync(skillPath)) {
       fs.removeSync(skillPath)
     }
-    logSuccess(`Skill "${skill.name}" removed successfully!`)
+    aiConsole.logSuccess(`Skill "${skill.name}" removed successfully!`)
   }
 
   // 根据名称或索引 启用skill-限制最大启用100个
   enable(skillName) {
-    const userConfig = this.configManager.config
-    const skills = userConfig.skills
+    const skills = this.readSkills()
     const enabledCount = skills.filter((skill) => skill.enable).length
     if (enabledCount >= 100) {
-      logError('Cannot enable more than 100 skills.')
+      aiConsole.logError('Cannot enable more than 100 skills.')
       return
     }
-    const skillObj = this._getSkill(skillName)
+    const skillObj = this._getSkill(skills, skillName)
     if (!skillObj) {
       return
     }
     const { skill } = skillObj
     skill.enable = true
-    this.configManager.writeConfig(userConfig)
-    logSuccess(`Skill "${skill.name}" enabled successfully!`)
+    this.writeSkills(skills)
+    aiConsole.logSuccess(`Skill "${skill.name}" enabled successfully!`)
   }
 
   // 根据名称或索引 禁用skill
   disable(skillName) {
-    const userConfig = this.configManager.config
-    const skillObj = this._getSkill(skillName)
+    const skills = this.readSkills()
+    const skillObj = this._getSkill(skills, skillName)
     if (!skillObj) {
       return
     }
     const { skill } = skillObj
     skill.enable = false
-    this.configManager.writeConfig(userConfig)
-    logSuccess(`Skill "${skill.name}" disabled successfully!`)
+    this.writeSkills(skills)
+    aiConsole.logSuccess(`Skill "${skill.name}" disabled successfully!`)
   }
 
   // 解析skill的描述文件，获取name、description
   _registerSkill(skillDirName, enable = true) {
-    const userConfig = this.configManager.config
+    const skills = this.readSkills()
     // 同名检测
-    if (userConfig.skills.some((skill) => skill.name === skillDirName)) {
+    if (skills.some((skill) => skill.name === skillDirName)) {
       throw new Error(
         `Skill with name "${skillDirName}" already exists in config.`,
       )
@@ -326,7 +336,7 @@ ${table}
     const skillInfo = this._parseSkill(skillDirPath)
     const name = skillInfo.name || skillDirName
     const description = skillInfo.description || ''
-    userConfig.skills.push({
+    skills.push({
       name,
       description,
       enable,
@@ -334,26 +344,25 @@ ${table}
       skillDirName: skillDirName,
       ...skillInfo,
     })
-    this.configManager.writeConfig(userConfig)
+    this.writeSkills(skills)
   }
 
-  _getSkill(skillName) {
-    const userConfig = this.configManager.config
+  _getSkill(skills, skillName) {
     let index = parseInt(skillName, 10)
     let skill = null
     if (!isNaN(index)) {
-      if (index < 0 || index >= userConfig.skills.length) {
-        logError(`Skill index "${index}" is out of range.`)
+      if (index < 0 || index >= skills.length) {
+        aiConsole.logError(`Skill index "${index}" is out of range.`)
       } else {
-        skill = userConfig.skills[index]
+        skill = skills[index]
       }
     } else {
-      index = userConfig.skills.findIndex((skill) => skill.name === skillName)
+      index = skills.findIndex((skill) => skill.name === skillName)
       if (index === -1) {
-        logError(`Skill with name "${skillName}" not found in config.`)
+        aiConsole.logError(`Skill with name "${skillName}" not found in config.`)
         return
       }
-      skill = userConfig.skills[index]
+      skill = skills[index]
     }
     return {
       skill,
