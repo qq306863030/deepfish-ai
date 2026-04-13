@@ -16,6 +16,8 @@ const GenerateTools = require('./tools/GenerateTools.js')
 const TaskTools = require('./tools/TaskTools.js')
 const TestTools = require('./tools/TestTools.js')
 const axios = require('axios')
+const echarts = require('echarts')
+const canvas = require('canvas')
 
 class BaseAgentRobot {
   id = '' // 机器人id
@@ -220,6 +222,8 @@ class BaseAgentRobot {
       axios,
       dayjs,
       lodash,
+      canvas,
+      echarts
     }
     tools.forEach((tool) => {
       Object.assign(toolFunctions, tool.functions)
