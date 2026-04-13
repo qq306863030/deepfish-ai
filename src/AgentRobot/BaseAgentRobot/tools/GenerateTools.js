@@ -6,7 +6,7 @@ const descriptions = [
     function: {
       name: 'getGenerateSkillRules',
       description:
-        '根据用户目标生成扩展工具的完整开发规则与提示词，返回可直接执行的规则文本。',
+        '根据用户目标生成扩展工具的完整开发规则与提示词，返回可直接执行的规则文本。注意是扩展工具，并非ClawSkill工具包。',
       parameters: {
         type: 'object',
         properties: {
@@ -36,7 +36,7 @@ const descriptions = [
     function: {
       name: 'getGenerateClawSkillRules',
       description:
-        '根据用户目标生成兼容 OpenClaw 规范的 Skill 工具包开发规则与提示词，返回可直接执行的规则文本。',
+        '根据用户目标生成兼容 OpenClaw 规范的 Skill 工具包开发规则与提示词，返回可直接执行的规则文本。注意是ClawSkill工具包，与扩展工具不同。',
       parameters: {
         type: 'object',
         properties: {
