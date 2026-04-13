@@ -54,7 +54,7 @@ class MainAgentRobot extends BaseAgentRobot {
       )
     } else {
       const agentTree = fs.readJsonSync(this.agentTreeFilePath)
-      if (agentTree) {
+      if (agentTree && agentTree.agentId === this.id) {
         // 恢复子机器人
         // this._parseAgentTree(this, agentTree)
       } else {
@@ -62,6 +62,7 @@ class MainAgentRobot extends BaseAgentRobot {
         fs.writeJsonSync(this.agentTreeFilePath, agentTree, { spaces: 2 })
       }
     }
+    this.agentTree = fs.readJsonSync(this.agentTreeFilePath)
     this.memoryFilePath = path.join(this.agentSpace, 'memory.json')
     this.logDirPath = path.join(this.agentSpace, 'logs')
     fs.ensureDirSync(this.logDirPath)

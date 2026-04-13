@@ -35,6 +35,33 @@ class Hand extends EventEmitterSuper {
     }
   }
 
+  _getFunctionParamNames(fn) {
+    if (typeof fn !== 'function') return []
+    const src = fn.toString()
+    const match = src.match(/^[\s\S]*?\(([^)]*)\)/)
+    if (!match) return []
+    return match[1]
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item) => item.replace(/\s*=.*$/, '').trim())
+  }
+
+  _buildOrderedArgs(fn, funcArgs) {
+    if (funcArgs == null) return []
+    if (Array.isArray(funcArgs)) return funcArgs
+    if (typeof funcArgs !== 'object') return [funcArgs]
+    const paramNames = this._getFunctionParamNames(fn)
+    if (paramNames.length === 0) return Object.values(funcArgs)
+    return paramNames.map((name) => funcArgs[name])
+  }
+
+  _getRequiredParamNames(funcName) {
+    const descriptions = this.agentRobot.getToolDescriptions()
+    const current = descriptions.find((item) => item?.function?.name === funcName)
+    return current?.function?.parameters?.required || []
+  }
+
   async useTools(tool_calls) {
     for (const toolCall of tool_calls) {
       const { toolId, funcArgs, funcName } = this._parseToolCalls(toolCall)
@@ -42,7 +69,15 @@ class Hand extends EventEmitterSuper {
       this.emit(HandEvent.USE_TOOL_BEFORE, toolId, funcName, funcArgs)
       if (toolFunctions[funcName]) {
         try {
-          let result = await toolFunctions[funcName](...Object.values(funcArgs))
+          const requiredParams = this._getRequiredParamNames(funcName)
+          if (funcArgs && typeof funcArgs === 'object' && !Array.isArray(funcArgs)) {
+            const missingParams = requiredParams.filter((name) => funcArgs[name] === undefined)
+            if (missingParams.length > 0) {
+              throw new Error(`Missing required tool arguments for ${funcName}: ${missingParams.join(', ')}`)
+            }
+          }
+          const orderedArgs = this._buildOrderedArgs(toolFunctions[funcName], funcArgs)
+          let result = await toolFunctions[funcName](...orderedArgs)
           let toolContent = JSON.stringify(result)
           if (funcName !== 'requestAI') {
             const MAX_CONTENT_SIZE = this.maxBlockFileSize * 1024

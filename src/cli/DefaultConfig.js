@@ -24,6 +24,32 @@ const aiCliConfig = {
     maxContextLength: 64, // 单位KB
     stream: true,
   },
+  MiniMax: {
+    baseUrl: 'https://api.minimaxi.com/v1',
+    model: {
+      list: ['MiniMax-M2.5'],
+      defaultValue: 'MiniMax-M2.5',
+    },
+    type: 'minimax',
+    apiKey: '',
+    temperature: 0.7,
+    maxTokens: 8, // 单位KB
+    maxContextLength: 64, // 单位KB
+    stream: true,
+  },
+  Qwen: {
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    model: {
+      list: ['qwen3.6-plus'],
+      defaultValue: 'qwen3.6-plus',
+    },
+    type: 'qwen',
+    apiKey: '',
+    temperature: 0.7,
+    maxTokens: 8, // 单位KB
+    maxContextLength: 64, // 单位KB
+    stream: true,
+  },
   Ollama: {
     baseUrl: 'http://localhost:11434/v1',
     model: {
@@ -49,7 +75,7 @@ const aiCliConfig = {
     maxTokens: 8, // 单位KB
     maxContextLength: 64, // 单位KB
     stream: true,
-  },
+  }
 }
 
 module.exports = { aiCliConfig, defaultConfig }

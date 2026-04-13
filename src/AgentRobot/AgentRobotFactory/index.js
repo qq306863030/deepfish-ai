@@ -19,7 +19,7 @@ class AgentRobotFactory {
       }
     }
     const subAgent = new SubSkillAgentRobot({
-      ...parent.originOpt,
+      ...parent.opt,
       id,
       name: `SubSkillAgent-${attachTools[0].name}`,
       parent: parent,
@@ -39,7 +39,7 @@ class AgentRobotFactory {
   // 创建子机器人
   createSubAgent(parent, id) {
     const subAgent = new SubAgentRobot({
-      ...parent.originOpt,
+      ...parent.opt,
       id,
       name: `SubAgent-${id}`,
       parent: parent,

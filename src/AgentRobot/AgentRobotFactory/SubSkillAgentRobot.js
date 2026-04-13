@@ -1,5 +1,6 @@
 const path = require('path')
 const os = require('os')
+const fs = require('fs-extra')
 const BaseAgentRobot = require('../BaseAgentRobot/index.js')
 const Logger = require('../BaseAgentRobot/Logger.js')
 
@@ -23,6 +24,21 @@ class SubSkillAgentRobot extends BaseAgentRobot {
     this.memoryFilePath = path.join(this.agentSpace, `memory-${this.id}.json`)
     this.logDirPath = path.join(this.agentSpace, 'logs')
     this.logger = new Logger(this) // 初始化日志系统
+    const parentAgentTree = this.parent.agentTree
+    const rootAgentTree = this.root.agentTree
+    if (parentAgentTree && parentAgentTree.children) {
+      const currentNode = parentAgentTree.children.find(
+        (child) => child.agentId === this.id,
+      )
+      if (!currentNode) {
+        parentAgentTree.children.push({
+          agentId: this.id,
+          children: [],
+          type: 'sub-skill',
+        })
+        fs.writeJsonSync(this.agentTreeFilePath, rootAgentTree, { spaces: 2 })
+      }
+    }
   }
 }
 

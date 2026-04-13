@@ -71,8 +71,6 @@ class BaseAgentRobot {
       },
     },
   ) {
-    opt = lodash.cloneDeep(opt)
-    this.originOpt = lodash.cloneDeep(opt)
     this.opt = opt
     this.config = opt
     this.id = opt.id || Date.now().toString()
