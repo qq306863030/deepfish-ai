@@ -14,17 +14,19 @@ class AttachmentToolScanner {
     const attachTools = []
     // 先扫描懒加载目录
     const lazyLoadDir = path.join(__dirname, '../lazy-tools')
-    for (const filePath of lazyLoadDir) {
+    const lazyFiles = fs.existsSync(lazyLoadDir) ? fs.readdirSync(lazyLoadDir) : []
+    for (const fileName of lazyFiles) {
       try {
-        const tool = require(filePath)
+        const filePath = path.join(lazyLoadDir, fileName)
+        const tool = require(path.resolve(lazyLoadDir, fileName))
         if (tool) {
           tool.type = AttachmentToolType.BASE_SKILL
           tool.location = tool.location || path.dirname(filePath)
-          tool.filePath = tool.filePath || filePath 
+          tool.filePath = tool.filePath || filePath
           attachTools.push(tool)
         }
       } catch (error) {
-        console.error(`加载附加工具失败: ${filePath}`, error)
+        console.error(`加载附加工具失败: ${fileName}`, error)
       }
     }
 
