@@ -39,7 +39,7 @@ function executeTaskList(userPrompt = '') {
 6. 每完成一个子任务都必须立刻写回 tmp_tasklist_${this.agentRobot.id}.json；
 7. 当全部任务为 "done" 时，明确输出“任务列表执行完成”。
 8. 尽量交给子任务完成，主任务流不要参与过多思考和执行细节。
-9. 告诉子任务任务列表的文件名称tmp_tasklist_${this.agentRobot.id}.json。
+9. 告诉子任务任务列表的文件名称 tmp_tasklist_${this.agentRobot.id}.json。
 10. 任务全部执行完成后，删除 tmp_tasklist_${this.agentRobot.id}.json 文件。
 
 输出要求：
@@ -175,14 +175,14 @@ const descriptions = [
     function: {
       name: 'executeSubTaskFromTaskList',
       description:
-        '启动子任务工作流执行单个子任务目标。subTaskGoalPrompt为子任务目标的提示词，传入“任务列表文件名称+任务列表+当前进度+当前任务目标详细说明+用户的原始需求”。',
+        '启动子任务工作流执行单个子任务目标。subTaskGoalPrompt为子任务目标的提示词（子任务目标的详细描述，一定要详细，能让子任务执行结果与期望一致），传入“任务列表文件名称+任务列表+当前进度+当前任务目标详细说明+用户的原始需求+用户定义的详细规则”。',
       parameters: {
         type: 'object',
         properties: {
           subTaskGoalPrompt: {
             type: 'string',
             description:
-              '子任务目标描述，传入“任务列表文件名称+任务列表+当前进度+当前任务目标详细说明+用户的原始需求”',
+              '子任务目标的详细描述，传入“任务列表文件名称+任务列表+当前进度+当前任务目标详细说明+用户的原始需求+用户定义的详细规则”',
           },
         },
         required: ['subTaskGoalPrompt'],
