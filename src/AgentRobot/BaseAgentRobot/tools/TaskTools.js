@@ -3,11 +3,10 @@ const path = require('path')
 
 // 生成/创建任务列表
 function createTaskList(userPrompt = '') {
-  const prompt = `创建一个任务列表文件 tmp_tasklist_${this.agentRobot.id}.json（位于当前目录）。
-创建规则：
-1. 如果 tmp_tasklist_${this.agentRobot.id}.json 已存在，先询问用户是否覆盖；
-2. 文件内容必须是 JSON 数组；
-3. 每个数组元素是一个任务对象，字段至少包含：
+  const prompt = `在当前目录创建一个任务列表文件 tmp_tasklist_${this.agentRobot.id}.json;创建一个记录用户任务目标的文件，tmp_task_goal_${this.agentRobot.id}.md。
+tmp_tasklist_${this.agentRobot.id}.json文件创建规则：
+1. 文件内容必须是 JSON 数组；
+2. 每个数组元素是一个任务对象，字段至少包含：
    - id: 任务唯一标识（字符串或数字）
    - name: 任务名称
    - description: 任务的详细说明
@@ -15,12 +14,12 @@ function createTaskList(userPrompt = '') {
    - createdAt: 创建时间（ISO 字符串）
    - finishedAt: 完成时间（未完成可为 null）
    - note: 备注（可为空字符串）
-4. 任务需尽量原子化、可执行。
+3. 任务需尽量原子化、可执行。
 
 输出要求：
 - 仅输出可写入的合法 JSON 内容，不要输出解释文字。
 
-以下是要完成的任务目标：
+tmp_task_goal_${this.agentRobot.id}.md文件为以下内容：
 ${userPrompt}
 `
   return this.Tools.createSubAgent(prompt)
@@ -34,13 +33,14 @@ function executeTaskList(userPrompt = '') {
 1. 读取任务列表，仅处理 status 为 "todo" 或 "doing" 的任务；
 2. 每次只执行一个子任务，按列表顺序执行；
 3. 执行前将当前任务状态更新为 "doing" 并保存；
-4. 子任务执行成功后更新为 "done"，并写入 finishedAt（ISO 时间）；
-5. 子任务失败时保留为 "doing" 或回退为 "todo"，并在 note 记录失败原因摘要；
-6. 每完成一个子任务都必须立刻写回 tmp_tasklist_${this.agentRobot.id}.json；
-7. 当全部任务为 "done" 时，明确输出“任务列表执行完成”。
-8. 尽量交给子任务完成，主任务流不要参与过多思考和执行细节。
-9. 告诉子任务任务列表的文件名称 tmp_tasklist_${this.agentRobot.id}.json。
-10. 任务全部执行完成后，删除 tmp_tasklist_${this.agentRobot.id}.json 文件。
+4. 执行前需要阅读 tmp_task_goal_${this.agentRobot.id}.md 文件，了解用户的整体需求；
+5. 子任务执行成功后更新为 "done"，并写入 finishedAt（ISO 时间）；
+6. 子任务失败时保留为 "doing" 或回退为 "todo"，并在 note 记录失败原因摘要；
+7. 每完成一个子任务都必须立刻写回 tmp_tasklist_${this.agentRobot.id}.json；
+8. 当全部任务为 "done" 时，明确输出“任务列表执行完成”。
+9. 尽量交给子任务完成，主任务流不要参与过多思考和执行细节。
+10. 告诉子任务任务列表的文件名称 tmp_tasklist_${this.agentRobot.id}.json。
+11. 任务全部执行完成后，删除 tmp_tasklist_${this.agentRobot.id}.json 文件和 tmp_task_goal_${this.agentRobot.id}.md 文件。
 
 输出要求：
 - 输出当前执行的任务 id/name、结果状态、下一步计划；
@@ -175,14 +175,14 @@ const descriptions = [
     function: {
       name: 'executeSubTaskFromTaskList',
       description:
-        '启动子任务工作流执行单个子任务目标。subTaskGoalPrompt为子任务目标的提示词（子任务目标的详细描述，一定要详细，能让子任务执行结果与期望一致），传入“任务列表文件名称+任务列表+当前进度+当前任务目标详细说明+用户的原始需求+用户定义的详细规则”。',
+        '启动子任务工作流执行单个子任务目标。subTaskGoalPrompt为子任务目标的提示词，传入“任务列表文件名称+当前进度+当前任务目标详细说明”。',
       parameters: {
         type: 'object',
         properties: {
           subTaskGoalPrompt: {
             type: 'string',
             description:
-              '子任务目标的详细描述，传入“任务列表文件名称+任务列表+当前进度+当前任务目标详细说明+用户的原始需求+用户定义的详细规则”',
+              '子任务目标的详细描述，传入“任务列表文件名称+当前进度+当前任务目标详细说明”',
           },
         },
         required: ['subTaskGoalPrompt'],
