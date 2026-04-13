@@ -10,6 +10,25 @@ class AttachmentToolScanner {
   // 获取附加工具
   static getToolCollection(workspace) {
     // 从文件中加载附加技能
+    // 动态加载这些文件，获取工具对象
+    const attachTools = []
+    // 先扫描懒加载目录
+    const lazyLoadDir = path.join(__dirname, '../lazy-tools')
+    for (const filePath of lazyLoadDir) {
+      try {
+        const tool = require(filePath)
+        if (tool) {
+          tool.type = AttachmentToolType.BASE_SKILL
+          tool.location = tool.location || path.dirname(filePath)
+          tool.filePath = tool.filePath || filePath 
+          attachTools.push(tool)
+        }
+      } catch (error) {
+        console.error(`加载附加工具失败: ${filePath}`, error)
+      }
+    }
+
+
     // 1.搜索程序所在目录下的以deepfish-ai-开头的文件夹
     // 2.搜索程序所在目录下以@deepfish-ai开头的文件夹里的目录
     // 3.工作目录下node_modules目录下以deepfish-ai-开头的文件夹
@@ -73,8 +92,6 @@ class AttachmentToolScanner {
         }
       }
     })
-    // 动态加载这些文件，获取工具对象
-    const attachTools = []
     for (const filePath of result) {
       try {
         const tool = require(filePath)
