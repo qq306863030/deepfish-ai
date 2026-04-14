@@ -384,6 +384,8 @@ AI always uses paths relative to the current working directory.
 
 Conversation history is created on a per-directory basis — each execution directory corresponds to its own Agent context. This means that conversations started in different directories are independent of each other.
 
+> **⚠️ Important Note:** AI context is directory-based — each directory corresponds to one context. **Please do not open two command-line dialogs in the same directory**, as this may cause context conflicts and unexpected behavior.
+
 Conversation history will be automatically cleared after a configurable period (controlled by the `maxMemoryExpireTime` field in the configuration file, default is 30 days). You can also manage it manually:
 
 - `ai memery dir` — Open the memory directory to view stored conversation contexts
