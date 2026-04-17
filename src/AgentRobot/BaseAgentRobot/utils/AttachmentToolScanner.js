@@ -203,5 +203,7 @@ ${table}
   }
 }
 
-module.exports = AttachmentToolScanner
-module.exports.AttachmentToolType = AttachmentToolType
+module.exports = {
+  AttachmentToolScanner,
+  AttachmentToolType,
+}

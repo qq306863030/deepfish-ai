@@ -3,7 +3,7 @@ const os = require('os')
 const fs = require('fs-extra')
 const BaseAgentRobot = require('../BaseAgentRobot/index.js')
 const Logger = require('../BaseAgentRobot/Logger.js')
-const AttachmentToolScanner = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
+const {AttachmentToolScanner} = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
 
 class SubAgentRobot extends BaseAgentRobot {
   // opt: { root, parent, ...MainAgentOpt }

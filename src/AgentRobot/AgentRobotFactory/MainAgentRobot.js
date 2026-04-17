@@ -4,7 +4,7 @@ const fs = require('fs-extra')
 const dayjs = require('dayjs')
 const Logger = require('../BaseAgentRobot/Logger.js')
 const BaseAgentRobot = require('../BaseAgentRobot/index.js')
-const AttachmentToolScanner = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
+const {AttachmentToolScanner} = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
 
 class MainAgentRobot extends BaseAgentRobot {
   // toolCollection = null // 工具集合，包含所有工具函数

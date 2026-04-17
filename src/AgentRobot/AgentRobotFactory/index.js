@@ -1,4 +1,4 @@
-const { AttachmentToolScanner, AttachmentToolType } = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
+const { AttachmentToolType, AttachmentToolScanner } = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
 const MainAgentRobot = require('./MainAgentRobot.js')
 const SubAgentRobot = require('./SubAgentRobot.js')
 const SubSkillAgentRobot = require('./SubSkillAgentRobot.js')
