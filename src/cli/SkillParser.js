@@ -2,20 +2,25 @@ const fs = require('fs-extra')
 const path = require('path')
 const yaml = require('js-yaml')
 
-function parseSkillMetadata(skillPath) {
-  const content = fs.readFileSync(skillPath, 'utf-8');
-  
-  // 提取 frontmatter (--- 之间的内容)
-  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+function extractFrontmatter(content, skillPath) {
+  // Support UTF-8 BOM and both LF/CRLF line endings.
+  const normalizedContent = content.replace(/^\uFEFF/, '');
+  const frontmatterMatch = normalizedContent.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/);
   if (!frontmatterMatch) {
     throw new Error(`No frontmatter found in ${skillPath}`);
   }
-  
-  const frontmatter = frontmatterMatch[1];
+
+  return frontmatterMatch[1];
+}
+
+function parseSkillMetadata(skillPath) {
+  const content = fs.readFileSync(skillPath, 'utf-8');
+
+  const frontmatter = extractFrontmatter(content, skillPath);
   const metadata = {};
   
   // 解析 key: value 或 key: "quoted value"
-  const lines = frontmatter.split('\n');
+  const lines = frontmatter.split(/\r?\n/);
   for (const line of lines) {
     const match = line.match(/^(\w+):\s*(.+)$/);
     if (match) {
@@ -37,13 +42,8 @@ function parseSkillMetadata(skillPath) {
 
 function parseSkillMetadataYaml(skillPath) {
   const content = fs.readFileSync(skillPath, 'utf-8');
-  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-  
-  if (!frontmatterMatch) {
-    throw new Error(`No frontmatter found in ${skillPath}`);
-  }
-  
-  const frontmatter = yaml.load(frontmatterMatch[1]);
+  const frontmatterContent = extractFrontmatter(content, skillPath);
+  const frontmatter = yaml.load(frontmatterContent);
   
   return {
     name: frontmatter.name,

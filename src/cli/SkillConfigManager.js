@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:23:42
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-07 15:56:35
+ * @LastEditTime: 2026-04-17 09:38:33
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */
@@ -168,11 +168,13 @@ ${table}
         // 如果是目录，则拷贝到skills目录下，并添加到config中
         fs.copySync(baseDir, path.join(this.skillDir, file))
         this._registerSkill(baseName)
+        aiConsole.logSuccess(`Skill "${baseName}" added successfully!`)
       } else if (path.extname(file) === '.zip') {
         // 如果是zip文件，则解压到skills目录下，并添加到config中
         const extractPath = path.join(this.skillDir, baseName)
         await extract(baseDir, { dir: extractPath })
         this._registerSkill(baseName)
+        aiConsole.logSuccess(`Skill "${baseName}" added successfully!`)
       } else {
         aiConsole.logError(`File "${file}" is not a directory or a zip file.`)
       }
@@ -244,7 +246,10 @@ ${table}
       // 解析HTML获取下载链接
       const html = response.data
       const $ = cheerio.load(html)
-      const downloadHref = $('.skill-hero-cta a').first().attr('href')
+      const downloadHref = $('a').filter((i, el) => {
+        const href = $(el).attr('href')
+        return href && (href.startsWith('https://wry-manatee-359.convex.site/api/v1/download') ||  href.endsWith('.zip'))
+      }).attr('href')
 
       if (!downloadHref) {
         aiConsole.logError(`No download link found for skill "${skillName}".`)
