@@ -181,6 +181,10 @@ class Brain extends EventEmitterSuper {
   }
 
   _initMessages(messages) {
+    let firstMessage = messages[0]
+    if (firstMessage.role === 'system') {
+      messages[0] = this.systemPrompt
+    }
     let lastMessage = messages[messages.length - 1]
     while (
       messages.length > 1 &&
