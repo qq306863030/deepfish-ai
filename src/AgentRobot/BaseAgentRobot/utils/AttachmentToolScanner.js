@@ -1,5 +1,6 @@
 const fs = require('fs-extra')
 const path = require('path')
+const { getGlobalNodeModulesPath } = require('./node-root')
 
 class AttachmentToolType {
   static BASE_SKILL = 'BaseSkill' // 基础技能，提供技能定义的基本结构
@@ -53,8 +54,9 @@ class AttachmentToolScanner {
     const dir1 = path.resolve(__dirname, '../../../../') // 程序所在目录
     const dir2 = path.resolve(workspace, './node_modules') // 工作目录下node_modules目录
     const dir3 = path.resolve(workspace, './') // 工作目录
+    const dir4 = getGlobalNodeModulesPath()
     const result = []
-    const searchDirs = [...new Set([dir1, dir2, dir3])]
+    const searchDirs = [...new Set([dir1, dir2, dir3, dir4])]
     for (const dirPath of searchDirs) {
       if (!fs.existsSync(dirPath)) {
         continue
