@@ -1,9 +1,11 @@
 const path = require('path')
 const os = require('os')
-const fs = require('fs-extra')
 const BaseAgentRobot = require('../BaseAgentRobot/index.js')
 const Logger = require('../BaseAgentRobot/Logger.js')
-const { default: AgentTree } = require('../BaseAgentRobot/utils/AgentTree.js')
+const AgentTree = require('../BaseAgentRobot/utils/AgentTree.js')
+const {
+  AttachmentToolScanner,
+} = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
 
 class SubSkillAgentRobot extends BaseAgentRobot {
   // opt: { root, parent, ...MainAgentOpt }
@@ -27,6 +29,21 @@ class SubSkillAgentRobot extends BaseAgentRobot {
     this.logger = new Logger(this) // 初始化日志系统
     this.agentTree = new AgentTree(this)
     this.agentTree.init()
+
+    this.toolCollection = AttachmentToolScanner.getToolCollection(
+      this.workspace,
+    ) // 加载工具集合
+    this.clawSkillCollection = AttachmentToolScanner.getClawSkillCollection(
+      this.basespace,
+    ) // 加载Claw技能集合
+  }
+
+  _getDefaultSystemPrompt(opt) {
+    const clawSkills = opt.clawSkills || []
+    let systemPrompt = super._getDefaultSystemPrompt(opt)
+    systemPrompt =
+      systemPrompt + '\n' + AttachmentToolScanner.getClawSkillPrompt(clawSkills, this.toolCollection, this.clawSkillCollection)
+    return systemPrompt
   }
 }
 

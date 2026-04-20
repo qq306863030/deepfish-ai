@@ -5,7 +5,7 @@ const dayjs = require('dayjs')
 const Logger = require('../BaseAgentRobot/Logger.js')
 const BaseAgentRobot = require('../BaseAgentRobot/index.js')
 const {AttachmentToolScanner} = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
-const { default: AgentTree } = require('../BaseAgentRobot/utils/AgentTree.js')
+const AgentTree = require('../BaseAgentRobot/utils/AgentTree.js')
 
 class MainAgentRobot extends BaseAgentRobot {
   // toolCollection = null // 工具集合，包含所有工具函数

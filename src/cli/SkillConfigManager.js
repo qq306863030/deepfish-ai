@@ -54,43 +54,6 @@ class SkillConfigManager {
     openDirectory(this.skillDir)
   }
 
-  // 预加载skills，拼接提示词
-  preLoadSkills() {
-    const skills = this.readSkills().filter((skill) => skill.enable)
-    if (skills.length === 0) {
-        return '### 暂无可以使用的Skill'
-    }
-    const table = skills
-      .map((s) => `| ${s.name} | ${s.description} | ${s.location} | ${s.skillFilePath} |`)
-      .join('\n')
-    return (
-`
-### 可以使用的Skill
-除了使用内置函数，还可以调用以下Skill来完成用户的请求，Skill的调用方式：当用户的请求匹配技能描述时，调用executeSkill函数加载对应Skill的SKILL.md说明文件，获取调用说明，通过仔细阅读说明文件学习Skill的使用方法，来完成任务。
-## Available Skills
-
-| Skill | Description | Location | SkillFilePath |
-|-------|-------------|----------|---------------|
-${table}
-
-## Skills Policy
-- 当用户请求匹配 skill description 时，调用 executeSkill 函数加载对应 SKILL.md
-- 一次只加载一个Skill，优先匹配最具体的Skill
-- 当用户请求不匹配任何Skill描述时，不加载任何Skill
-- Skill即你可以使用的技能`
-    )
-  }
-
-  // 调用skill，传入参数，返回结果
-  loadSkill(skillFilePath) {
-    // 读取skill的SKILL.md，获取调用说明
-    if (!fs.existsSync(skillFilePath)) {
-        aiConsole.logError(`Skill file "${skillFilePath}" does not exist.`)
-        return null
-    }
-    return fs.readFileSync(skillFilePath, 'utf-8')
-  }
-
   // 解析skill文件，写入到json中，获取名称、版本、作者、元数据、描述等信息
   _parseSkill(skillDirPath) {
     const skillMdPath = ['SKILL.md', 'skill.md']

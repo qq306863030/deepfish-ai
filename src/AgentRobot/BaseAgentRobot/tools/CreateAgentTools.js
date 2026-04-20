@@ -37,6 +37,7 @@ async function createSubSkillAgent(skillName, skillType, workGoal) {
       result,
     }
   } catch (error) {
+    console.error('Error in createSubSkillAgent:', error)
     return {
       success: false,
       error: error?.message || String(error),
@@ -61,6 +62,15 @@ async function createSubAgent(workGoal) {
       success: false,
       error: error?.message || String(error),
     }
+  }
+}
+
+function loadAttachTool(toolName) {
+  try {
+    this.agentRobot.loadAttachTool(toolName)
+    return `Tool ${toolName} loaded successfully`
+  } catch (error) {
+    return `Failed to load tool ${toolName}: ${error.message}`
   }
 }
 
@@ -110,11 +120,30 @@ const descriptions = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'loadAttachTool',
+      description:
+        '按名称加载一个附加工具（Attach Tool）到当前agent实例中，返回加载结果信息。',
+      parameters: {
+        type: 'object',
+        properties: {
+          toolName: {
+            type: 'string',
+            description: '要加载的附加工具名称（与可用工具名称一致）。',
+          },
+        },
+        required: ['toolName'],
+      },
+    },
+  },
 ]
 
 const functions = {
   createSubSkillAgent,
-  createSubAgent
+  createSubAgent,
+  loadAttachTool,
 }
 
 const CreateAgentTool = {

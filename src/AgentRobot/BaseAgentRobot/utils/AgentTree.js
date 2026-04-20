@@ -1,7 +1,7 @@
 const path = require('path')
 const fs = require('fs-extra')
 
-export default class AgentTree {
+class AgentTree {
   content = null
   constructor(agentRobot) {
     this.agentRobot = agentRobot
@@ -9,8 +9,8 @@ export default class AgentTree {
       this.agentRobot.agentSpace,
       'agentTree.json',
     )
-    this.parentAgentTree = this.agentRobot.parent.agentTree
-    this.rootAgentTree = this.agentRobot.root.agentTree
+    this.parentAgentTree = this.agentRobot.parent?.agentTree
+    this.rootAgentTree = this.agentRobot.root?.agentTree
   }
   init() {
     if (!this.rootAgentTree && !fs.pathExistsSync(this.agentTreeFilePath)) {
@@ -61,3 +61,6 @@ export default class AgentTree {
     }
   }
 }
+
+module.exports = AgentTree
+

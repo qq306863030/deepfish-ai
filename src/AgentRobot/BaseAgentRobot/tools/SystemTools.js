@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-17 09:51:54
+ * @LastEditTime: 2026-04-20 17:47:12
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -112,7 +112,6 @@ async function executeJSCode(code) {
     }
 
     const result = await Func(functions, newRequire)
-
     return result || ''
   } catch (error) {
     aiConsole.logError(`Error executing code: ${error.stack}`)
@@ -123,7 +122,7 @@ async function executeJSCode(code) {
 // 了解自己
 function getSelfInfo() {
   // 返回自己的代码路径、package.json路径、readme路径等基本信息，供AI有选择的了解自己，回答用户的问题
-  const homeDir = path.resolve(__dirname, '../../../')
+  const homeDir = path.resolve(__dirname, '../../../../')
   const packageJson = fs.readJSONSync(path.resolve(homeDir, 'package.json'))
   return {
     config: {
@@ -192,7 +191,7 @@ const descriptions = [
     function: {
       name: 'executeJSCode',
       description:
-        '执行JavaScript代码，返回代码执行结果。代码中可通过Tools命名空间直接调用其他工具函数（如await Tools.createFile(),注意：不需要使用require引入）,Tools中引入了一些常用库可直接调用（Tools.fs="fs-extra", Tools.dayjs="dayjs", Tools.axios="axios", Tools.lodash="lodash", Tools.echarts="echarts", Tools.canvas="canvas"），支持引入自定义模块（需使用绝对路径）。注意：1.代码中不要使用__dirname获取当前目录，请使用path.resolve(".")来获取当前目录。2.执行失败时会抛出错误，成功时返回代码执行结果或空字符串。3.使用require(module_path)函数引入自定义模块，module_path为模块路径字符串，支持相对路径（如"./myModule.js"）和绝对路径，返回引入的模块内容。',
+        '执行JavaScript代码，返回代码执行结果。代码中可通过Tools命名空间直接调用其他工具函数（如await Tools.createFile(),注意：不需要使用require引入）,Tools中引入了一些常用库可直接调用（Tools.fs="fs-extra", Tools.dayjs="dayjs", Tools.axios="axios", Tools.lodash="lodash", Tools.echarts="echarts", Tools.canvas="canvas" Tools.cheerio="cheerio" Tools.puppeteer="puppeteer"），支持引入自定义模块（需使用绝对路径）。注意：1.代码中不要使用__dirname获取当前目录，请使用path.resolve(".")来获取当前目录。2.执行失败时会抛出错误，成功时返回代码执行结果或空字符串。3.使用require(module_path)函数引入自定义模块，module_path为模块路径字符串，支持相对路径（如"./myModule.js"）和绝对路径，返回引入的模块内容。',
       parameters: {
         type: 'object',
         properties: {

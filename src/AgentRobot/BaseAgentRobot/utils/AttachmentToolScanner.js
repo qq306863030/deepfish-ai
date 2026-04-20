@@ -134,7 +134,7 @@ class AttachmentToolScanner {
           `| ${s.name} | ${s.type} | ${s.description || s.extensionDescription} | ${s.location} | ${s.filePath || s.skillFilePath} |`,
       )
       .join('\n')
-    if (!table) {
+    if (!table || !table.length) {
       return '### 暂无可用的Skills'
     }
     return `
@@ -153,16 +153,22 @@ ${table}
 `
   }
 
-  static getClawSkillPrompt(clawSkills) {
-    const table = clawSkills
+  static getClawSkillPrompt(clawSkills=[], toolCollection=[], clawSkillCollection=[]) {
+    const table1 = clawSkills
       .map(
         (s) =>
           `| ${s.name} | ${s.type} | ${s.description} | ${s.location} | ${s.skillFilePath} |`,
       )
       .join('\n')
-    return `
-    ### 可以使用的Skills
-可以调用以下Skill来完成用户的请求，Skill的调用方式：
+    const table2 = ([].concat(toolCollection).concat(clawSkillCollection))
+      .map(
+        (s) =>
+          `| ${s.name} | ${s.type} | ${s.description || s.extensionDescription} | ${s.location} | ${s.filePath || s.skillFilePath} |`,
+      )
+      .join('\n')
+    let skills1 = `
+    ### 优先使用的Skills
+可以优先调用以下Skill来完成用户的请求，Skill的调用方式：
 - 使用用户请求匹配 skill description，
 - 一次只加载一个Skill，优先匹配最具体的Skill
 - 当用户请求不匹配任何Skill描述时，不加载任何Skill
@@ -171,9 +177,26 @@ ${table}
 
 | Skill | Type | Description | Location | SkillFilePath |
 |-------|------|-------------|----------|---------------|
-${table}
+${table1}
 |-------|------|-------------|----------|---------------|
 `
+  let skills2 = `
+### 其他可以使用的Skills
+可以调用以下Skill来完成用户的请求，Skill的调用方式：
+- 使用用户请求匹配 skill description，
+- 一次只加载一个Skill，优先匹配最具体的Skill
+- 当用户请求不匹配任何Skill描述时，不加载任何Skill
+- Type类型为'ClawSkill'时，使用Skill前先使用readFile函数读取SKILL.md文件获取调用说明，通过仔细阅读说明文件学习Skill的使用方法，来完成任务
+- Type类型为'BaseSkill'时，使用loadAttachTool函数加载Skill后，通过使用该Skill提供的函数来完成任务
+## Available Skills
+
+| Skill | Type | Description | Location | FilePath |
+|-------|------|-------------|----------|----------|
+${table2}
+|-------|------|-------------|----------|----------|
+`
+return skills1 + '\n' + skills2
+
   }
 
   // 扫描包

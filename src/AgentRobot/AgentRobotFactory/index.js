@@ -25,13 +25,8 @@ class AgentRobotFactory {
       parent: parent,
       root: parent.root || parent,
       attachTools: baseSkill,
+      clawSkills: clawSkill
     })
-    if (clawSkill.length > 0) {
-      parent.systemPrompt =
-        parent.systemPrompt +
-        '\n' +
-        AttachmentToolScanner.getClawSkillPrompt(clawSkill)
-    }
     parent.children.push(subAgent)
     return subAgent
   }

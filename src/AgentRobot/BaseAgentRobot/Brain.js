@@ -12,7 +12,6 @@ class Brain extends EventEmitterSuper {
     this.maxIterations = agentRobot.opt.maxIterations
     this.maxContextLength = agentRobot.opt.aiConfig.maxContextLength
     this.memoryFilePath = agentRobot.memoryFilePath
-    this.systemPrompt = agentRobot.systemPrompt // 系统提示词
     this.messageCompresser = new MessageCompresser(this)
     this.aiConfig = agentRobot.opt.aiConfig
     this.aiClient = creatClient(agentRobot.opt.aiConfig)
@@ -55,7 +54,7 @@ class Brain extends EventEmitterSuper {
       // 初始化message
       this.storeMemory({
         role: 'system',
-        content: this.systemPrompt,
+        content: this.agentRobot.systemPrompt,
       })
       this.storeMemory({
         role: 'user',
@@ -183,7 +182,10 @@ class Brain extends EventEmitterSuper {
   _initMessages(messages) {
     let firstMessage = messages[0]
     if (firstMessage.role === 'system') {
-      messages[0] = this.systemPrompt
+      messages[0] = {
+        role: 'system',
+        content: this.agentRobot.systemPrompt,
+      }
     }
     let lastMessage = messages[messages.length - 1]
     while (

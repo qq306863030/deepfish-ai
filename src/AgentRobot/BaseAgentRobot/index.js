@@ -18,6 +18,8 @@ const TestTools = require('./tools/TestTools.js')
 const axios = require('axios')
 const echarts = require('echarts')
 const canvas = require('canvas')
+const cheerio = require('cheerio')
+const puppeteer = require('puppeteer')
 
 class BaseAgentRobot {
   id = '' // Agentid
@@ -187,6 +189,14 @@ class BaseAgentRobot {
     })
   }
 
+  loadAttachTool(toolName) {
+      let tool = this.attachTools.find((t) => t.name === toolName)
+      if (!tool) {
+        tool = this.toolCollection.find((t) => t.name === toolName)
+        this.attachTools.push(tool)
+      }
+  }
+
   getTools() {
     const tools = [...this.originalTools, ...this.attachTools]
     const toolFunctions = {
@@ -195,8 +205,11 @@ class BaseAgentRobot {
       dayjs,
       lodash,
       canvas,
-      echarts
+      echarts,
+      cheerio,
+      puppeteer
     }
+    
     tools.forEach((tool) => {
       Object.assign(toolFunctions, tool.functions)
     })
@@ -253,6 +266,9 @@ class BaseAgentRobot {
 当前工作目录：${workspace}
 操作系统类型：${osType}
 语言类型: 与用户输入语言一致
+
+### 工具使用
+执行任务前，应仔细阅读工具描述以及可以使用的Skills的描述内容，选择最合适的工具或技能来完成任务。
 
 ### 大文本文件处理规则（分步执行）
 处理长文档等大文件（单文件＞${maxBlockFileSize}KB）时，必须按以下步骤分块处理：
