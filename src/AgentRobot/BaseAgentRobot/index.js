@@ -20,30 +20,30 @@ const echarts = require('echarts')
 const canvas = require('canvas')
 
 class BaseAgentRobot {
-  id = '' // 机器人id
-  name = '' // 机器人名字
+  id = '' // Agentid
+  name = '' // Agent名字
 
   brain = null // 大脑，负责思考、记忆、决策
   hand = null // 手，负责使用工具
   originalTools = null // 原装工具
-  attachTools = null // 附加工具, 机器人后续安装的工具函数
+  attachTools = null // 附加工具, Agent后续安装的工具函数
   heart = null // 心脏，负责心跳、连接
   sender = null // 发送器，负责发送消息
   receiver = null // 接收器，负责接收消息
-  screenPrinter = null // 机器人连接的打印机，能向屏幕输出文字
-  logger = null // 机器人连接的日志系统，能记录日志
-  children = [] // 子机器人，能分担任务
-  parent = null // 父机器人，能分配任务
-  root = null // 根机器人
-  state = 0 // 机器人状态，-1表示销毁 0表示空闲，1表示思考中 2表示工作中
-  type = 'main' // 机器人类型，main表示主机器人，sub表示子机器人，sub-skill表示子技能机器人
+  screenPrinter = null // Agent连接的打印机，能向屏幕输出文字
+  logger = null // Agent连接的日志系统，能记录日志
+  children = [] // 子Agent，能分担任务
+  parent = null // 父Agent，能分配任务
+  root = null // 根Agent
+  state = 0 // Agent状态，-1表示销毁 0表示空闲，1表示思考中 2表示工作中
+  type = 'main' // Agent类型，main表示主Agent，sub表示子Agent，sub-skill表示子技能Agent
 
   workspace = null
   basespace = null
   memorySpace = null
   agentRecordFilePath = null
   agentSpace = null
-  agentTreeFilePath = null
+  agentTree = null
   memoryFilePath = null
   logDirPath = null
 
@@ -51,7 +51,7 @@ class BaseAgentRobot {
     opt = {
       id: '',
       name: '',
-      attachTools: [], // 附加工具, 机器人后续安装的工具函数
+      attachTools: [], // 附加工具, Agent后续安装的工具函数
       workspace: process.cwd(), // 工作空间，目录
       basespace: path.join(os.homedir(), '.deepfish-ai'), // 记忆空间，目录
       maxIterations: -1, // 思考的最大迭代次数，-1表示无限制
@@ -81,7 +81,7 @@ class BaseAgentRobot {
     this._initFiles(opt) // 初始化文件
 
     this.originalTools = this._getOriginalTools() // 天赋技能
-    this.attachTools = opt.attachTools || [] // 附加工具, 机器人后续安装的工具函数
+    this.attachTools = opt.attachTools || [] // 附加工具, Agent后续安装的工具函数
     this.systemPrompt = opt.systemPrompt || this._getDefaultSystemPrompt(opt) // 系统提示语
     this.brain = new Brain(this) // 初始化大脑
     this.hand = new Hand(this) // 初始化手
@@ -89,35 +89,7 @@ class BaseAgentRobot {
   }
 
   // 初始化文件
-  _initFiles(opt) {
-    this.root = opt.root
-    this.parent = opt.parent
-    this.workspace = opt.workspace || process.cwd() // 工作空间，目录
-    this.basespace = opt.basespace || path.join(os.homedir(), '.deepfish-ai') // 记忆空间，目录
-    this.memorySpace = path.join(this.basespace, 'memory') // 记忆空间，目录
-    this.agentRecordFilePath = path.join(this.memorySpace, 'agentRecord.json')
-    this.agentSpace = path.join(this.memorySpace, this.root.id) // 机器人空间，目录
-    this.agentTreeFilePath = path.join(this.agentSpace, 'agentTree.json')
-    this.memoryFilePath = path.join(this.agentSpace, `memory-${this.id}.json`)
-    this.logDirPath = path.join(this.agentSpace, 'logs')
-    let agentRecord = fs.readJsonSync(this.agentRecordFilePath)
-    // 自动清除过期的记忆和日志
-    const currentDate = dayjs()
-    agentRecord = agentRecord.filter((record) => {
-      if (
-        currentDate.diff(dayjs(record.updateTime), 'day') >
-        opt.maxMemoryExpireTime
-      ) {
-        // 删除机器人空间
-        fs.removeSync(path.join(this.memorySpace, record.agentId))
-        return false
-      }
-      return true
-    })
-    fs.writeJsonSync(this.agentRecordFilePath, agentRecord, { spaces: 2 })
-    this.logger = new Logger(this) // 初始化日志系统
-    this.logger.clearAllLogs()
-  }
+  _initFiles(opt) {}
 
   _initEvents() {
     const aiConfig = this.opt.aiConfig
@@ -314,13 +286,13 @@ class BaseAgentRobot {
     return this._agentRobotFactory
   }
 
-  // 创建子技能机器人
+  // 创建子技能Agent
   createSubSkillAgent(id, attachTools = []) {
     const agentRobotFactory = this._getAgentRobotFactory()
     return agentRobotFactory.createSubSkillAgent(this, id, attachTools)
   }
 
-  // 创建子机器人
+  // 创建子Agent
   createSubAgent(id) {
     const agentRobotFactory = this._getAgentRobotFactory()
     return agentRobotFactory.createSubAgent(this, id)
@@ -329,6 +301,7 @@ class BaseAgentRobot {
   destroy() {
     this.brain.removeAllListeners()
     this.state = -1
+    this.agentTree.clear()
   }
 }
 

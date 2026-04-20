@@ -5,7 +5,7 @@ const readline = require('readline')
 
 class DeepFishAI {
   constructor(config) {
-    // 启动一个机器人
+    // 启动一个Agent
     this.agentRobot = new MainAgentRobot(config)
   }
 

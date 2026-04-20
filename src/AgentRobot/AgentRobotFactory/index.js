@@ -7,7 +7,7 @@ class AgentRobotFactory {
   createMainAgent(opt) {
     return new MainAgentRobot(opt)
   }
-  // 创建子技能机器人
+  // 创建子技能Agent
   createSubSkillAgent(parent, id, attachTools = []) {
     const baseSkill = []
     const clawSkill = []
@@ -36,7 +36,7 @@ class AgentRobotFactory {
     return subAgent
   }
 
-  // 创建子机器人
+  // 创建子Agent
   createSubAgent(parent, id) {
     const subAgent = new SubAgentRobot({
       ...parent.opt,

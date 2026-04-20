@@ -5,6 +5,7 @@ const dayjs = require('dayjs')
 const Logger = require('../BaseAgentRobot/Logger.js')
 const BaseAgentRobot = require('../BaseAgentRobot/index.js')
 const {AttachmentToolScanner} = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
+const { default: AgentTree } = require('../BaseAgentRobot/utils/AgentTree.js')
 
 class MainAgentRobot extends BaseAgentRobot {
   // toolCollection = null // 工具集合，包含所有工具函数
@@ -43,26 +44,10 @@ class MainAgentRobot extends BaseAgentRobot {
       })
     }
     fs.writeJsonSync(this.agentRecordFilePath, agentRecord, { spaces: 2 })
-    this.agentSpace = path.join(this.memorySpace, this.id) // 机器人空间，目录
+    this.agentSpace = path.join(this.memorySpace, this.id) // Agent空间，目录
     fs.ensureDirSync(this.agentSpace)
-    this.agentTreeFilePath = path.join(this.agentSpace, 'agentTree.json')
-    if (!fs.pathExistsSync(this.agentTreeFilePath)) {
-      fs.writeJsonSync(
-        this.agentTreeFilePath,
-        { agentId: this.id, children: [] },
-        { spaces: 2 },
-      )
-    } else {
-      const agentTree = fs.readJsonSync(this.agentTreeFilePath)
-      if (agentTree && agentTree.agentId === this.id) {
-        // 恢复子机器人
-        // this._parseAgentTree(this, agentTree)
-      } else {
-        agentTree.push({ agentId: this.id, children: [] })
-        fs.writeJsonSync(this.agentTreeFilePath, agentTree, { spaces: 2 })
-      }
-    }
-    this.agentTree = fs.readJsonSync(this.agentTreeFilePath)
+    this.agentTree = new AgentTree(this)
+    this.agentTree.init()
     this.memoryFilePath = path.join(this.agentSpace, 'memory.json')
     this.logDirPath = path.join(this.agentSpace, 'logs')
     fs.ensureDirSync(this.logDirPath)
@@ -74,7 +59,7 @@ class MainAgentRobot extends BaseAgentRobot {
         currentDate.diff(dayjs(record.updateTime), 'day') >
         opt.maxMemoryExpireTime
       ) {
-        // 删除机器人空间
+        // 删除Agent空间
         fs.removeSync(path.join(this.memorySpace, record.agentId))
         return false
       }

@@ -4,6 +4,7 @@ const fs = require('fs-extra')
 const BaseAgentRobot = require('../BaseAgentRobot/index.js')
 const Logger = require('../BaseAgentRobot/Logger.js')
 const {AttachmentToolScanner} = require('../BaseAgentRobot/utils/AttachmentToolScanner.js')
+const { default: AgentTree } = require('../BaseAgentRobot/utils/AgentTree.js')
 
 class SubAgentRobot extends BaseAgentRobot {
   // opt: { root, parent, ...MainAgentOpt }
@@ -21,20 +22,12 @@ class SubAgentRobot extends BaseAgentRobot {
     this.basespace = opt.basespace || path.join(os.homedir(), '.deepfish-ai') // 记忆空间，目录
     this.memorySpace = path.join(this.basespace, 'memory') // 记忆空间，目录
     this.agentRecordFilePath = path.join(this.memorySpace, 'agentRecord.json')
-    this.agentSpace = path.join(this.memorySpace, this.root.id) // 机器人空间，目录
-    this.agentTreeFilePath = path.join(this.agentSpace, 'agentTree.json')
+    this.agentSpace = path.join(this.memorySpace, this.root.id) // Agent空间，目录
     this.memoryFilePath = path.join(this.agentSpace, `memory-${this.id}.json`)
     this.logDirPath = path.join(this.agentSpace, 'logs')
     this.logger = new Logger(this) // 初始化日志系统
-    const parentAgentTree = this.parent.agentTree
-    const rootAgentTree = this.root.agentTree
-    if (parentAgentTree && parentAgentTree.children) {
-      const currentNode = parentAgentTree.children.find((child) => child.agentId === this.id)
-      if (!currentNode) {
-        parentAgentTree.children.push({ agentId: this.id, children: [], type: 'sub' })
-        fs.writeJsonSync(this.agentTreeFilePath, rootAgentTree, { spaces: 2 })
-      }
-    }
+    this.agentTree = new AgentTree(this)
+    this.agentTree.init()
     this.toolCollection = AttachmentToolScanner.getToolCollection(
       this.workspace,
     ) // 加载工具集合

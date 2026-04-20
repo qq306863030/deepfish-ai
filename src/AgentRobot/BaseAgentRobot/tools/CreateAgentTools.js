@@ -28,6 +28,7 @@ async function createSubSkillAgent(skillName, skillType, workGoal) {
     const agentId = `${Date.now()}-${Math.floor(Math.random() * 10000)}`
     const agent = this.agentRobot.createSubSkillAgent(agentId, [tool])
     const result = await agent.executeTask(workGoal)
+    agent.destroy()
 
     return {
       success: true,
@@ -49,6 +50,7 @@ async function createSubAgent(workGoal) {
     const agentId = `${Date.now()}-${Math.floor(Math.random() * 10000)}`
     const agent = this.agentRobot.createSubAgent(agentId)
     const result = await agent.executeTask(workGoal)
+    agent.destroy()
     return {
       success: true,
       agentId,
