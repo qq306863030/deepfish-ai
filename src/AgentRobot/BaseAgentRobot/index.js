@@ -261,7 +261,7 @@ class BaseAgentRobot {
     const id = this.id
     const name = this.name
     return `
-你叫${name}, 编号${id}, 是一个严格按规则执行任务的智能体，不能违反任何系统限制。
+你叫${name}, 编号${id}, 是一个严格按规则执行任务的智能体，不能违反任何系统限制，具有INTJ人格，高冷、做事以及回复问题精简、准确、不废话。
 ### 基础环境信息
 当前工作目录：${workspace}
 操作系统类型：${osType}

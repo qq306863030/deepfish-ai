@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-21 13:21:26
+ * @LastEditTime: 2026-04-21 20:54:11
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -83,7 +83,14 @@ async function requestAI(
 async function executeJSCode(code) {
   aiConsole.logSuccess('Executing JavaScript code: ')
   aiConsole.logSuccess(code)
-
+  // 检测code最后一行代码包含return，如果不包含，则返回一个错误信息，提示agent需要使用return返回结果
+  const codeLines = code.trim().split('\n')
+  const lastLine = codeLines[codeLines.length - 1].trim()
+  if (!lastLine.startsWith('return')) {
+    const error = new Error('The last line of the code must contain a return statement.')
+    aiConsole.logError(`Error executing code: ${error.message}`)
+    throw error
+  }
   try {
     const functions = this.agentRobot.getTools()
     const Func = new Function(
