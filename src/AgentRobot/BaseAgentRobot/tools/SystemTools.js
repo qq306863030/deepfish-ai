@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-20 18:31:36
+ * @LastEditTime: 2026-04-21 13:21:26
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -97,7 +97,9 @@ async function executeJSCode(code) {
             this.logMessages.push(Array.from(arguments).join(' '))
           }
           console.log = newLog.bind(this)
-          ${code}
+          function __main() {
+            ${code}
+          }
           const result = await __main()
           console.log = originalLog
           return result || this.logMessages.join('\\n')
