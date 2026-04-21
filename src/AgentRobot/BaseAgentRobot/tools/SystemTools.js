@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-21 20:54:11
+ * @LastEditTime: 2026-04-21 21:08:34
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -88,7 +88,6 @@ async function executeJSCode(code) {
   const lastLine = codeLines[codeLines.length - 1].trim()
   if (!lastLine.startsWith('return')) {
     const error = new Error('The last line of the code must contain a return statement.')
-    aiConsole.logError(`Error executing code: ${error.message}`)
     throw error
   }
   try {
