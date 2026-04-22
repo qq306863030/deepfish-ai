@@ -1,20 +1,12 @@
 const path = require('path')
 const os = require('os')
 const fs = require('fs-extra')
-const FileTools = require('./tools/FileTools.js')
-const InquirerTools = require('./tools/InquirerTools.js')
-const SystemTools = require('./tools/SystemTools.js')
-const CreateAgentTools = require('./tools/CreateAgentTools.js')
 const lodash = require('lodash')
 const { Brain } = require('./Brain.js')
 const BrainEvent = require('./BrainEvent.js')
 const ScreenPrinter = require('./ScreenPrinter.js')
 const { HandEvent, Hand } = require('./Hand.js')
 const dayjs = require('dayjs')
-const Logger = require('./Logger.js')
-const GenerateTools = require('./tools/GenerateTools.js')
-const TaskTools = require('./tools/TaskTools.js')
-const TestTools = require('./tools/TestTools.js')
 const axios = require('axios')
 const echarts = require('echarts')
 const canvas = require('canvas')
@@ -243,15 +235,17 @@ class BaseAgentRobot {
 
   // 获取原装工具
   _getOriginalTools() {
-    return [
-      FileTools,
-      InquirerTools,
-      SystemTools,
-      CreateAgentTools,
-      GenerateTools,
-      TaskTools,
-      TestTools,
-    ]
+    // 自动扫描tools目录
+    const toolsPath = path.join(__dirname, './tools')
+    const toolFiles = fs.readdirSync(toolsPath).filter((file) => {
+      return file.endsWith('.js') || file.endsWith('.mjs')
+    })
+    const tools = []
+    toolFiles.forEach((file) => {
+      const tool = require(path.join(toolsPath, file))
+      tools.push(tool)
+    })
+    return tools
   }
 
   _getDefaultSystemPrompt(opt) {
