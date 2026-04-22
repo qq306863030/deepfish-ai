@@ -8,6 +8,8 @@ const defaultConfig = {
   maxLogExpireTime: 3, // 日志过期时间，单位天，-1表示无限制，0表示不记录
   maxBlockFileSize: 20, // 最大分块文件大小，单位KB；超过该大小的文件需要分块处理
   encoding: 'auto', // 命令行编码格式, 可设置为utf-8、gbk等, 也可以设置成auto或空值自动判断
+  EMBEDDING_API: '', // 向量化接口地址
+  EMBEDDING_API_KEY: '' // 向量化接口密钥
 }
 
 const aiCliConfig = {
