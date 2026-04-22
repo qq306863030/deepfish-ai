@@ -54,6 +54,21 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
 }
 
+function unescapeXml(str) {
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+}
+
+function buildRunXml(rPr, text) {
+  if (!text) return ''
+  const xmlSp = /^\s|\s$/.test(text) ? ' xml:space="preserve"' : ''
+  return `<w:r>${rPr}<w:t${xmlSp}>${escapeHtml(text)}</w:t></w:r>`
+}
+
 /**
  * 将 Markdown 文本转换为 HTML 字符串
  */
@@ -741,6 +756,126 @@ async function htmlToWord(inputPath, outputPath) {
 
 // ─── 工具描述 ─────────────────────────────────────────────────────────────────
 
+/**
+ * 保留原格式修改 Word 文档内容（支持跨 <w:r> run 的文本替换，不破坏其余样式）
+ * @param {string} filePath - .docx 文件路径
+ * @param {Array<{search:string, replace:string}>} replacements - 替换规则数组
+ */
+async function patchDocxText(filePath, replacements) {
+  try {
+    const fullPath = resolvePath(filePath)
+    if (!fs.existsSync(fullPath)) {
+      return fail(`File does not exist: ${fullPath}`, { filePath: fullPath })
+    }
+    const content = fs.readFileSync(fullPath, 'binary')
+    const zip = new PizZip(content)
+    const docFile = zip.file('word/document.xml')
+    if (!docFile) return fail('word/document.xml not found', { filePath: fullPath })
+    let xml = docFile.asText()
+    let totalCount = 0
+
+    for (const { search, replace: replaceStr } of (replacements || [])) {
+      if (!search) continue
+
+      xml = xml.replace(/<w:p(?:\s[^>]*)?>([\s\S]*?)<\/w:p>/g, (para) => {
+        // 提取所有含文本的 <w:r> 元素
+        const runRe = /<w:r(?:\s[^>]*)?>([\s\S]*?)<\/w:r>/g
+        const runs = []
+        let rm
+        while ((rm = runRe.exec(para)) !== null) {
+          const tM = rm[0].match(/<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/)
+          if (!tM) continue // 跳过无文本内容的 run（如字段符号）
+          const rPrM = rm[0].match(/<w:rPr>[\s\S]*?<\/w:rPr>/)
+          runs.push({
+            full: rm[0],
+            rPr: rPrM ? rPrM[0] : '',
+            text: unescapeXml(tM[1]),
+          })
+        }
+        if (!runs.length) return para
+
+        const fullText = runs.map(r => r.text).join('')
+        if (!fullText.includes(search)) return para
+
+        // 构建每个 run 的字符偏移区间
+        let off = 0
+        const offsets = runs.map(r => { const s = off; off += r.text.length; return { start: s, end: off } })
+
+        const findRunIdx = (pos) => {
+          const idx = offsets.findIndex(o => pos >= o.start && pos < o.end)
+          return idx >= 0 ? idx : runs.length - 1
+        }
+
+        // 找所有非重叠匹配位置
+        const occurrences = []
+        let from = 0
+        while (true) {
+          const pos = fullText.indexOf(search, from)
+          if (pos === -1) break
+          occurrences.push(pos)
+          from = pos + search.length
+        }
+        totalCount += occurrences.length
+
+        // 按字符位置构建新的 {rPr, text} 片段列表
+        const segs = []
+        let cursor = 0
+        for (const matchPos of occurrences) {
+          // 匹配前的文本：按 run 边界拆分，保留各自 rPr
+          let p = cursor
+          while (p < matchPos) {
+            const ri = findRunIdx(p)
+            const runEnd = Math.min(offsets[ri].end, matchPos)
+            segs.push({ rPr: runs[ri].rPr, text: fullText.slice(p, runEnd) })
+            p = runEnd
+          }
+          // 替换文本：使用匹配起始位置所在 run 的 rPr
+          segs.push({ rPr: runs[findRunIdx(matchPos)].rPr, text: replaceStr })
+          cursor = matchPos + search.length
+        }
+        // 匹配后剩余文本
+        let p = cursor
+        while (p < fullText.length) {
+          const ri = findRunIdx(p)
+          segs.push({ rPr: runs[ri].rPr, text: fullText.slice(p, offsets[ri].end) })
+          p = offsets[ri].end
+        }
+
+        // 合并相邻且 rPr 相同的片段
+        const merged = []
+        for (const seg of segs) {
+          if (!seg.text) continue
+          if (merged.length && merged[merged.length - 1].rPr === seg.rPr) {
+            merged[merged.length - 1].text += seg.text
+          } else {
+            merged.push({ rPr: seg.rPr, text: seg.text })
+          }
+        }
+
+        // 构建新的 runs XML
+        const newRunsXml = merged.map(s => buildRunXml(s.rPr, s.text)).join('')
+
+        // 将段落中从第一个到最后一个文本 run 的区间替换为新 runs
+        const firstRunFull = runs[0].full
+        const lastRunFull = runs[runs.length - 1].full
+        const firstIdx = para.indexOf(firstRunFull)
+        const lastIdx = para.lastIndexOf(lastRunFull)
+        if (firstIdx === -1 || lastIdx === -1) return para
+        return para.slice(0, firstIdx) + newRunsXml + para.slice(lastIdx + lastRunFull.length)
+      })
+    }
+
+    zip.file('word/document.xml', xml)
+    const buf = zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' })
+    fs.writeFileSync(fullPath, buf)
+    return ok({ filePath: fullPath, totalReplacements: totalCount })
+  } catch (error) {
+    return fail(error, { filePath })
+  }
+}
+
+// ─── 工具描述 ─────────────────────────────────────────────────────────────────
+
 const descriptions = [
   {
     type: 'function',
@@ -1056,6 +1191,34 @@ const descriptions = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'patchDocxText',
+      description: `保留原格式修改 Word 文档内容（支持跨 run 文本替换）。与 replaceDocxText 的区别：本函数在替换时智能处理 Word XML 的 run 拆分问题，替换文本会沿用匹配位置的原有字符样式（字体、字号、颜色等），不重建文档结构，最大程度保留原有格式。
+参数：filePath 为目标 .docx 路径；replacements 为替换规则数组，每项格式 { search: '查找文本', replace: '替换文本' }。
+返回值：对象，包含 success、data（含 filePath、totalReplacements）、error。`,
+      parameters: {
+        type: 'object',
+        properties: {
+          filePath: { type: 'string', description: '目标 .docx 文件路径。' },
+          replacements: {
+            type: 'array',
+            description: '替换规则数组，每项包含 search（查找文本）和 replace（替换文本）。',
+            items: {
+              type: 'object',
+              properties: {
+                search: { type: 'string', description: '要查找的文本。' },
+                replace: { type: 'string', description: '替换后的文本。' },
+              },
+              required: ['search', 'replace'],
+            },
+          },
+        },
+        required: ['filePath', 'replacements'],
+      },
+    },
+  },
 ]
 
 // ─── 导出 ──────────────────────────────────────────────────────────────────────
@@ -1080,6 +1243,7 @@ const functions = {
   wordToMarkdown,
   markdownToWord,
   htmlToWord,
+  patchDocxText,
 }
 
 const DocxTool = {
