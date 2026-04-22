@@ -8,6 +8,7 @@ const mammoth = require('mammoth')
 const docx = require('docx')
 const PizZip = require('pizzip')
 const Docxtemplater = require('docxtemplater')
+const cheerio = require('cheerio')
 
 // ─── 统一返回结构 ─────────────────────────────────────────────────────────────
 
@@ -21,6 +22,189 @@ function fail(error, data = null) {
 
 function resolvePath(filePath) {
   return path.resolve(process.cwd(), filePath)
+}
+
+// ─── 格式转换辅助函数 ────────────────────────────────────────────────────────
+
+/**
+ * 使用 puppeteer 将 HTML 字符串渲染为 PDF 文件
+ */
+async function htmlStringToPdf(html, outputPath) {
+  let puppeteer
+  try {
+    puppeteer = require('puppeteer')
+  } catch {
+    throw new Error('puppeteer 未安装，请先执行 npm install puppeteer')
+  }
+  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] })
+  try {
+    const page = await browser.newPage()
+    await page.setContent(html, { waitUntil: 'networkidle0' })
+    fs.ensureDirSync(path.dirname(outputPath))
+    await page.pdf({ path: outputPath, format: 'A4', printBackground: true })
+  } finally {
+    await browser.close()
+  }
+}
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+/**
+ * 将 Markdown 文本转换为 HTML 字符串
+ */
+function markdownToHtmlString(md) {
+  let html = md
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+      `<pre><code class="language-${lang}">${escapeHtml(code.trimEnd())}</code></pre>`)
+    .replace(/`([^`]+)`/g, (_, c) => `<code>${escapeHtml(c)}</code>`)
+    .replace(/^###### (.+)$/gm, '<h6>$1</h6>')
+    .replace(/^##### (.+)$/gm, '<h5>$1</h5>')
+    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/^[-*_]{3,}$/gm, '<hr>')
+    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/_(.+?)_/g, '<em>$1</em>')
+    .replace(/~~(.+?)~~/g, '<del>$1</del>')
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img alt="$1" src="$2">')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+    .replace(/^[ \t]*[-*+] (.+)$/gm, '<li>$1</li>')
+    .replace(/^[ \t]*\d+\. (.+)$/gm, '<li>$1</li>')
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+  html = html.replace(/(<li>[\s\S]+?<\/li>)(\n(?!<li>)|$)/g, (_, items) => `<ul>${items}</ul>`)
+  html = html.replace(/^(?!<[a-z]|$)(.+)$/gm, '<p>$1</p>')
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:sans-serif;line-height:1.7;max-width:900px;margin:40px auto;padding:0 20px;color:#333}
+h1,h2,h3,h4,h5,h6{margin-top:1.2em}
+pre{background:#f5f5f5;padding:12px;border-radius:4px;overflow:auto}
+code{background:#f0f0f0;padding:2px 4px;border-radius:3px}
+blockquote{border-left:4px solid #ddd;margin:0;padding-left:1em;color:#666}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:6px 10px}
+</style></head><body>${html}</body></html>`
+}
+
+/**
+ * 将 HTML 字符串转换为 Markdown 文本
+ */
+function htmlStringToMarkdown(html) {
+  const $ = cheerio.load(html)
+  const body = $('body').length ? $('body') : $.root()
+
+  function nodeToMd(el) {
+    const node = $(el)
+    const tag = el.type === 'text' ? '#text' : (el.name || '').toLowerCase()
+    if (el.type === 'text') return el.data || ''
+    const inner = () => node.contents().toArray().map(nodeToMd).join('')
+    switch (tag) {
+      case 'h1': return `# ${inner()}\n\n`
+      case 'h2': return `## ${inner()}\n\n`
+      case 'h3': return `### ${inner()}\n\n`
+      case 'h4': return `#### ${inner()}\n\n`
+      case 'h5': return `##### ${inner()}\n\n`
+      case 'h6': return `###### ${inner()}\n\n`
+      case 'p': return `${inner()}\n\n`
+      case 'br': return '\n'
+      case 'hr': return '---\n\n'
+      case 'strong':
+      case 'b': return `**${inner()}**`
+      case 'em':
+      case 'i': return `*${inner()}*`
+      case 'del':
+      case 's': return `~~${inner()}~~`
+      case 'code': return `\`${inner()}\``
+      case 'pre': {
+        const codeEl = node.find('code')
+        const lang = (codeEl.attr('class') || '').replace('language-', '')
+        const content = codeEl.length ? codeEl.text() : node.text()
+        return `\`\`\`${lang}\n${content}\n\`\`\`\n\n`
+      }
+      case 'blockquote': return inner().split('\n').map(l => l ? `> ${l}` : '').join('\n') + '\n\n'
+      case 'a': return `[${inner()}](${node.attr('href') || ''})`
+      case 'img': return `![${node.attr('alt') || ''}](${node.attr('src') || ''})`
+      case 'ul':
+      case 'ol': return inner() + '\n'
+      case 'li': return `- ${inner()}\n`
+      case 'table': {
+        const rows = node.find('tr').toArray()
+        if (!rows.length) return ''
+        return rows.map((row, i) => {
+          const cells = $(row).find('th,td').toArray().map(c => $(c).text().trim())
+          const line = `| ${cells.join(' | ')} |`
+          return i === 0 ? `${line}\n| ${cells.map(() => '---').join(' | ')} |` : line
+        }).join('\n') + '\n\n'
+      }
+      case 'head':
+      case 'style':
+      case 'script': return ''
+      default: return inner()
+    }
+  }
+
+  return body.contents().toArray().map(nodeToMd).join('').replace(/\n{3,}/g, '\n\n').trim()
+}
+
+/**
+ * 将 HTML 字符串解析为 docx sections 数组
+ */
+function htmlStringToDocxSections(html) {
+  const $ = cheerio.load(html)
+  const sections = []
+
+  function processNode(el) {
+    const node = $(el)
+    const tag = (el.name || '').toLowerCase()
+    const headingMatch = tag.match(/^h([1-6])$/)
+    if (headingMatch) {
+      sections.push({ type: 'heading', level: parseInt(headingMatch[1]), text: node.text().trim() })
+      return
+    }
+    switch (tag) {
+      case 'p':
+        if (node.text().trim()) sections.push({ type: 'paragraph', text: node.text().trim() })
+        break
+      case 'ul':
+        sections.push({ type: 'list', items: node.find('li').toArray().map(li => $(li).text().trim()) })
+        break
+      case 'ol':
+        sections.push({ type: 'numberedList', items: node.find('li').toArray().map(li => $(li).text().trim()) })
+        break
+      case 'table': {
+        const rows = node.find('tr').toArray().map(row =>
+          $(row).find('th,td').toArray().map(c => $(c).text().trim()))
+        if (rows.length) sections.push({ type: 'table', rows })
+        break
+      }
+      case 'hr':
+        sections.push({ type: 'horizontalRule' })
+        break
+      case 'pre':
+        sections.push({ type: 'paragraph', text: node.text() })
+        break
+      case 'blockquote':
+        node.find('p').each((_, pEl) => {
+          const t = $(pEl).text().trim()
+          if (t) sections.push({ type: 'paragraph', text: `> ${t}` })
+        })
+        if (!node.find('p').length && node.text().trim()) {
+          sections.push({ type: 'paragraph', text: `> ${node.text().trim()}` })
+        }
+        break
+      default:
+        node.children().each((_, child) => processNode(child))
+    }
+  }
+
+  $('body').children().each((_, el) => processNode(el))
+  return sections
 }
 
 // ─── 内部辅助：将 sections 描述转换为 docx children ──────────────────────────
@@ -439,6 +623,122 @@ async function overwriteDocx(filePath, sections = []) {
   }
 }
 
+// ─── Word 格式转换函数 ───────────────────────────────────────────────────────
+
+/**
+ * Word 转 PDF
+ */
+async function wordToPdf(inputPath, outputPath) {
+  try {
+    const fullInput = resolvePath(inputPath)
+    const fullOutput = resolvePath(outputPath)
+    if (!fs.existsSync(fullInput)) {
+      return fail(`File does not exist: ${fullInput}`, { inputPath: fullInput })
+    }
+    const result = await mammoth.convertToHtml({ path: fullInput })
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:sans-serif;line-height:1.7;margin:40px;color:#333}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:6px 10px}
+</style></head><body>${result.value}</body></html>`
+    await htmlStringToPdf(html, fullOutput)
+    return ok({ inputPath: fullInput, outputPath: fullOutput })
+  } catch (error) {
+    return fail(error, { inputPath, outputPath })
+  }
+}
+
+/**
+ * Word 转 HTML
+ */
+async function wordToHtml(inputPath, outputPath) {
+  try {
+    const fullInput = resolvePath(inputPath)
+    const fullOutput = resolvePath(outputPath)
+    if (!fs.existsSync(fullInput)) {
+      return fail(`File does not exist: ${fullInput}`, { inputPath: fullInput })
+    }
+    const result = await mammoth.convertToHtml({ path: fullInput })
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:sans-serif;line-height:1.7;max-width:900px;margin:40px auto;padding:0 20px;color:#333}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:6px 10px}
+</style></head><body>${result.value}</body></html>`
+    fs.ensureDirSync(path.dirname(fullOutput))
+    fs.writeFileSync(fullOutput, html, 'utf8')
+    return ok({ inputPath: fullInput, outputPath: fullOutput, messages: result.messages })
+  } catch (error) {
+    return fail(error, { inputPath, outputPath })
+  }
+}
+
+/**
+ * Word 转 Markdown
+ */
+async function wordToMarkdown(inputPath, outputPath) {
+  try {
+    const fullInput = resolvePath(inputPath)
+    const fullOutput = resolvePath(outputPath)
+    if (!fs.existsSync(fullInput)) {
+      return fail(`File does not exist: ${fullInput}`, { inputPath: fullInput })
+    }
+    const result = await mammoth.convertToHtml({ path: fullInput })
+    const md = htmlStringToMarkdown(result.value)
+    fs.ensureDirSync(path.dirname(fullOutput))
+    fs.writeFileSync(fullOutput, md, 'utf8')
+    return ok({ inputPath: fullInput, outputPath: fullOutput })
+  } catch (error) {
+    return fail(error, { inputPath, outputPath })
+  }
+}
+
+/**
+ * Markdown 转 Word
+ */
+async function markdownToWord(inputPath, outputPath) {
+  try {
+    const fullInput = resolvePath(inputPath)
+    const fullOutput = resolvePath(outputPath)
+    if (!fs.existsSync(fullInput)) {
+      return fail(`File does not exist: ${fullInput}`, { inputPath: fullInput })
+    }
+    const md = fs.readFileSync(fullInput, 'utf8')
+    const html = markdownToHtmlString(md)
+    const sections = htmlStringToDocxSections(html)
+    const { Document, Packer } = docx
+    fs.ensureDirSync(path.dirname(fullOutput))
+    const children = buildChildren(sections, docx)
+    const doc = new Document({ sections: [{ properties: {}, children }] })
+    const buffer = await Packer.toBuffer(doc)
+    fs.writeFileSync(fullOutput, buffer)
+    return ok({ inputPath: fullInput, outputPath: fullOutput, sectionCount: sections.length })
+  } catch (error) {
+    return fail(error, { inputPath, outputPath })
+  }
+}
+
+/**
+ * HTML 转 Word
+ */
+async function htmlToWord(inputPath, outputPath) {
+  try {
+    const fullInput = resolvePath(inputPath)
+    const fullOutput = resolvePath(outputPath)
+    if (!fs.existsSync(fullInput)) {
+      return fail(`File does not exist: ${fullInput}`, { inputPath: fullInput })
+    }
+    const html = fs.readFileSync(fullInput, 'utf8')
+    const sections = htmlStringToDocxSections(html)
+    const { Document, Packer } = docx
+    fs.ensureDirSync(path.dirname(fullOutput))
+    const children = buildChildren(sections, docx)
+    const doc = new Document({ sections: [{ properties: {}, children }] })
+    const buffer = await Packer.toBuffer(doc)
+    fs.writeFileSync(fullOutput, buffer)
+    return ok({ inputPath: fullInput, outputPath: fullOutput, sectionCount: sections.length })
+  } catch (error) {
+    return fail(error, { inputPath, outputPath })
+  }
+}
+
 // ─── 工具描述 ─────────────────────────────────────────────────────────────────
 
 const descriptions = [
@@ -676,6 +976,86 @@ const descriptions = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'wordToPdf',
+      description:
+        '将 Word 文档（.docx）转换为 PDF 文件。依赖 puppeteer，转换时保留基础格式。参数：inputPath 为源 .docx 路径；outputPath 为输出 .pdf 路径。返回值：对象，包含 success、data（含 inputPath、outputPath）、error。',
+      parameters: {
+        type: 'object',
+        properties: {
+          inputPath: { type: 'string', description: '源 .docx 文件路径。' },
+          outputPath: { type: 'string', description: '输出 .pdf 文件路径。' },
+        },
+        required: ['inputPath', 'outputPath'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'wordToHtml',
+      description:
+        '将 Word 文档（.docx）转换为 HTML 文件，保留格式信息（粗体、斜体、表格等）。参数：inputPath 为源 .docx 路径；outputPath 为输出 .html 路径。返回值：对象，包含 success、data（含 inputPath、outputPath、messages）、error。',
+      parameters: {
+        type: 'object',
+        properties: {
+          inputPath: { type: 'string', description: '源 .docx 文件路径。' },
+          outputPath: { type: 'string', description: '输出 .html 文件路径。' },
+        },
+        required: ['inputPath', 'outputPath'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'wordToMarkdown',
+      description:
+        '将 Word 文档（.docx）转换为 Markdown 文件（.md）。通过 HTML 中间格式进行转换，保留标题、段落、表格、链接等结构。参数：inputPath 为源 .docx 路径；outputPath 为输出 .md 路径。返回值：对象，包含 success、data（含 inputPath、outputPath）、error。',
+      parameters: {
+        type: 'object',
+        properties: {
+          inputPath: { type: 'string', description: '源 .docx 文件路径。' },
+          outputPath: { type: 'string', description: '输出 .md 文件路径。' },
+        },
+        required: ['inputPath', 'outputPath'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'markdownToWord',
+      description:
+        '将 Markdown 文件（.md）转换为 Word 文档（.docx）。支持标题、段落、表格、列表、代码块、引用等元素。参数：inputPath 为源 .md 路径；outputPath 为输出 .docx 路径。返回值：对象，包含 success、data（含 inputPath、outputPath、sectionCount）、error。',
+      parameters: {
+        type: 'object',
+        properties: {
+          inputPath: { type: 'string', description: '源 .md 文件路径。' },
+          outputPath: { type: 'string', description: '输出 .docx 文件路径。' },
+        },
+        required: ['inputPath', 'outputPath'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'htmlToWord',
+      description:
+        '将 HTML 文件转换为 Word 文档（.docx），解析标题、段落、表格、列表等元素。参数：inputPath 为源 .html 路径；outputPath 为输出 .docx 路径。返回值：对象，包含 success、data（含 inputPath、outputPath、sectionCount）、error。',
+      parameters: {
+        type: 'object',
+        properties: {
+          inputPath: { type: 'string', description: '源 .html 文件路径。' },
+          outputPath: { type: 'string', description: '输出 .docx 文件路径。' },
+        },
+        required: ['inputPath', 'outputPath'],
+      },
+    },
+  },
 ]
 
 // ─── 导出 ──────────────────────────────────────────────────────────────────────
@@ -695,11 +1075,17 @@ const functions = {
   mergeDocx,
   extractDocxLinks,
   getDocxParagraphStats,
+  wordToPdf,
+  wordToHtml,
+  wordToMarkdown,
+  markdownToWord,
+  htmlToWord,
 }
 
 const DocxTool = {
   name: 'DocxTool',
-  description: '提供 Word 文档（.docx）的创建、读取、搜索、替换、模板填充、格式转换、合并等全面处理能力',
+  description: '提供 Word 文档（.docx）的创建、读取、搜索、替换、模板填充、格式转换、合并，以及 Word/Markdown/HTML/PDF 格式互转等全面处理能力',
+  // 格式转换：wordToPdf、wordToHtml、wordToMarkdown、markdownToWord、htmlToWord
   platform: 'all',
   descriptions,
   functions,
