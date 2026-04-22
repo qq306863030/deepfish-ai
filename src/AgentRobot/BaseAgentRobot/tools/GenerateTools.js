@@ -102,8 +102,9 @@ async function getGenerateSkillRules(goal) {
 2. 命名规范：
    - 函数名称前缀：「领域用途+分隔符」（如systemFileManagement_）
    - 函数描述开头：统一格式「领域用途+分隔符+功能描述」（如系统文件管理:重命名文件）
-3. 内置工具函数调用：函数内可以使用内置工具函数requestAI来获取AI请求结果，在环境中通过this.Tools注入，示例：
+3. 内置工具函数调用：函数内可以使用内置工具函数requestAI来获取AI请求结果，在环境中通过this.Tools注入，必要时也可以使用其他函数，示例：
    - this.Tools.requestAI(systemDescription, prompt, temperature)
+   - this.Tools.executeCommand(command)
 4. 函数数量：至少包含1个可被AI工作流调用的函数
 5. 拆分成多个文件,保持文件结构清晰
 6. 对于大于5个的扩展功能，需要在functions中输出一个说明函数，只需返回一个markdown类型的英文字符串，专门用于解释当前扩展工具的使用方法、参数说明、示例等内容，函数名称为「readme」，如「systemFileManagement_readme」；函数描述需要强调调用该扩展模块前必须先阅读该规则文档。
