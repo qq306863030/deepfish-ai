@@ -247,7 +247,7 @@ const functions = {
 
 const MCPWebTool = {
   name: 'MCPWebTool',
-  description: '提供MCP网页浏览与内容抓取能力，支持任意网页的读取与关键词提取。',
+  description: '提供网页浏览与内容抓取能力，支持任意网页的读取与关键词提取。',
   platform: 'all',
   descriptions,
   functions,

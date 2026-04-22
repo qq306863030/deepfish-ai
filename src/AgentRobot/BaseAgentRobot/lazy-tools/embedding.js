@@ -463,12 +463,153 @@ async function rebuildKnowledgeBase(sourcePath = '', knowledgeBasePath = '') {
   }
 }
 
+// 知识库创建描述
+function getKnowledgeBaseCreationDescription() {
+  return `# Knowledge Base Creation Guide
+
+## 目标
+使用本工具在命令执行目录下创建或维护本地知识库（默认目录为 .deepfish-rag），并支持后续持续增量更新。
+
+## 能完成的任务
+1. 从用户给定的目录或文件加载文档内容，构建本地知识库。
+2. 自动识别常见文本与文档格式（如 md、txt、json、js、pdf、docx、xlsx 等）。
+3. 在重复导入时执行增量更新：
+   - 内容未变化：跳过
+   - 内容已变化：更新
+   - 新文件：新增
+4. 记录每次构建来源和统计信息（sourceHistory），方便审计和复盘。
+5. 支持删除后重建，快速恢复知识库状态。
+
+## 关键函数与协同关系
+
+### 1) 构建层
+- buildKnowledgeBase(sourcePath, knowledgeBasePath)
+  - 创建或续加知识库的主入口。
+  - sourcePath 为空时会交互式要求用户输入文件或目录。
+  - 默认知识库路径为 process.cwd()/.deepfish-rag。
+
+它在内部协同调用：
+- _getKbRootPath：统一知识库目录解析。
+- _loadKnowledgeBase：读取或初始化 index.json。
+- _collectSourceFiles：展开目录得到文件集合。
+- _isSupportedFile：过滤可处理文件类型。
+- _readDocumentContent：按不同文件类型提取文本。
+- _sha256：计算内容哈希，用于增量判断。
+- _saveKnowledgeBase：保存最终索引。
+
+### 2) 重建层
+- deleteKnowledgeBase(knowledgeBasePath)
+  - 删除现有知识库目录。
+- rebuildKnowledgeBase(sourcePath, knowledgeBasePath)
+  - 先删后建。
+  - 典型用于“索引异常修复”或“结构升级后重建”。
+
+## 推荐执行流程
+1. 调用 buildKnowledgeBase 进行首次构建。
+2. 后续补充文档时再次调用 buildKnowledgeBase（续加）。
+3. 如需彻底刷新：调用 rebuildKnowledgeBase。
+4. 构建完成后再进入检索阶段（read/search 系列函数）。
+
+## 面向用户任务的协同策略
+- 用户说“请把这个目录做成知识库”：
+  - buildKnowledgeBase(目录路径)
+- 用户说“继续把新资料加进去”：
+  - buildKnowledgeBase(新目录路径)
+- 用户说“从头重建”：
+  - rebuildKnowledgeBase(目录路径)
+
+## 结果校验建议
+构建后建议检查：
+1. getKnowledgeBaseInfo 的 totalDocuments 是否大于 0。
+2. sourceHistory 是否新增一条构建记录。
+3. addedCount / updatedCount / skippedCount 是否符合预期。
+`
+}
+
+// 知识库检索描述
+function getKnowledgeBaseRetrievalDescription() {
+  return `# Knowledge Base Retrieval Guide
+
+## 目标
+从本地知识库中高效找到“相关文档”与“关键片段”，用于问答、总结、比对和后续 RAG 召回。
+
+## 能完成的任务
+1. 查看知识库总体状态与构建历史。
+2. 按关键词筛选文档摘要，快速定位候选文档。
+3. 按文档 ID 读取全文，进行精读分析。
+4. 按分块检索返回命中片段，适合长文档场景。
+
+## 关键函数与协同关系
+
+### 1) 元信息确认
+- getKnowledgeBaseInfo(knowledgeBasePath)
+  - 获取总文档数、创建时间、更新时间、构建历史。
+  - 作用：先判断库是否可用，再决定检索策略。
+
+### 2) 粗粒度召回（文档级）
+- readKnowledgeBase(keyword, knowledgeBasePath, limit)
+  - 返回文档摘要（id、sourcePath、preview）。
+  - 作用：先召回候选文档，缩小范围。
+
+### 3) 细粒度阅读（全文级）
+- readKnowledgeBaseDocument(documentId, knowledgeBasePath)
+  - 读取指定文档全文。
+  - 作用：对高价值候选文档做精读与引用。
+
+### 4) 片段级召回（chunk级）
+- searchKnowledgeBaseChunks(keyword, knowledgeBasePath, chunkSize, overlap, limit)
+  - 将文档切块并按关键词命中分数排序。
+  - 作用：在超长文档里快速找到最相关上下文。
+
+它在内部协同调用：
+- _chunkText：按 chunkSize + overlap 生成可检索片段。
+- _calcKeywordScore：计算关键词命中次数并排序。
+
+## 推荐检索流程
+1. 调用 getKnowledgeBaseInfo，确认知识库可用。
+2. 调用 readKnowledgeBase(keyword)，拿到候选文档列表。
+3. 对重点文档调用 readKnowledgeBaseDocument 进行精读。
+4. 若候选文档过大或命中不精确，调用 searchKnowledgeBaseChunks 做片段召回。
+5. 将片段结果组织为回答证据，必要时回看全文补全上下文。
+
+## 典型用户任务协同方案
+
+### 场景 A：用户问“知识库里有没有某主题”
+1. readKnowledgeBase(主题词)
+2. 返回候选文档与预览
+
+### 场景 B：用户问“请给出该主题的依据段落”
+1. readKnowledgeBase(主题词)
+2. searchKnowledgeBaseChunks(主题词)
+3. 输出高分片段 + 源文件路径
+
+### 场景 C：用户问“请基于某篇文档做总结”
+1. readKnowledgeBase(文档名关键词)
+2. readKnowledgeBaseDocument(documentId)
+3. 对全文执行总结
+
+## 检索参数建议
+1. limit
+   - 初筛推荐 5-20
+2. chunkSize
+   - 一般 600-1200
+3. overlap
+   - 一般 80-200
+   - 过小可能断句，过大可能冗余
+
+## 结果质量建议
+1. 优先返回包含 sourcePath 与文档 ID 的证据。
+2. 先文档级筛选，再 chunk 级定位，避免全库全文扫描输出过大。
+3. 对高分片段做二次核对，防止关键词误命中。
+`
+}
+
 const descriptions = [
   {
     type: 'function',
     function: {
-      name: 'getEmbeddingConfig',
-      description: '读取向量化接口配置（EMBEDDING_API 与 EMBEDDING_API_KEY）。如未配置，会提示用户输入并写入配置文件。',
+      name: 'getKnowledgeBaseCreationDescription',
+      description: '知识库创建与续加的完整说明文档，包含可完成任务、函数协同关系与推荐执行流程。在执行知识库创建、续加或重建前，建议先阅读此文档以明确使用方法与注意事项。',
       parameters: {
         type: 'object',
         properties: {},
@@ -478,15 +619,11 @@ const descriptions = [
   {
     type: 'function',
     function: {
-      name: 'setEmbeddingConfig',
-      description: '写入向量化接口配置，保存 EMBEDDING_API 与 EMBEDDING_API_KEY 到配置文件。',
+      name: 'getKnowledgeBaseRetrievalDescription',
+      description: '知识库检索的完整说明文档，包含检索策略、函数协同关系与典型任务执行方案。在执行知识库检索前，建议先阅读此文档以明确使用方法与注意事项。',
       parameters: {
         type: 'object',
-        properties: {
-          embeddingApi: { type: 'string', description: '向量化接口地址' },
-          embeddingApiKey: { type: 'string', description: '向量化接口密钥' },
-        },
-        required: ['embeddingApi', 'embeddingApiKey'],
+        properties: {},
       },
     },
   },
@@ -600,8 +737,8 @@ const descriptions = [
 ]
 
 const functions = {
-  getEmbeddingConfig,
-  setEmbeddingConfig,
+  getKnowledgeBaseCreationDescription,
+  getKnowledgeBaseRetrievalDescription,
   buildKnowledgeBase,
   readKnowledgeBase,
   readKnowledgeBaseDocument,
@@ -613,7 +750,7 @@ const functions = {
 
 const EmbeddingTool = {
   name: 'EmbeddingTool',
-  description: '提供向量化配置管理与本地知识库构建/读取能力，默认知识库路径为命令执行目录下的 .deepfish-rag',
+  description: '提供本地知识库构建/读取能力，默认知识库路径为命令执行目录下的 .deepfish-rag',
   platform: 'all',
   descriptions,
   functions,
