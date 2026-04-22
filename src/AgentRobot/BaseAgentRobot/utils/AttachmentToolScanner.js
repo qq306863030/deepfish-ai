@@ -166,7 +166,7 @@ ${table}
           `| ${s.name} | ${s.type} | ${s.description || s.extensionDescription} | ${s.location} | ${s.filePath || s.skillFilePath} |`,
       )
       .join('\n')
-    let skills1 = `
+    let skills1 = clawSkills.length > 0 ? `
     ### 优先使用的Skills
 可以优先调用以下Skill来完成用户的请求，Skill的调用方式：
 - 使用用户请求匹配 skill description，
@@ -179,8 +179,8 @@ ${table}
 |-------|------|-------------|----------|---------------|
 ${table1}
 |-------|------|-------------|----------|---------------|
-`
-  let skills2 = `
+` : '### 无优先使用的Skills'
+  let skills2 = toolCollection.length + clawSkillCollection.length > 0 ?  `
 ### 其他可以使用的Skills
 可以调用以下Skill来完成用户的请求，Skill的调用方式：
 - 使用用户请求匹配 skill description，
@@ -194,9 +194,8 @@ ${table1}
 |-------|------|-------------|----------|----------|
 ${table2}
 |-------|------|-------------|----------|----------|
-`
+`: '### 无其他可用的Skills'
 return skills1 + '\n' + skills2
-
   }
 
   // 扫描包
