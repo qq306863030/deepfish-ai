@@ -67,7 +67,7 @@ async function createSubAgent(workGoal) {
 
 function loadAttachTool(toolName) {
   try {
-    this.agentRobot.loadAttachTool(toolName)
+    this.agentRobot.toolManager.addTool(toolName)
     return `Tool ${toolName} loaded successfully`
   } catch (error) {
     return `Failed to load tool ${toolName}: ${error.message}`

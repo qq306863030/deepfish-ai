@@ -70,7 +70,7 @@ class Brain extends EventEmitterSuper {
     if (maxIterations === -1) {
       maxIterations = Infinity
     }
-    const skillDescriptions = this.agentRobot.getToolDescriptions()
+    const skillDescriptions = this.agentRobot.toolManager.descriptions
     this.emit(BrainEvent.THINK_BEFORE, messages)
     while (maxIterations-- > 0) {
       try {

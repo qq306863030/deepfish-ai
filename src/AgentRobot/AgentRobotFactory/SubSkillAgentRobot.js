@@ -29,20 +29,13 @@ class SubSkillAgentRobot extends BaseAgentRobot {
     this.logger = new Logger(this) // 初始化日志系统
     this.agentTree = new AgentTree(this)
     this.agentTree.init()
-
-    this.toolCollection = AttachmentToolScanner.getToolCollection(
-      this.workspace,
-    ) // 加载工具集合
-    this.clawSkillCollection = AttachmentToolScanner.getClawSkillCollection(
-      this.basespace,
-    ) // 加载Claw技能集合
   }
 
   _getDefaultSystemPrompt(opt) {
     const clawSkills = opt.clawSkills || []
     let systemPrompt = super._getDefaultSystemPrompt(opt)
     systemPrompt =
-      systemPrompt + '\n' + AttachmentToolScanner.getClawSkillPrompt(clawSkills, this.toolCollection, this.clawSkillCollection)
+      systemPrompt + '\n' + AttachmentToolScanner.getClawSkillPrompt(clawSkills, this.toolManager.toolCollection, this.toolManager.clawSkillCollection)
     return systemPrompt
   }
 }

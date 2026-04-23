@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-21 21:08:34
+ * @LastEditTime: 2026-04-23 14:50:37
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -91,7 +91,7 @@ async function executeJSCode(code) {
     throw error
   }
   try {
-    const functions = this.agentRobot.getTools()
+    const functions = this.agentRobot.toolManager.functions
     const Func = new Function(
       'Tools',
       'require',

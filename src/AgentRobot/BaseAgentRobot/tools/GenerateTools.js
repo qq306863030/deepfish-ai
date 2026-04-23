@@ -202,7 +202,7 @@ module.exports = functions
 3. 测试文件：如果引入了requestAI，必须确保函数可正确使用 this.Tools 上下文。
    - 环境创建方式：
      "const { DeepFishAI } = require('${packagePath}')\nconst deepfishAI = new DeepFishAI();"
-   - 调用方式：为模块导出的functions绑定Tools上下文，示例：functions.Tools = deepfishAI.agentRobot.getTools();
+   - 调用方式：为模块导出的functions绑定Tools上下文，示例：functions.Tools = deepfishAI.agentRobot.toolManager.functions;
 4. 断言与输出规范：每个用例需打印“用例名称、输入、期望、实际、是否通过（PASS/FAIL）”；全部执行后输出汇总（总数、通过数、失败数）。
 5. 失败处理：出现异常时不得静默吞错，需捕获并输出可定位信息（错误消息、对应用例、关键参数）。
 6. 副作用控制：测试过程中创建的临时文件必须使用 tmp_test_ 前缀，并在测试结束后清理。

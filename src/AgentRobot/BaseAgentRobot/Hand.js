@@ -12,7 +12,7 @@ class Hand extends EventEmitterSuper {
     super()
     this.agentRobot = agentRobot
     this.maxBlockFileSize = agentRobot.opt.maxBlockFileSize || 20 // KB
-    this.tools = agentRobot.getTools()
+    this.tools = agentRobot.toolManager.functions
   }
 
   _parseToolCalls(tool_call) {
@@ -57,7 +57,7 @@ class Hand extends EventEmitterSuper {
   }
 
   _getRequiredParamNames(funcName) {
-    const descriptions = this.agentRobot.getToolDescriptions()
+    const descriptions = this.agentRobot.toolManager.descriptions
     const current = descriptions.find((item) => item?.function?.name === funcName)
     return current?.function?.parameters?.required || []
   }

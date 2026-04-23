@@ -28,12 +28,6 @@ class SubAgentRobot extends BaseAgentRobot {
     this.logger = new Logger(this) // 初始化日志系统
     this.agentTree = new AgentTree(this)
     this.agentTree.init()
-    this.toolCollection = AttachmentToolScanner.getToolCollection(
-      this.workspace,
-    ) // 加载工具集合
-    this.clawSkillCollection = AttachmentToolScanner.getClawSkillCollection(
-      this.basespace,
-    ) // 加载Claw技能集合
   }
 
   _getDefaultSystemPrompt(opt) {
@@ -42,7 +36,7 @@ class SubAgentRobot extends BaseAgentRobot {
   ${systemPrompt}
   ### 工具调用
   对于复杂的任务，先从可以使用的Skills中查找并使用合适的Skill，如果没有合适的Skill，再使用内置工具函数，使用时请严格按照工具函数的调用方式进行调用。
-  ${AttachmentToolScanner.getAttachToolPrompt(this.toolCollection, this.clawSkillCollection)}
+  ${AttachmentToolScanner.getAttachToolPrompt(this.toolManager.toolCollection, this.toolManager.clawSkillCollection)}
       `
   }
 }

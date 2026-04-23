@@ -12,6 +12,7 @@ const echarts = require('echarts')
 const canvas = require('canvas')
 const cheerio = require('cheerio')
 const puppeteer = require('puppeteer')
+const AIToolManager = require('./utils/AIToolManager.js')
 
 class BaseAgentRobot {
   id = '' // Agentid
@@ -19,8 +20,7 @@ class BaseAgentRobot {
 
   brain = null // 大脑，负责思考、记忆、决策
   hand = null // 手，负责使用工具
-  originalTools = null // 原装工具
-  attachTools = null // 附加工具, Agent后续安装的工具函数
+  
   heart = null // 心脏，负责心跳、连接
   sender = null // 发送器，负责发送消息
   receiver = null // 接收器，负责接收消息
@@ -40,6 +40,7 @@ class BaseAgentRobot {
   agentTree = null
   memoryFilePath = null
   logDirPath = null
+  toolManager = null
 
   constructor(
     opt = {
@@ -73,9 +74,7 @@ class BaseAgentRobot {
     this.name = opt.name || 'AgentRobot'
     this.screenPrinter = new ScreenPrinter() // 屏幕打印机
     this._initFiles(opt) // 初始化文件
-
-    this.originalTools = this._getOriginalTools() // 天赋技能
-    this.attachTools = opt.attachTools || [] // 附加工具, Agent后续安装的工具函数
+    this.toolManager = new AIToolManager(this)
     this.systemPrompt = opt.systemPrompt || this._getDefaultSystemPrompt(opt) // 系统提示语
     this.brain = new Brain(this) // 初始化大脑
     this.hand = new Hand(this) // 初始化手
@@ -179,73 +178,6 @@ class BaseAgentRobot {
       this.screenPrinter.logInfo(`I have finished using tool ${funcName}`)
       this.logger.logInfo(`I have finished using tool ${funcName}`)
     })
-  }
-
-  loadAttachTool(toolName) {
-      let tool = this.attachTools.find((t) => t.name === toolName)
-      if (!tool) {
-        tool = this.toolCollection.find((t) => t.name === toolName)
-        this.attachTools.push(tool)
-      }
-  }
-
-  getTools() {
-    const tools = [...this.originalTools, ...this.attachTools]
-    const toolFunctions = {
-      fs,
-      axios,
-      dayjs,
-      lodash,
-      canvas,
-      echarts,
-      cheerio,
-      puppeteer
-    }
-    
-    tools.forEach((tool) => {
-      Object.assign(toolFunctions, tool.functions)
-    })
-    toolFunctions.agentRobot = this
-    toolFunctions.Tools = toolFunctions
-    // 兼容老版本
-    toolFunctions.aiCli = {
-      Tools: toolFunctions,
-    }
-    return toolFunctions
-  }
-
-  getToolDescriptions() {
-    const tools = [...this.originalTools, ...this.attachTools]
-    const toolDescriptions = []
-    tools.forEach((tool) => {
-      const descriptions = tool.descriptions.map((item) => {
-        if (!item.type) {
-          return {
-            type: 'function',
-            function: item,
-          }
-        } else {
-          return item
-        }
-      })
-      toolDescriptions.push(...descriptions)
-    })
-    return toolDescriptions
-  }
-
-  // 获取原装工具
-  _getOriginalTools() {
-    // 自动扫描tools目录
-    const toolsPath = path.join(__dirname, './tools')
-    const toolFiles = fs.readdirSync(toolsPath).filter((file) => {
-      return file.endsWith('.js') || file.endsWith('.mjs')
-    })
-    const tools = []
-    toolFiles.forEach((file) => {
-      const tool = require(path.join(toolsPath, file))
-      tools.push(tool)
-    })
-    return tools
   }
 
   _getDefaultSystemPrompt(opt) {
