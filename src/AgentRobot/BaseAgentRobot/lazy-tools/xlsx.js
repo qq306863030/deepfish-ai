@@ -581,6 +581,7 @@ const XlsxTool = {
   platform: 'all',
   descriptions,
   functions,
+  isSystem: true
 }
 
 module.exports = XlsxTool

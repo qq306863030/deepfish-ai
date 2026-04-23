@@ -74,6 +74,13 @@ class Brain extends EventEmitterSuper {
     this.emit(BrainEvent.THINK_BEFORE, messages)
     while (maxIterations-- > 0) {
       try {
+        // 更新系统提示词
+        if (messages[0].role === 'system') {
+          messages[0] = {
+            role: 'system',
+            content: this.agentRobot.systemPrompt,
+          }
+        }
         // 压缩上下文
         await this.messageCompresser.compress(messages)
         const { message, content, tool_calls } = await thinkByTool(
@@ -180,13 +187,6 @@ class Brain extends EventEmitterSuper {
   }
 
   _initMessages(messages) {
-    let firstMessage = messages[0]
-    if (firstMessage.role === 'system') {
-      messages[0] = {
-        role: 'system',
-        content: this.agentRobot.systemPrompt,
-      }
-    }
     let lastMessage = messages[messages.length - 1]
     while (
       messages.length > 1 &&

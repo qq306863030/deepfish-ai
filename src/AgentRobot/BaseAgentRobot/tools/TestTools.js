@@ -94,6 +94,7 @@ const TestTools = {
   extensionDescription: "提供程序功能测试任务的生成和执行功能，支持自动化测试工作流",
   descriptions,
   functions,
+  isSystem: true
 }
 
 module.exports = TestTools

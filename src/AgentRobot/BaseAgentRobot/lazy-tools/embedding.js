@@ -754,6 +754,7 @@ const EmbeddingTool = {
   platform: 'all',
   descriptions,
   functions,
+  isSystem: true
 }
 
 module.exports = EmbeddingTool

@@ -729,6 +729,7 @@ const PdfTool = {
   platform: 'all',
   descriptions,
   functions,
+  isSystem: true
 }
 
 module.exports = PdfTool

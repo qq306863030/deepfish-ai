@@ -19,9 +19,11 @@ class MainAgentRobot extends BaseAgentRobot {
     this.workspace = opt.workspace || process.cwd() // 工作空间，目录
     this.basespace = opt.basespace || path.join(os.homedir(), '.deepfish-ai') // 记忆空间，目录
     this.userspace = path.join(this.basespace, 'user-info') // 用户空间，目录
+    this.userInfoFilePath = path.join(this.userspace, 'user.md')
     this.memorySpace = path.join(this.basespace, 'memory') // 记忆空间，目录
     this.agentRecordFilePath = path.join(this.memorySpace, 'agentRecord.json')
     fs.ensureDirSync(this.memorySpace)
+    fs.ensureDirSync(this.userspace)
     // 查看agentRecord.json文件是否存在，不存在则创建
     if (!fs.pathExistsSync(this.agentRecordFilePath)) {
       fs.writeJsonSync(this.agentRecordFilePath, [], { spaces: 2 })

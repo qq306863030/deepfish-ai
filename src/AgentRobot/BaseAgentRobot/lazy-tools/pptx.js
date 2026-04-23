@@ -534,6 +534,7 @@ const PptxTool = {
   platform: 'all',
   descriptions,
   functions,
+  isSystem: true
 }
 
 module.exports = PptxTool

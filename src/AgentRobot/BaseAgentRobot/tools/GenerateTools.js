@@ -423,6 +423,7 @@ const GenerateTools = {
   description: '提供扩展工具与Skill工具包生成规则能力，用于辅助AI构建标准化扩展项目模板',
   descriptions,
   functions,
+  isSystem: true
 }
 
 module.exports = GenerateTools

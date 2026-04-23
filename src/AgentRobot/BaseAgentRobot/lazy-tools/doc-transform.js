@@ -198,6 +198,7 @@ const DocTransformTool = {
   platform: 'all',
   descriptions,
   functions,
+  isSystem: true
 }
 
 module.exports = DocTransformTool

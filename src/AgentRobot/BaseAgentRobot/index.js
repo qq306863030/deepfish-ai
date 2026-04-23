@@ -1,17 +1,9 @@
 const path = require('path')
 const os = require('os')
-const fs = require('fs-extra')
-const lodash = require('lodash')
 const { Brain } = require('./Brain.js')
 const BrainEvent = require('./BrainEvent.js')
 const ScreenPrinter = require('./ScreenPrinter.js')
 const { HandEvent, Hand } = require('./Hand.js')
-const dayjs = require('dayjs')
-const axios = require('axios')
-const echarts = require('echarts')
-const canvas = require('canvas')
-const cheerio = require('cheerio')
-const puppeteer = require('puppeteer')
 const AIToolManager = require('./utils/AIToolManager.js')
 
 class BaseAgentRobot {
@@ -56,6 +48,7 @@ class BaseAgentRobot {
       maxBlockFileSize: 20, // 大文件分块阈值，单位KB；超过该大小的文件需要分块处理
       systemPrompt: '', // 系统提示语
       encoding: 'auto', // 命令行编码格式, 可设置为utf-8、gbk等, 也可以设置成auto或空值自动判断
+      isThinkPrint: true, // 是否打印思考过程
       aiConfig: {
         name: 'deepseek',
         type: 'deepseek',
@@ -87,10 +80,11 @@ class BaseAgentRobot {
 
   _initEvents() {
     const aiConfig = this.opt.aiConfig
+    const isThinkPrint = this.opt.isThinkPrint
     let stopLoading = null
     this.brain.on(BrainEvent.THINK_BEFORE, () => {})
     this.brain.on(BrainEvent.SUB_THINK_BEFORE, (messages) => {
-      if (!aiConfig.stream) {
+      if (!aiConfig.stream || !isThinkPrint) {
         if (stopLoading) {
           stopLoading('I have finished thinking.')
         }
@@ -98,27 +92,27 @@ class BaseAgentRobot {
       }
     })
     this.brain.on(BrainEvent.SUB_THINK_AFTER, (messages) => {
-      if (!aiConfig.stream && stopLoading) {
+      if ((!aiConfig.stream && stopLoading) || !isThinkPrint) {
         stopLoading('I have finished thinking.')
         stopLoading = null
-        const lastMessage = messages[messages.length - 1]
-        this.screenPrinter.logInfo(lastMessage?.content)
+        // const lastMessage = messages[messages.length - 1]
+        // this.screenPrinter.logInfo(lastMessage?.content)
       }
     })
     this.brain.on(BrainEvent.SUB_STREAM_THINK_OUTPUT, (messages, output) => {
-      this.screenPrinter.streamOutput(output, '#47854a')
+      isThinkPrint && this.screenPrinter.streamOutput(output, '#47854a')
     })
     this.brain.on(BrainEvent.SUB_STREAM_CONTENT_OUTPUT, (messages, content) => {
-      this.screenPrinter.streamOutput(content, '#c2a654')
+      isThinkPrint && this.screenPrinter.streamOutput(content, '#c2a654')
     })
     this.brain.on(
       BrainEvent.SUB_STREAM_TOOL_CALLS_OUTPUT,
       (messages, toolCalls) => {
-        this.screenPrinter.streamOutput(toolCalls, '#47854a')
+        isThinkPrint && this.screenPrinter.streamOutput(toolCalls, '#47854a')
       },
     )
     this.brain.on(BrainEvent.SUB_STREAM_END, () => {
-      this.screenPrinter.streamLineBreak()
+      isThinkPrint && this.screenPrinter.streamLineBreak()
     })
     this.brain.on(BrainEvent.SUB_USE_TOOL, async (toolCalls) => {
       await this.hand.useTools(toolCalls)
@@ -187,7 +181,6 @@ class BaseAgentRobot {
     const maxBlockFileSize = opt.maxBlockFileSize || 20
     const id = this.id
     const name = this.name
-    const userInfoFilePath = path.join(this.userspace, 'user.md')
     return `
 你叫${name}, 编号${id}, 是一个严格按规则执行任务的智能体，不能违反任何系统限制，具有INTJ人格，高冷、做事以及回复问题精简、准确、不废话。
 ### 基础环境信息
@@ -213,7 +206,13 @@ class BaseAgentRobot {
 5. 任务执行过程中，产生的所有临时文件（如分块文件、测试文件等）必须以"tmp_"为前缀命名，如"tmp_block_filename.txt、tmp_test_filename.txt、tmp_bak_filename.txt"，并在任务完成后删除这些临时文件，确保工作目录整洁。
 
 ### 用户信息
-请将用户信息记录在${userInfoFilePath}文件中，使用Markdown格式进行整理。记录内容应包括：个人信息（如姓名、年龄、职业、兴趣爱好、个人性格等非敏感基础信息）、操作习惯、代码习惯、阅读习惯、常用目录、我的文档目录（记录用户文档）。严禁记录任何敏感信息，例如密码、密钥、令牌、身份证号、银行卡号、详细住址、联系方式等个人隐私信息。
+#### 用户信息记录规则
+当对话中出现用户信息时，如个人基础信息（如姓名、年龄、职业、兴趣、性格特征）、操作习惯、代码习惯、阅读习惯、常用目录、文档收藏夹目录等，必须使用用户信息读写函数进行记录。
+
+#### 当前用户信息
+----user info start----
+${this.toolManager.functions.readUserInfo()}
+----user info end----
     `
   }
 

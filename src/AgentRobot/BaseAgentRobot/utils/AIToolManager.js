@@ -79,7 +79,7 @@ class AIToolManager {
         }
         return item
       })
-      if (tool.name) {
+      if (tool.name && !tool.isSystem) {
         for (const funcName in tool.functions) {
           if (!funcName.includes('_')) {
             this.functions[`${tool.name}_${funcName}`] =

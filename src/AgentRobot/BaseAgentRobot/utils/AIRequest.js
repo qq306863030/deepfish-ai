@@ -44,10 +44,10 @@ async function think(
         streamEnd,
       )
       await thinkAfter()
-      return messageRes.choices[0].message.content
+      return clearThinkTag(messageRes.choices[0].message.content)
     }
     await thinkAfter()
-    return response.choices[0].message.content
+    return clearThinkTag(response.choices[0].message.content)
   } catch (error) {
     throw new Error(`AI response error: ${error.message}`)
   }
@@ -90,6 +90,7 @@ async function thinkByTool(
         streamEnd,
       )
       await thinkAfter()
+      messageRes.choices[0].message.content = clearThinkTag(messageRes.choices[0].message.content)
       return {
         content: messageRes.choices[0].message.content,
         tool_calls: messageRes.choices[0].message.tool_calls,
@@ -97,6 +98,7 @@ async function thinkByTool(
       }
     }
     await thinkAfter()
+    response.choices[0].message.content = clearThinkTag(response.choices[0].message.content)
     return {
       content: response.choices[0].message.content,
       tool_calls: response.choices[0].message.tool_calls,
@@ -105,6 +107,11 @@ async function thinkByTool(
   } catch (error) {
     throw new Error(`AI response error: ${error.message}`)
   }
+}
+
+// 清除字符串中<think></think>标签以及之间的内容
+function clearThinkTag(content) {
+  return content.replace(/<think>[\s\S]*?<\/think>/g, '')
 }
 
 // 流式输出结果转非流式输出

@@ -151,6 +151,7 @@ const CreateAgentTool = {
   description: '提供子agent创建与任务分发能力，可按技能选择子agent执行目标任务',
   descriptions,
   functions,
+  isSystem: true
 }
 
 module.exports = CreateAgentTool

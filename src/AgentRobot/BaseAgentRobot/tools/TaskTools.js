@@ -205,6 +205,7 @@ const TaskTools = {
     '提供任务列表创建规则、执行规则、任务读写与子任务执行能力，支持基于tasklist的可追踪拆分执行流程',
   descriptions,
   functions,
+  isSystem: true
 }
 
 module.exports = TaskTools

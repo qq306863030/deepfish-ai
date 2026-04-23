@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-23 14:50:37
+ * @LastEditTime: 2026-04-23 18:53:35
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -65,8 +65,6 @@ async function requestAI(
     systemDescription = systemDescription.systemDescription || ''
   }
   try {
-    aiConsole.logInfo(`aiSystem: ${systemDescription}`)
-    aiConsole.logInfo(`aiPrompt: ${prompt}`)
     const response = await this.agentRobot.brain.think(
       systemDescription,
       prompt,
@@ -237,6 +235,7 @@ const SystemTool = {
     '提供系统命令执行、AI请求、JS代码执行、扩展文件生成规则、AI配置管理、Tool加载执行等核心系统功能',
   descriptions,
   functions,
+  isSystem: true
 }
 
 module.exports = SystemTool
