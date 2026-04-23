@@ -107,7 +107,7 @@ const descriptions = [
     function: {
       name: 'createSubAgent',
       description:
-        '创建一个携带所有技能包说明的子agent（能够根据需要创建加载技能包的子agent），并让其执行给定工作目标。返回执行结果与状态信息。',
+        '创建一个子agent，并让其执行给定工作目标。可以进行复杂的任务分配，如知识库查询、多源搜索结果整合、多步骤任务处理等，返回执行结果与状态信息。',
       parameters: {
         type: 'object',
         properties: {
