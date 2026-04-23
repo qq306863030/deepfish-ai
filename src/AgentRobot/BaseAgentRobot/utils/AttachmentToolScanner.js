@@ -187,7 +187,7 @@ ${table1}
 - 一次只加载一个Skill，优先匹配最具体的Skill
 - 当用户请求不匹配任何Skill描述时，不加载任何Skill
 - Type类型为'ClawSkill'时，使用Skill前先使用readFile函数读取SKILL.md文件获取调用说明，通过仔细阅读说明文件学习Skill的使用方法，来完成任务
-- Type类型为'BaseSkill'时，使用loadAttachTool函数加载Skill后，通过使用该Skill提供的函数来完成任务
+- Type类型为'BaseSkill'时，使用loadAttachTool函数加载Skill后，该技能中的工具函数会被添加到工具列表中，即可直接调用
 ## Available Skills
 
 | Skill | Type | Description | Location | FilePath |

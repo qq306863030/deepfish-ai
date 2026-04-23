@@ -455,6 +455,7 @@ async function pdfToLongImage(pdfPath, outputImagePath) {
 
     return ok({ pdfPath, outputImagePath, pageCount: pages.length, width: maxWidth, height: totalHeight })
   } catch (error) {
+    console.error(error)
     return fail(error, { pdfPath, outputImagePath })
   }
 }

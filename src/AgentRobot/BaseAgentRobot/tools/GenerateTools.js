@@ -64,14 +64,13 @@ const descriptions = [
 ]
 
 async function getGenerateSkillRules(goal) {
-  const packagePath = path.resolve(__filename, '../../../index.js')
   const newGoal = `
-### 任务目标
+## 任务目标
 基于指定规则创建一个标准化的Node.js NPM项目，实现用户目标：${goal}，最终输出符合AI工作流调用规范的函数模块，并配套中英文说明文档。
 
-### 任务步骤
+## 任务步骤
 
-#### 第一步：项目初始化
+### 第一步：项目初始化
 1. 目录创建：新建目录，目录名称以"deepfish-ai-"开头,如"deepfish-ai-「项目功能名称」"，作为NPM项目根目录，并作为当前项目的名称
 2. package.json配置：
    - name字段值：与项目名称一致，即"deepfish-ai-「项目功能名称」"
@@ -87,8 +86,8 @@ async function getGenerateSkillRules(goal) {
     - README_CN.md（中文说明文档）
     - README.md（英文说明文档）
 
-#### 第二步：核心代码开发
-##### 2.1 核心输出要求
+### 第二步：核心代码开发
+#### 2.1 核心输出要求
 文件需输出四个核心字段，且代码逻辑清晰、可运行：
 - name：字符串类型，扩展的名称标识
 - description：字符串类型，扩展功能的简要描述，说明该扩展提供的核心能力
@@ -96,7 +95,7 @@ async function getGenerateSkillRules(goal) {
 - platform：字符串类型，扩展支持的平台(process.platform)，all或空表示所有平台, win32表示仅支持Windows, darwin表示仅支持MacOS, linux表示仅支持Linux:
 - functions：对象类型，key为函数名称，value为函数方法体
 
-##### 2.2 开发强制规则
+#### 2.2 开发强制规则
 1. 参数一致性：functions中函数的入参，必须与descriptions中对应函数声明的parameters完全一致
 2. 命名规范：
    - 函数名称前缀：「领域用途+分隔符」（如systemFileManagement_）
@@ -109,7 +108,7 @@ async function getGenerateSkillRules(goal) {
 6. 对于大于5个的扩展功能，需要在functions中输出一个说明函数，只需返回一个markdown类型的英文字符串，专门用于解释当前扩展工具的使用方法、参数说明、示例等内容，函数名称为「readme」，如「systemFileManagement_readme」；函数描述需要强调调用该扩展模块前必须先阅读该规则文档。
 7. 仅进行简单逻辑性检查，不需要测试。
 
-##### 2.3 基础代码模板（必须遵循）
+#### 2.3 基础代码模板（必须遵循）
 const descriptions = []
 const functions = {}
 module.exports = {
@@ -120,9 +119,9 @@ module.exports = {
   functions,
 }
 
-##### 2.4 参考示例（可参考格式，展示多文件拆分结构）
+#### 2.4 参考示例（可参考格式，展示多文件拆分结构）
 
-###### index.js（主文件）
+##### index.js（主文件）
 const descriptions = require('./descriptions')
 const functions = require('./functions')
 module.exports = {
@@ -133,7 +132,7 @@ module.exports = {
   functions,
 }
 
-###### descriptions.js（描述子文件）
+##### descriptions.js（描述子文件）
 const descriptions = [
   {
     name: 'systemFileManagement_renameFile',
@@ -160,7 +159,7 @@ const descriptions = [
 ]
 module.exports = descriptions
 
-###### functions.js（函数子文件）
+##### functions.js（函数子文件）
 const functions = {
   systemFileManagement_renameFile: function(oldPath, newPath) {
     try {
@@ -196,14 +195,14 @@ const functions = {
 }
 module.exports = functions
 
-#### 第三步：输出README文档
-##### 3.1 通用要求
+### 第三步：输出README文档
+#### 3.1 通用要求
 - 两个文档需在标题下方包含「中英文切换标签」（如文档顶部标注「English | 中文」/「中文 | English」）
 - 结构保持一致，仅语言不同，核心模块顺序不可调整
 - 文件名称README_CN.md（中文）、README.md（英文）
 - 链接使用相对路径，如[中文](./README_CN.md)
 
-##### 3.2 核心模块
+#### 3.2 核心模块
 1. 总体功能描述：
    - 清晰说明当前NPM包的核心定位、整体功能价值、适用场景
    - 语言简洁易懂，无需技术细节，聚焦「做什么」而非「怎么做」
@@ -228,12 +227,12 @@ async function generateSkill(rules) {
 
 async function getGenerateClawSkillRules(goal) {
    const newGoal = `
-### 任务目标
+## 任务目标
 基于OpenClaw Skill规范创建一个标准化的Skill工具包，实现用户目标：${goal}，最终输出可被你直接加载使用。
 
-### 任务步骤
+## 任务步骤
 
-#### 第一步：项目初始化
+### 第一步：项目初始化
 1. 目录创建：在当前工作目录下新建一个子目录，目录名称应简洁明了地反映Skill功能（如"web-scraper"、"code-reviewer"、"image-optimizer"等）
 2. 核心文件：目录中必须包含 SKILL.md 文件（文件名大小写敏感，必须为 SKILL.md）
 3. 文档文件：目录中需新增2个说明文档：
@@ -241,7 +240,7 @@ async function getGenerateClawSkillRules(goal) {
    - README.md（英文说明文档）
 4. 辅助文件：如果Skill涉及复杂逻辑，可在目录中创建辅助脚本文件（如 .js、.sh、.py 等），并在 SKILL.md 中说明其用途和调用方式
 
-##### 标准目录结构
+#### 标准目录结构
 \`\`\`
 <skill-name>/
 ├── SKILL.md          # [必需] 核心文件：YAML元数据 + AI执行指令
@@ -256,13 +255,13 @@ async function getGenerateClawSkillRules(goal) {
     └── ...
 \`\`\`
 
-#### 第二步：SKILL.md 完整开发规范
-##### 2.1 文件结构
+### 第二步：SKILL.md 完整开发规范
+#### 2.1 文件结构
 SKILL.md 由两部分组成：
 - **YAML Frontmatter**（元数据区）：位于文件顶部，用 \`---\` 包裹
 - **Markdown Body**（指令正文区）：Frontmatter之后的所有内容，是AI执行Skill的核心指令
 
-##### 2.2 YAML Frontmatter 规范（必须遵循）
+#### 2.2 YAML Frontmatter 规范（必须遵循）
 \`\`\`yaml
 ---
 name: "skill-name"
@@ -276,7 +275,7 @@ homepage: "https://github.com/your-repo/skill-name"
 - description：Skill功能的简要描述，用于在Skill列表中展示，帮助AI判断何时匹配使用该Skill
 - homepage：Skill的主页或仓库地址，可留空
 
-##### 2.3 Markdown Body 指令正文规范
+#### 2.3 Markdown Body 指令正文规范
 指令正文是Skill的核心，AI在加载Skill后会仔细阅读此部分内容来学习如何使用该Skill。正文需包含以下模块：
 
 **模块一：概述**
@@ -306,90 +305,22 @@ homepage: "https://github.com/your-repo/skill-name"
 - 列出已知限制和边界条件
 - 提供常见问题的处理建议
 
-##### 2.4 SKILL.md 参考示例
-\`\`\`markdown
----
-name: "file-translator"
-description: "将指定文件翻译为目标语言，支持多种文件格式的智能翻译"
-homepage: "https://github.com/example/file-translator"
----
-
-# File Translator Skill
-
-## 概述
-本Skill提供文件翻译能力，能够将指定文件内容翻译为目标语言。支持 .txt、.md、.json 等文本格式文件。
-
-#### 能力范围
-- ✅ 支持文本文件的全文翻译
-- ✅ 支持保留原文件格式结构
-- ✅ 支持中、英、日、韩等主流语言互译
-- ❌ 不支持二进制文件（如图片、视频）
-- ❌ 不支持超过100MB的大文件
-
-## 使用指令
-
-#### 步骤1：读取源文件
-通过 readFile 工具函数读取需要翻译的源文件内容。
-
-#### 步骤2：执行翻译
-调用 requestAI 工具函数，将文件内容和目标语言作为参数，获取翻译结果。
-
-提示词模板：
-"请将以下内容翻译为{目标语言}，保持原有格式不变：\\n{文件内容}"
-
-#### 步骤3：写入结果
-将翻译结果写入目标文件。目标文件命名规则：{原文件名}_{语言代码}.{扩展名}
-
-## 输入输出
-- 输入：源文件路径、目标语言
-- 输出：翻译后的文件路径
-
-## 注意事项
-- 大文件需按分块规则处理，避免超出上下文长度限制
-- 翻译完成后需校验文件完整性
-\`\`\`
-
-##### 2.5 开发强制规则
-1. SKILL.md 的指令正文必须足够详细，使AI仅通过阅读该文件即可完全理解并执行Skill的所有功能
-2. 避免使用模糊描述（如"适当处理"、"合理配置"），所有操作步骤必须明确、具体、可执行
-3. 如果Skill依赖辅助脚本文件，必须在指令正文中说明文件路径和调用方式
-4. Skill的指令中可以引导AI使用内置工具函数完成任务，如：
-   - executeCommand(command)：执行系统命令
-   - executeJSCode(code)：执行Node.js代码
-   - requestAI(systemDescription, prompt, temperature)：调用AI进行文本处理
-5. description字段的描述至关重要，它决定了AI何时选择加载该Skill，必须准确反映Skill的核心能力
-6. 工具包创建在当前工作目录下，完成后不需要自动安装到全局
-
-#### 第三步：辅助脚本文件规范（如需要）
-1. 如果Skill的功能较复杂，无法仅通过纯文本指令描述完成，可以创建辅助脚本文件
-2. 辅助脚本可以是任意可执行格式（.js、.sh、.py、.bat等），需确保与目标操作系统兼容
-3. 脚本文件放置在Skill目录中，SKILL.md中通过相对路径引用
-4. 脚本需要有良好的注释和错误处理
-5. 如果脚本依赖第三方库，需要在SKILL.md的环境依赖模块中明确说明安装方式
-
-#### 第四步：README文档规范
-##### 4.1 通用要求
+### 第三步：输出README文档
+#### 3.1 通用要求
 - 两个文档需在标题下方包含「中英文切换标签」（如文档顶部标注「English | 中文」/「中文 | English」）
 - 结构保持一致，仅语言不同，核心模块顺序不可调整
 - 文件名称README_CN.md（中文）、README.md（英文）
 - 链接使用相对路径，如[中文](./README_CN.md)
 
-##### 4.2 核心模块
+#### 3.2 核心模块
 1. 总体功能描述：
-   - 清晰说明当前Skill工具包的核心定位、整体功能价值、适用场景
+   - 清晰说明当前SKILL包的核心定位、整体功能价值、适用场景
    - 语言简洁易懂，无需技术细节，聚焦「做什么」而非「怎么做」
 2. 快速开始：
-   - 明确说明安装步骤，顺序不可颠倒：
-     ① 先安装deepfish-ai全局库：npm install deepfish-ai -g
-     ② 将Skill目录拷贝到当前工作目录，执行：ai skill add <skill-name>
-     ③ 启用Skill：ai skill enable <skill-name>
-   - 也可以从ClawHub安装（如已发布）：ai skill install <clawhub-url>
-3. Skill能力说明：
-   - 列出该Skill提供的所有能力
-   - 对应说明每项能力的使用场景和效果
-4. 使用示例：
-   - 提供1-3个典型的使用场景示例
-   - 说明用户输入和预期输出
+   - 明确说明安装步骤：
+     ① 全局安装deepfish-ai：npm install deepfish-ai -g
+     ② 全局安装当前项目：ai skill add <skill-name>;ai skill ls;ai skill enable <skill-name|skill-index>
+     ③ 在命令行中输入：ai 「skill功能」。如：添加了一个查询天气的扩展。则输入：ai 查询一下今天的天气
   `
   return newGoal
 }
