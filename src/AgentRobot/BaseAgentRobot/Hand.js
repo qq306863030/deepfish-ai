@@ -89,7 +89,7 @@ class Hand extends EventEmitterSuper {
                 toolContent = {
                   truncated: true,
                   message:
-                    '文件内容过大，请使用executeJSCode工具编写脚本分块读取和处理文件，避免一次性读取整个文件内容到对话中。',
+                    '文件内容过大，请使用executeJSCode工具编写脚本分块读取和处理文件，避免一次性读取整个文件内容到对话中。如果不是本地文件，建议创建或下载成本地文件后再进行分块读取。',
                   preview: toolContent.substring(0, 1000) + '...',
                 }
               } else {

@@ -2,6 +2,8 @@
 
 ### .deepfish-ai目录结构
 -config.js
+-user-info
+    -user.md
 -clawSkills
     -skill // 扩展技能
         -SKILL.md
@@ -32,17 +34,12 @@
         -logs // 日志目录
             -log-{YYYY-MM-DD HH}.txt // 以小时为单位的日志文件
 
-3. 子agent的记忆文件和结构跟随生命周期创建和删除
 8. 守护进程
 9. agent连接
 10. 看板、对话界面
-11. 并发执行
 12. 文档处理、图像生成、视频生成agent
-13. 知识库搭建
 14. 日志记录
 15. 命令行
 16. 多进程
 17. 文件恢复
-18. 树结构记录
-19. pdf转换
         

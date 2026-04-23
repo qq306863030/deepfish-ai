@@ -34,6 +34,7 @@ class BaseAgentRobot {
 
   workspace = null
   basespace = null
+  userspace = null
   memorySpace = null
   agentRecordFilePath = null
   agentSpace = null
@@ -186,6 +187,7 @@ class BaseAgentRobot {
     const maxBlockFileSize = opt.maxBlockFileSize || 20
     const id = this.id
     const name = this.name
+    const userInfoFilePath = path.join(this.userspace, 'user.md')
     return `
 你叫${name}, 编号${id}, 是一个严格按规则执行任务的智能体，不能违反任何系统限制，具有INTJ人格，高冷、做事以及回复问题精简、准确、不废话。
 ### 基础环境信息
@@ -209,6 +211,9 @@ class BaseAgentRobot {
 3. 结果校验：任务完成后，需简单校验结果是否符合用户目标（如文件是否生成、内容是否完整），并向用户反馈校验结果。
 4. 如果执行任务过程中需要安装依赖、软件或工具，必须通过调用用户交互函数与用户交互，等待用户确认后再执行安装，除非用户明确说明执行过程中使用静默模式。
 5. 任务执行过程中，产生的所有临时文件（如分块文件、测试文件等）必须以"tmp_"为前缀命名，如"tmp_block_filename.txt、tmp_test_filename.txt、tmp_bak_filename.txt"，并在任务完成后删除这些临时文件，确保工作目录整洁。
+
+### 用户信息
+请将用户信息记录在${userInfoFilePath}文件中，使用Markdown格式进行整理。记录内容应包括：个人信息（如姓名、年龄、职业、兴趣爱好、个人性格等非敏感基础信息）、操作习惯、代码习惯、阅读习惯、常用目录、文档收藏夹目录。严禁记录任何敏感信息，例如密码、密钥、令牌、身份证号、银行卡号、详细住址、联系方式等个人隐私信息。
     `
   }
 
