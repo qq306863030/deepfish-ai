@@ -420,7 +420,33 @@ async function imagesToPdf(imagePaths, outputPath, options = {}) {
 
 // ─── 工具描述 ─────────────────────────────────────────────────────────────────
 
+
+// ─── 使用说明 ─────────────────────────────────────────────────────────────────
+
+function imgReadme() {
+  return `【IMG 工具使用说明】
+1. 优先使用本工具内置函数完成任务（元数据读取、缩放、裁剪、旋转、格式转换、压缩、水印等）。
+2. 如果内置函数无法满足需求（如复杂滤镜处理、特殊格式转换、高级图像合成），再尝试使用 ImageMagick 命令行。
+3. 在调用 ImageMagick 前，先检测系统是否已安装 ImageMagick：
+   - 已安装：直接使用 ImageMagick 命令行继续处理。
+   - 未安装：询问用户是否允许安装。
+4. 若用户同意安装：引导完成安装后继续执行原任务。
+5. 若用户拒绝安装：明确告知当前能力限制，并终止该操作。
+
+建议：
+- 常规图像处理优先使用内置函数，速度更快且依赖更少。
+- 仅在确实需要高级图像处理能力时才启用 ImageMagick 路径。`
+}
+
 const descriptions = [
+  {
+    type: 'function',
+    function: {
+      name: 'imgReadme',
+      description: '获取 IMG 工具集的使用说明, 调用函数前必须先查看本说明。',
+      parameters: {},
+    }
+  },
   {
     type: 'function',
     function: {
@@ -707,6 +733,7 @@ const descriptions = [
 // ─── 导出 ──────────────────────────────────────────────────────────────────────
 
 const functions = {
+  imgReadme,
   getImageInfo,
   resizeImage,
   cropImage,
