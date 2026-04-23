@@ -372,7 +372,33 @@ async function getPptxTextStats(filePath) {
 
 // ─── 工具描述 ─────────────────────────────────────────────────────────────────
 
+
+// ─── 使用说明 ─────────────────────────────────────────────────────────────────
+
+function pptxReadme() {
+  return `【PPTX 工具使用说明】
+1. 优先使用本工具内置函数完成任务（信息读取、文本提取、搜索、创建演示文稿、追加幻灯片、文本替换、合并、图片提取等）。
+2. 如果内置函数无法满足需求（如复杂动画保真、特殊版式处理、跨格式高级转换），再尝试使用 LibreOffice 命令行。
+3. 在调用 LibreOffice 前，先检测系统是否已安装 LibreOffice：
+   - 已安装：直接使用 LibreOffice 命令行继续处理。
+   - 未安装：询问用户是否允许安装。
+4. 若用户同意安装：引导完成安装后继续执行原任务。
+5. 若用户拒绝安装：明确告知当前能力限制，并终止该操作。
+
+建议：
+- 常规演示文稿处理优先使用内置函数，速度更快且依赖更少。
+- 仅在确实需要高保真格式转换或复杂版式时才启用 LibreOffice 路径。`
+}
+
 const descriptions = [
+  {
+    type: 'function',
+    function: {
+      name: 'pptxReadme',
+      description: '获取 PPTX 工具集的使用说明, 调用函数前必须先查看本说明。',
+      parameters: {},
+    }
+  },
   {
     type: 'function',
     function: {
@@ -517,6 +543,7 @@ options 可选：{ title, subject, author, company, layout }。
 // ─── 导出 ──────────────────────────────────────────────────────────────────────
 
 const functions = {
+  pptxReadme,
   getPptxInfo,
   readPptxText,
   searchPptxText,
