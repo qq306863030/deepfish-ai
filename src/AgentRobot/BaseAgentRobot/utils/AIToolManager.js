@@ -53,6 +53,8 @@ class AIToolManager {
     this.clawSkillCollection = AttachmentToolScanner.getClawSkillCollection(
       this.agentRobot.basespace,
     ) // 加载Claw技能集合
+    this.agentRobot.toolCollection = this.toolCollection
+    this.agentRobot.clawSkillCollection = this.clawSkillCollection
   }
 
   // 动态添加工具
