@@ -22,6 +22,21 @@ function resolvePath(filePath) {
 
 // ─── 工具函数 ─────────────────────────────────────────────────────────────────
 
+function xlsxReadme() {
+  return `【XLSX 工具使用说明】
+1. 优先使用本工具内置函数完成任务（读取、写入、搜索、合并、CSV 互转等）。
+2. 如果内置函数无法满足需求（如复杂格式保真、特殊公式处理、跨格式高级转换），再尝试使用 LibreOffice 命令行。
+3. 在调用 LibreOffice 前，先检测系统是否已安装 LibreOffice：
+   - 已安装：直接使用 LibreOffice 命令行继续处理。
+   - 未安装：询问用户是否允许安装。
+4. 若用户同意安装：引导完成安装后继续执行原任务。
+5. 若用户拒绝安装：明确告知当前能力限制，并终止该操作。
+
+建议：
+- 简单与结构化数据处理优先使用内置函数，速度更快且依赖更少。
+- 仅在确实需要高保真格式转换时才启用 LibreOffice 路径。`
+}
+
 /**
  * 获取 XLSX 文件基本信息（工作表名称、行列数等）
  */
@@ -340,6 +355,14 @@ const descriptions = [
   {
     type: 'function',
     function: {
+      name: 'xlsxReadme',
+      description: '获取 XLSX 工具集的使用说明, 调用函数前必须先查看本说明。',
+      parameters: {},
+    }
+  },
+  {
+    type: 'function',
+    function: {
       name: 'getXlsxInfo',
       description: '获取 XLSX 文件基本信息（工作表名列表、各 sheet 行列数、文件大小等）。参数：filePath 为 .xlsx 文件路径。返回值：对象，包含 success、data（含 sheetCount、sheets 数组、size、mtime）、error。',
       parameters: {
@@ -559,6 +582,7 @@ const descriptions = [
 // ─── 导出 ──────────────────────────────────────────────────────────────────────
 
 const functions = {
+  xlsxReadme,
   getXlsxInfo,
   getSheetNames,
   readSheet,
