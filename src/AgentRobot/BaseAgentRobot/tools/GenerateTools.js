@@ -86,9 +86,8 @@ async function getGenerateSkillRules(goal) {
    - 文档文件：项目根目录需新增2个文档文件：
     - README_CN.md（中文说明文档）
     - README.md（英文说明文档）
-   - 主测试文件：test.js
 
-#### 第二步：index.js 完整开发规范
+#### 第二步：核心代码开发
 ##### 2.1 核心输出要求
 文件需输出四个核心字段，且代码逻辑清晰、可运行：
 - name：字符串类型，扩展的名称标识
@@ -108,6 +107,7 @@ async function getGenerateSkillRules(goal) {
 4. 函数数量：至少包含1个可被AI工作流调用的函数
 5. 拆分成多个文件,保持文件结构清晰
 6. 对于大于5个的扩展功能，需要在functions中输出一个说明函数，只需返回一个markdown类型的英文字符串，专门用于解释当前扩展工具的使用方法、参数说明、示例等内容，函数名称为「readme」，如「systemFileManagement_readme」；函数描述需要强调调用该扩展模块前必须先阅读该规则文档。
+7. 仅进行简单逻辑性检查，不需要测试。
 
 ##### 2.3 基础代码模板（必须遵循）
 const descriptions = []
@@ -196,26 +196,14 @@ const functions = {
 }
 module.exports = functions
 
-#### 第三步：测试规则
-1. 测试目标：至少覆盖扩展中的核心函数（建议覆盖每个对外函数），验证“正常输入可用、关键边界可处理、异常输入有明确反馈”。
-2. 测试文件：统一在 test.js 编写可直接运行的测试脚本，结构清晰，包含“准备数据 → 执行函数 → 断言结果 → 输出结论”。
-3. 测试文件：如果引入了requestAI，必须确保函数可正确使用 this.Tools 上下文。
-   - 环境创建方式：
-     "const { DeepFishAI } = require('${packagePath}')\nconst deepfishAI = new DeepFishAI();"
-   - 调用方式：为模块导出的functions绑定Tools上下文，示例：functions.Tools = deepfishAI.agentRobot.toolManager.functions;
-4. 断言与输出规范：每个用例需打印“用例名称、输入、期望、实际、是否通过（PASS/FAIL）”；全部执行后输出汇总（总数、通过数、失败数）。
-5. 失败处理：出现异常时不得静默吞错，需捕获并输出可定位信息（错误消息、对应用例、关键参数）。
-6. 副作用控制：测试过程中创建的临时文件必须使用 tmp_test_ 前缀，并在测试结束后清理。
-7. 执行方式：test.js 不需要导出模块，支持通过 node test.js 直接运行并看到结果。
-
-#### 第四步：README文档规范
-##### 4.1 通用要求
+#### 第三步：输出README文档
+##### 3.1 通用要求
 - 两个文档需在标题下方包含「中英文切换标签」（如文档顶部标注「English | 中文」/「中文 | English」）
 - 结构保持一致，仅语言不同，核心模块顺序不可调整
 - 文件名称README_CN.md（中文）、README.md（英文）
 - 链接使用相对路径，如[中文](./README_CN.md)
 
-##### 4.2 核心模块
+##### 3.2 核心模块
 1. 总体功能描述：
    - 清晰说明当前NPM包的核心定位、整体功能价值、适用场景
    - 语言简洁易懂，无需技术细节，聚焦「做什么」而非「怎么做」
