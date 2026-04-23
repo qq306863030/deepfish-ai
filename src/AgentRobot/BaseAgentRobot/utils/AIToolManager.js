@@ -46,7 +46,6 @@ class AIToolManager {
     this.functions.aiCli = {
       Tools: this.functions,
     }
-
     // 外部工具扫描
     this.toolCollection = AttachmentToolScanner.getToolCollection(
       this.agentRobot.workspace,
