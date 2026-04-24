@@ -1,5 +1,4 @@
 const path = require('path')
-const os = require('os')
 const fs = require('fs-extra')
 const crypto = require('crypto')
 const mammoth = require('mammoth')
@@ -15,25 +14,8 @@ function fail(error, data = null) {
   return { success: false, error: error?.message || String(error), data }
 }
 
-// 获取配置地址
-function _getConfigFilePath() {
-  const configDir = path.join(os.homedir(), './.deepfish-ai')
-  const configPath = path.join(configDir, './config.js')
-  return configPath
-}
-
-function _loadConfig(configPath) {
-  fs.ensureDirSync(path.dirname(configPath))
-  if (!fs.existsSync(configPath)) {
-    fs.writeFileSync(configPath, 'module.exports = {}')
-  }
-  const resolved = require.resolve(configPath)
-  delete require.cache[resolved]
-  return require(configPath)
-}
-
-function _getKbRootPath(knowledgeBasePath = '') {
-  return path.resolve(process.cwd(), knowledgeBasePath || '.deepfish-rag')
+function _getKbRootPath() {
+  return path.resolve(process.cwd(), '.deepfish-rag')
 }
 
 function _getKbIndexPath(kbRootPath) {
@@ -95,10 +77,49 @@ async function _readDocumentContent(filePath) {
   return fs.readFileSync(filePath, 'utf8')
 }
 
+function _normalizeText(content = '') {
+  return String(content || '').replace(/\s+/g, ' ').trim()
+}
+
+function _buildSummary(content = '', maxLen = 320) {
+  const normalized = _normalizeText(content)
+  if (!normalized) return ''
+  if (normalized.length <= maxLen) return normalized
+  return `${normalized.slice(0, maxLen)}...`
+}
+
+async function _extractSummary(content = '', maxLen = 320, absolutePath = '') {
+  const fallbackSummary = _buildSummary(content, maxLen)
+  if (!fallbackSummary) return ''
+
+  if (!this?.Tools?.requestAI) {
+    return fallbackSummary
+  }
+
+  const systemDescription = '你是文档摘要助手，只输出简洁摘要正文，不要解释。'
+  const prompt = `请为下面文档提取摘要：\n\n文档路径：${absolutePath || '未知'}\n文档内容：\n${content}\n\n要求：\n1. 输出中文摘要，保留关键事实与结论。\n2. 摘要长度不超过${maxLen}个字符。\n3. 不要输出标题、前后缀或解释，只输出摘要正文。`
+
+  try {
+    const aiSummary = await this.Tools.requestAI(systemDescription, prompt, 0.2)
+    if (typeof aiSummary !== 'string') {
+      return fallbackSummary
+    }
+    const normalizedSummary = _normalizeText(aiSummary)
+    if (!normalizedSummary) {
+      return fallbackSummary
+    }
+    return normalizedSummary.length > maxLen
+      ? `${normalizedSummary.slice(0, maxLen)}...`
+      : normalizedSummary
+  } catch {
+    return fallbackSummary
+  }
+}
+
 function _getEmptyKnowledgeBase(kbRootPath) {
   const now = new Date().toISOString()
   return {
-    version: 1,
+    version: 2,
     name: 'deepfish-rag',
     kbRootPath,
     createdAt: now,
@@ -116,13 +137,30 @@ function _loadKnowledgeBase(kbRootPath) {
     fs.writeFileSync(indexPath, JSON.stringify(emptyKb, null, 2), 'utf8')
     return emptyKb
   }
+
   const content = fs.readFileSync(indexPath, 'utf8')
   const parsed = JSON.parse(content)
-  return {
+  const base = {
     ..._getEmptyKnowledgeBase(kbRootPath),
     ...parsed,
     kbRootPath,
   }
+
+  // 向后兼容旧结构：若旧数据里有content，则在加载时迁移为summary。
+  base.documents = (base.documents || []).map((doc) => {
+    const absolutePath = path.resolve(doc.absolutePath || doc.sourcePath || '')
+    return {
+      id: doc.id || _sha256(absolutePath).slice(0, 16),
+      absolutePath,
+      sourceHash: doc.sourceHash || '',
+      size: doc.size || 0,
+      summary: doc.summary || _buildSummary(doc.content || ''),
+      createdAt: doc.createdAt || base.createdAt,
+      updatedAt: doc.updatedAt || base.updatedAt,
+    }
+  })
+
+  return base
 }
 
 function _saveKnowledgeBase(kbRootPath, knowledgeBase) {
@@ -131,243 +169,170 @@ function _saveKnowledgeBase(kbRootPath, knowledgeBase) {
   fs.writeFileSync(indexPath, JSON.stringify(knowledgeBase, null, 2), 'utf8')
 }
 
-function _chunkText(content = '', chunkSize = 800, overlap = 120) {
-  const text = String(content || '')
-  const size = Math.max(200, Number(chunkSize) || 800)
-  const overlapSize = Math.max(0, Math.min(size - 1, Number(overlap) || 120))
-  const step = Math.max(1, size - overlapSize)
-  const chunks = []
-  for (let i = 0; i < text.length; i += step) {
-    const chunk = text.slice(i, i + size)
-    if (!chunk.trim()) continue
-    chunks.push({
-      offsetStart: i,
-      offsetEnd: i + chunk.length,
-      content: chunk,
+async function _upsertKnowledgeBase(sourcePath = '', knowledgeBasePath = '', reset = false) {
+  const inputSourcePath = sourcePath || (await aiInquirer.askInput('请输入源文件目录或文件路径', '', {}))
+  if (!inputSourcePath) {
+    return fail('未提供源文件目录或文件路径')
+  }
+
+  const resolvedSourcePath = path.resolve(process.cwd(), inputSourcePath)
+  if (!fs.existsSync(resolvedSourcePath)) {
+    return fail(`Source path does not exist: ${resolvedSourcePath}`, {
+      sourcePath: resolvedSourcePath,
     })
-    if (i + size >= text.length) {
-      break
-    }
   }
-  return chunks
-}
 
-function _calcKeywordScore(content = '', keyword = '') {
-  if (!keyword) return 0
-  const src = String(content || '').toLowerCase()
-  const kw = String(keyword || '').toLowerCase()
-  let count = 0
-  let fromIndex = 0
-  while (true) {
-    const idx = src.indexOf(kw, fromIndex)
-    if (idx < 0) break
-    count += 1
-    fromIndex = idx + kw.length
+  const kbRootPath = _getKbRootPath(knowledgeBasePath)
+  if (reset && fs.existsSync(kbRootPath)) {
+    fs.removeSync(kbRootPath)
   }
-  return count
-}
 
-// 获取向量化配置
-async function getEmbeddingConfig() {
-  const configPath = _getConfigFilePath()
-  const config = _loadConfig(configPath)
-  if (!config.EMBEDDING_API) {
-    // 提示用户输入
-    const res = await aiInquirer.askInput('请输入向量化接口地址', '', {})
-    if (res) {
-        config.EMBEDDING_API = res
-        setEmbeddingConfig(config.EMBEDDING_API, config.EMBEDDING_API_KEY)
-    }
-  }
-  if (!config.EMBEDDING_API_KEY) {
-    // 提示用户输入
-    const res = await aiInquirer.askInput('请输入向量化接口密钥', '', {})
-    if (res) {
-        config.EMBEDDING_API_KEY = res
-        setEmbeddingConfig(config.EMBEDDING_API, config.EMBEDDING_API_KEY)
-    }
-  }
-  return {
-    EMBEDDING_API: config.EMBEDDING_API || '',
-    EMBEDDING_API_KEY: config.EMBEDDING_API_KEY || '',
-  }
-}
+  const knowledgeBase = _loadKnowledgeBase(kbRootPath)
+  const sourceFiles = _collectSourceFiles(resolvedSourcePath)
+  const supportedFiles = sourceFiles.filter((filePath) => _isSupportedFile(filePath))
 
-// 写入向量化配置
-function setEmbeddingConfig(embeddingApi, embeddingApiKey) {
-  const configPath = _getConfigFilePath()
-  const config = _loadConfig(configPath)
-  const newConfig = {
-    ...config,
-    EMBEDDING_API: embeddingApi,
-    EMBEDDING_API_KEY: embeddingApiKey,
-  }
-  fs.writeFileSync(configPath, `module.exports = ${JSON.stringify(newConfig, null, 2)}`)
-  return ok({
-    configPath,
-    EMBEDDING_API: embeddingApi || '',
-    EMBEDDING_API_KEY: embeddingApiKey || '',
-  })
-}
+  let addedCount = 0
+  let updatedCount = 0
+  let skippedCount = 0
 
-// 创建/续加知识库，默认路径为命令执行目录下 .deepfish-rag
-async function buildKnowledgeBase(sourcePath = '', knowledgeBasePath = '') {
-  try {
-    const inputSourcePath = sourcePath || (await aiInquirer.askInput('请输入源文件目录或文件路径', '', {}))
-    if (!inputSourcePath) {
-      return fail('未提供源文件目录或文件路径')
-    }
+  for (const filePath of supportedFiles) {
+    try {
+      const absolutePath = path.resolve(filePath)
+      const content = await _readDocumentContent(absolutePath)
+      if (!content || !content.trim()) {
+        skippedCount += 1
+        continue
+      }
 
-    const resolvedSourcePath = path.resolve(process.cwd(), inputSourcePath)
-    if (!fs.existsSync(resolvedSourcePath)) {
-      return fail(`Source path does not exist: ${resolvedSourcePath}`, {
-        sourcePath: resolvedSourcePath,
-      })
-    }
+      const sourceHash = _sha256(content)
+      const existingIndex = knowledgeBase.documents.findIndex((item) => item.absolutePath === absolutePath)
 
-    const kbRootPath = _getKbRootPath(knowledgeBasePath)
-    const knowledgeBase = _loadKnowledgeBase(kbRootPath)
-    const sourceFiles = _collectSourceFiles(resolvedSourcePath)
-
-    const supportedFiles = sourceFiles.filter((filePath) => _isSupportedFile(filePath))
-    let addedCount = 0
-    let updatedCount = 0
-    let skippedCount = 0
-
-    for (const filePath of supportedFiles) {
-      try {
-        const content = await _readDocumentContent(filePath)
-        if (!content || !content.trim()) {
+      if (existingIndex >= 0) {
+        if (knowledgeBase.documents[existingIndex].sourceHash === sourceHash) {
           skippedCount += 1
           continue
         }
 
-        const sourceHash = _sha256(content)
-        const existingIndex = knowledgeBase.documents.findIndex((item) => item.sourcePath === filePath)
-        if (existingIndex >= 0) {
-          if (knowledgeBase.documents[existingIndex].sourceHash === sourceHash) {
-            skippedCount += 1
-            continue
-          }
-          knowledgeBase.documents[existingIndex] = {
-            ...knowledgeBase.documents[existingIndex],
-            sourceHash,
-            size: Buffer.byteLength(content, 'utf8'),
-            content,
-            updatedAt: new Date().toISOString(),
-          }
-          updatedCount += 1
-          continue
-        }
+        const summary = await _extractSummary.call(this, content, 320, absolutePath)
 
-        knowledgeBase.documents.push({
-          id: _sha256(filePath).slice(0, 16),
-          sourcePath: filePath,
+        knowledgeBase.documents[existingIndex] = {
+          ...knowledgeBase.documents[existingIndex],
           sourceHash,
           size: Buffer.byteLength(content, 'utf8'),
-          content,
-          createdAt: new Date().toISOString(),
+          summary,
           updatedAt: new Date().toISOString(),
-        })
-        addedCount += 1
-      } catch {
-        skippedCount += 1
+        }
+        _saveKnowledgeBase(kbRootPath, knowledgeBase)
+        updatedCount += 1
+        continue
       }
+
+      const summary = await _extractSummary.call(this, content, 320, absolutePath)
+
+      knowledgeBase.documents.push({
+        id: _sha256(absolutePath).slice(0, 16),
+        absolutePath,
+        sourceHash,
+        size: Buffer.byteLength(content, 'utf8'),
+        summary,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      _saveKnowledgeBase(kbRootPath, knowledgeBase)
+      addedCount += 1
+    } catch {
+      skippedCount += 1
     }
+  }
 
-    knowledgeBase.sourceHistory.push({
-      sourcePath: resolvedSourcePath,
-      loadedAt: new Date().toISOString(),
-      scannedFiles: sourceFiles.length,
-      supportedFiles: supportedFiles.length,
-      addedCount,
-      updatedCount,
-      skippedCount,
-    })
+  knowledgeBase.sourceHistory.push({
+    sourcePath: resolvedSourcePath,
+    loadedAt: new Date().toISOString(),
+    scannedFiles: sourceFiles.length,
+    supportedFiles: supportedFiles.length,
+    addedCount,
+    updatedCount,
+    skippedCount,
+    mode: reset ? 'create' : 'append',
+  })
 
-    _saveKnowledgeBase(kbRootPath, knowledgeBase)
-    return ok({
-      knowledgeBasePath: kbRootPath,
-      sourcePath: resolvedSourcePath,
-      scannedFiles: sourceFiles.length,
-      supportedFiles: supportedFiles.length,
-      addedCount,
-      updatedCount,
-      skippedCount,
-      totalDocuments: knowledgeBase.documents.length,
-    })
+  _saveKnowledgeBase(kbRootPath, knowledgeBase)
+
+  return ok({
+    knowledgeBasePath: kbRootPath,
+    sourcePath: resolvedSourcePath,
+    scannedFiles: sourceFiles.length,
+    supportedFiles: supportedFiles.length,
+    addedCount,
+    updatedCount,
+    skippedCount,
+    totalDocuments: knowledgeBase.documents.length,
+  })
+}
+
+async function createKnowledgeBase(sourcePath = '', knowledgeBasePath = '') {
+  try {
+    return await _upsertKnowledgeBase.call(this, sourcePath, knowledgeBasePath, true)
   } catch (error) {
     return fail(error, { sourcePath, knowledgeBasePath })
   }
 }
 
-// 读取知识库文档摘要，支持关键词检索
-function readKnowledgeBase(keyword = '', knowledgeBasePath = '', limit = 10) {
+async function appendKnowledgeBase(sourcePath = '', knowledgeBasePath = '') {
   try {
-    const kbRootPath = _getKbRootPath(knowledgeBasePath)
-    const knowledgeBase = _loadKnowledgeBase(kbRootPath)
-    const normalizedKeyword = (keyword || '').trim().toLowerCase()
-    const maxResult = Number(limit) > 0 ? Number(limit) : 10
-
-    const filtered = knowledgeBase.documents.filter((item) => {
-      if (!normalizedKeyword) return true
-      return (
-        item.sourcePath.toLowerCase().includes(normalizedKeyword) ||
-        item.content.toLowerCase().includes(normalizedKeyword)
-      )
-    })
-
-    const result = filtered.slice(0, maxResult).map((item) => ({
-      id: item.id,
-      sourcePath: item.sourcePath,
-      size: item.size,
-      updatedAt: item.updatedAt,
-      preview: (item.content || '').slice(0, 240),
-    }))
-
-    return ok({
-      knowledgeBasePath: kbRootPath,
-      totalDocuments: knowledgeBase.documents.length,
-      matchedDocuments: filtered.length,
-      items: result,
-    })
+    return await _upsertKnowledgeBase.call(this, sourcePath, knowledgeBasePath, false)
   } catch (error) {
-    return fail(error, { keyword, knowledgeBasePath, limit })
+    return fail(error, { sourcePath, knowledgeBasePath })
   }
 }
 
-// 按文档ID读取完整内容
-function readKnowledgeBaseDocument(documentId, knowledgeBasePath = '') {
-  try {
-    if (!documentId) {
-      return fail('documentId is required')
-    }
-    const kbRootPath = _getKbRootPath(knowledgeBasePath)
-    const knowledgeBase = _loadKnowledgeBase(kbRootPath)
-    const doc = knowledgeBase.documents.find((item) => item.id === documentId)
-    if (!doc) {
-      return fail(`Document not found: ${documentId}`, {
-        documentId,
-        knowledgeBasePath: kbRootPath,
-      })
-    }
-    return ok({
-      id: doc.id,
-      sourcePath: doc.sourcePath,
-      size: doc.size,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-      content: doc.content,
-    })
-  } catch (error) {
-    return fail(error, { documentId, knowledgeBasePath })
-  }
+function _matchSummary(knowledgeBase, normalizedKeyword = '', maxResult = 10) {
+  const filtered = knowledgeBase.documents.filter((item) => {
+    if (!normalizedKeyword) return true
+    const haystack = `${item.absolutePath || ''} ${item.summary || ''}`.toLowerCase()
+    return haystack.includes(normalizedKeyword)
+  })
+
+  return filtered.slice(0, maxResult).map((item) => ({
+    id: item.id,
+    absolutePath: item.absolutePath,
+    size: item.size,
+    updatedAt: item.updatedAt,
+    summary: item.summary,
+  }))
 }
 
-// 按分块检索知识库内容，适用于后续RAG召回
-function searchKnowledgeBaseChunks(keyword = '', knowledgeBasePath = '', chunkSize = 800, overlap = 120, limit = 10) {
+async function _queryBySubAgent(keyword, summaryMatches, includeFullDocument = false) {
+  if (!this?.Tools?.createSubAgent) {
+    return {
+      success: false,
+      skipped: true,
+      reason: 'createSubAgent tool is unavailable in current context',
+    }
+  }
+
+  const prompt = `你是知识库检索子agent，请完成文档检索。
+
+用户关键词：${keyword}
+是否允许读取全文：${includeFullDocument ? '是' : '否（仅在必要时）'}
+候选文档（按摘要初筛后）如下：
+${JSON.stringify(summaryMatches, null, 2)}
+
+执行要求：
+1. 先使用候选文档的summary进行关键词匹配和排序。
+2. 当summary不足以回答问题时，再读取对应absolutePath的完整文档内容进行补充。
+3. 输出结构化结果，必须包含：
+   - 命中文档列表（id、absolutePath、匹配原因）
+   - 最终结论
+   - 若读取全文，列出已读取的absolutePath。
+`
+
+  return this.Tools.createSubAgent(prompt)
+}
+
+async function queryKnowledgeBase(keyword = '', knowledgeBasePath = '', limit = 10, includeFullDocument = false) {
   try {
-    const normalizedKeyword = (keyword || '').trim()
+    const normalizedKeyword = String(keyword || '').trim().toLowerCase()
     if (!normalizedKeyword) {
       return fail('keyword is required')
     }
@@ -375,61 +340,26 @@ function searchKnowledgeBaseChunks(keyword = '', knowledgeBasePath = '', chunkSi
     const kbRootPath = _getKbRootPath(knowledgeBasePath)
     const knowledgeBase = _loadKnowledgeBase(kbRootPath)
     const maxResult = Number(limit) > 0 ? Number(limit) : 10
-    const allChunks = []
+    const summaryMatches = _matchSummary(knowledgeBase, normalizedKeyword, maxResult)
 
-    for (const doc of knowledgeBase.documents) {
-      const chunks = _chunkText(doc.content || '', chunkSize, overlap)
-      chunks.forEach((chunk, index) => {
-        const score = _calcKeywordScore(chunk.content, normalizedKeyword)
-        if (score > 0) {
-          allChunks.push({
-            documentId: doc.id,
-            sourcePath: doc.sourcePath,
-            chunkIndex: index,
-            offsetStart: chunk.offsetStart,
-            offsetEnd: chunk.offsetEnd,
-            score,
-            content: chunk.content,
-          })
-        }
-      })
+    let subAgentResult = null
+    if (summaryMatches.length > 0) {
+      subAgentResult = await _queryBySubAgent.call(this, keyword, summaryMatches, includeFullDocument)
     }
 
-    const items = allChunks
-      .sort((a, b) => b.score - a.score || a.sourcePath.localeCompare(b.sourcePath) || a.chunkIndex - b.chunkIndex)
-      .slice(0, maxResult)
-
     return ok({
       knowledgeBasePath: kbRootPath,
-      keyword: normalizedKeyword,
-      totalMatchedChunks: allChunks.length,
-      items,
-    })
-  } catch (error) {
-    return fail(error, { keyword, knowledgeBasePath, chunkSize, overlap, limit })
-  }
-}
-
-// 读取知识库统计信息
-function getKnowledgeBaseInfo(knowledgeBasePath = '') {
-  try {
-    const kbRootPath = _getKbRootPath(knowledgeBasePath)
-    const knowledgeBase = _loadKnowledgeBase(kbRootPath)
-    return ok({
-      knowledgeBasePath: kbRootPath,
-      version: knowledgeBase.version,
-      name: knowledgeBase.name,
-      createdAt: knowledgeBase.createdAt,
-      updatedAt: knowledgeBase.updatedAt,
+      keyword,
       totalDocuments: knowledgeBase.documents.length,
-      sourceHistory: knowledgeBase.sourceHistory,
+      matchedDocuments: summaryMatches.length,
+      items: summaryMatches,
+      subAgentResult,
     })
   } catch (error) {
-    return fail(error, { knowledgeBasePath })
+    return fail(error, { keyword, knowledgeBasePath, limit, includeFullDocument })
   }
 }
 
-// 删除知识库目录
 function deleteKnowledgeBase(knowledgeBasePath = '') {
   try {
     const kbRootPath = _getKbRootPath(knowledgeBasePath)
@@ -440,6 +370,7 @@ function deleteKnowledgeBase(knowledgeBasePath = '') {
         message: 'knowledge base path not found',
       })
     }
+
     fs.removeSync(kbRootPath)
     return ok({
       knowledgeBasePath: kbRootPath,
@@ -450,193 +381,16 @@ function deleteKnowledgeBase(knowledgeBasePath = '') {
   }
 }
 
-// 先删除再重建知识库
-async function rebuildKnowledgeBase(sourcePath = '', knowledgeBasePath = '') {
-  try {
-    const deleteResult = deleteKnowledgeBase(knowledgeBasePath)
-    if (!deleteResult.success) {
-      return deleteResult
-    }
-    return await buildKnowledgeBase(sourcePath, knowledgeBasePath)
-  } catch (error) {
-    return fail(error, { sourcePath, knowledgeBasePath })
-  }
-}
-
-// 知识库创建描述
-function getKnowledgeBaseCreationDescription() {
-  return `# Knowledge Base Creation Guide
-
-## 目标
-使用本工具在命令执行目录下创建或维护本地知识库（默认目录为 .deepfish-rag），并支持后续持续增量更新。
-
-## 能完成的任务
-1. 从用户给定的目录或文件加载文档内容，构建本地知识库。
-2. 自动识别常见文本与文档格式（如 md、txt、json、js、pdf、docx、xlsx 等）。
-3. 在重复导入时执行增量更新：
-   - 内容未变化：跳过
-   - 内容已变化：更新
-   - 新文件：新增
-4. 记录每次构建来源和统计信息（sourceHistory），方便审计和复盘。
-5. 支持删除后重建，快速恢复知识库状态。
-
-## 关键函数与协同关系
-
-### 1) 构建层
-- buildKnowledgeBase(sourcePath, knowledgeBasePath)
-  - 创建或续加知识库的主入口。
-  - sourcePath 为空时会交互式要求用户输入文件或目录。
-  - 默认知识库路径为 process.cwd()/.deepfish-rag。
-
-它在内部协同调用：
-- _getKbRootPath：统一知识库目录解析。
-- _loadKnowledgeBase：读取或初始化 index.json。
-- _collectSourceFiles：展开目录得到文件集合。
-- _isSupportedFile：过滤可处理文件类型。
-- _readDocumentContent：按不同文件类型提取文本。
-- _sha256：计算内容哈希，用于增量判断。
-- _saveKnowledgeBase：保存最终索引。
-
-### 2) 重建层
-- deleteKnowledgeBase(knowledgeBasePath)
-  - 删除现有知识库目录。
-- rebuildKnowledgeBase(sourcePath, knowledgeBasePath)
-  - 先删后建。
-  - 典型用于“索引异常修复”或“结构升级后重建”。
-
-## 推荐执行流程
-1. 调用 buildKnowledgeBase 进行首次构建。
-2. 后续补充文档时再次调用 buildKnowledgeBase（续加）。
-3. 如需彻底刷新：调用 rebuildKnowledgeBase。
-4. 构建完成后再进入检索阶段（read/search 系列函数）。
-
-## 面向用户任务的协同策略
-- 用户说“请把这个目录做成知识库”：
-  - buildKnowledgeBase(目录路径)
-- 用户说“继续把新资料加进去”：
-  - buildKnowledgeBase(新目录路径)
-- 用户说“从头重建”：
-  - rebuildKnowledgeBase(目录路径)
-
-## 结果校验建议
-构建后建议检查：
-1. getKnowledgeBaseInfo 的 totalDocuments 是否大于 0。
-2. sourceHistory 是否新增一条构建记录。
-3. addedCount / updatedCount / skippedCount 是否符合预期。
-`
-}
-
-// 知识库检索描述
-function getKnowledgeBaseRetrievalDescription() {
-  return `# Knowledge Base Retrieval Guide
-
-## 目标
-从本地知识库中高效找到“相关文档”与“关键片段”，用于问答、总结、比对和后续 RAG 召回。
-
-## 能完成的任务
-1. 查看知识库总体状态与构建历史。
-2. 按关键词筛选文档摘要，快速定位候选文档。
-3. 按文档 ID 读取全文，进行精读分析。
-4. 按分块检索返回命中片段，适合长文档场景。
-
-## 关键函数与协同关系
-
-### 1) 元信息确认
-- getKnowledgeBaseInfo(knowledgeBasePath)
-  - 获取总文档数、创建时间、更新时间、构建历史。
-  - 作用：先判断库是否可用，再决定检索策略。
-
-### 2) 粗粒度召回（文档级）
-- readKnowledgeBase(keyword, knowledgeBasePath, limit)
-  - 返回文档摘要（id、sourcePath、preview）。
-  - 作用：先召回候选文档，缩小范围。
-
-### 3) 细粒度阅读（全文级）
-- readKnowledgeBaseDocument(documentId, knowledgeBasePath)
-  - 读取指定文档全文。
-  - 作用：对高价值候选文档做精读与引用。
-
-### 4) 片段级召回（chunk级）
-- searchKnowledgeBaseChunks(keyword, knowledgeBasePath, chunkSize, overlap, limit)
-  - 将文档切块并按关键词命中分数排序。
-  - 作用：在超长文档里快速找到最相关上下文。
-
-它在内部协同调用：
-- _chunkText：按 chunkSize + overlap 生成可检索片段。
-- _calcKeywordScore：计算关键词命中次数并排序。
-
-## 推荐检索流程
-1. 调用 getKnowledgeBaseInfo，确认知识库可用。
-2. 调用 readKnowledgeBase(keyword)，拿到候选文档列表。
-3. 对重点文档调用 readKnowledgeBaseDocument 进行精读。
-4. 若候选文档过大或命中不精确，调用 searchKnowledgeBaseChunks 做片段召回。
-5. 将片段结果组织为回答证据，必要时回看全文补全上下文。
-
-## 典型用户任务协同方案
-
-### 场景 A：用户问“知识库里有没有某主题”
-1. readKnowledgeBase(主题词)
-2. 返回候选文档与预览
-
-### 场景 B：用户问“请给出该主题的依据段落”
-1. readKnowledgeBase(主题词)
-2. searchKnowledgeBaseChunks(主题词)
-3. 输出高分片段 + 源文件路径
-
-### 场景 C：用户问“请基于某篇文档做总结”
-1. readKnowledgeBase(文档名关键词)
-2. readKnowledgeBaseDocument(documentId)
-3. 对全文执行总结
-
-## 检索参数建议
-1. limit
-   - 初筛推荐 5-20
-2. chunkSize
-   - 一般 600-1200
-3. overlap
-   - 一般 80-200
-   - 过小可能断句，过大可能冗余
-
-## 结果质量建议
-1. 优先返回包含 sourcePath 与文档 ID 的证据。
-2. 先文档级筛选，再 chunk 级定位，避免全库全文扫描输出过大。
-3. 对高分片段做二次核对，防止关键词误命中。
-`
-}
-
 const descriptions = [
   {
     type: 'function',
     function: {
-      name: 'getKnowledgeBaseCreationDescription',
-      description: '知识库创建与续加的完整说明文档，包含可完成任务、函数协同关系与推荐执行流程。在执行知识库创建、续加或重建前，建议先阅读此文档以明确使用方法与注意事项。',
-      parameters: {
-        type: 'object',
-        properties: {},
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'getKnowledgeBaseRetrievalDescription',
-      description: '知识库检索的完整说明文档，包含检索策略、函数协同关系与典型任务执行方案。在执行知识库检索前，建议先阅读此文档以明确使用方法与注意事项。',
-      parameters: {
-        type: 'object',
-        properties: {},
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'buildKnowledgeBase',
-      description: '创建或续加知识库。默认知识库路径为命令执行目录下的 .deepfish-rag。sourcePath 为空时会提示用户输入源文件目录或文件路径。',
+      name: 'createKnowledgeBase',
+      description: '创建知识库（先删除旧库再重建），存储文档绝对路径和约300字摘要。',
       parameters: {
         type: 'object',
         properties: {
           sourcePath: { type: 'string', description: '源文件目录或文件路径。为空时会交互输入。' },
-          knowledgeBasePath: { type: 'string', description: '知识库目录路径，默认 .deepfish-rag（相对命令执行目录）。' },
         },
         required: [],
       },
@@ -645,14 +399,12 @@ const descriptions = [
   {
     type: 'function',
     function: {
-      name: 'readKnowledgeBase',
-      description: '读取知识库中的文档摘要，支持关键词过滤。可用于快速检索知识库内容。',
+      name: 'appendKnowledgeBase',
+      description: '续加知识库（增量导入），存储文档绝对路径和约300字摘要。',
       parameters: {
         type: 'object',
         properties: {
-          keyword: { type: 'string', description: '关键词，不传表示返回全部文档摘要。' },
-          knowledgeBasePath: { type: 'string', description: '知识库目录路径，默认 .deepfish-rag。' },
-          limit: { type: 'number', description: '返回条数上限，默认 10。' },
+          sourcePath: { type: 'string', description: '源文件目录或文件路径。为空时会交互输入。' },
         },
         required: [],
       },
@@ -661,45 +413,14 @@ const descriptions = [
   {
     type: 'function',
     function: {
-      name: 'readKnowledgeBaseDocument',
-      description: '按文档ID读取知识库中的完整文档内容。',
-      parameters: {
-        type: 'object',
-        properties: {
-          documentId: { type: 'string', description: '文档ID（由 buildKnowledgeBase 生成）。' },
-          knowledgeBasePath: { type: 'string', description: '知识库目录路径，默认 .deepfish-rag。' },
-        },
-        required: ['documentId'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'getKnowledgeBaseInfo',
-      description: '读取知识库元信息与历史加载记录（sourceHistory）。',
-      parameters: {
-        type: 'object',
-        properties: {
-          knowledgeBasePath: { type: 'string', description: '知识库目录路径，默认 .deepfish-rag。' },
-        },
-        required: [],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'searchKnowledgeBaseChunks',
-      description: '对知识库进行分块检索，返回命中关键词的文本块（chunk），用于RAG召回。',
+      name: 'queryKnowledgeBase',
+      description: '查询知识库：先按摘要匹配关键词，再由子agent在必要时读取命中文档的完整内容。',
       parameters: {
         type: 'object',
         properties: {
           keyword: { type: 'string', description: '检索关键词。' },
-          knowledgeBasePath: { type: 'string', description: '知识库目录路径，默认 .deepfish-rag。' },
-          chunkSize: { type: 'number', description: '分块长度，默认 800。' },
-          overlap: { type: 'number', description: '分块重叠长度，默认 120。' },
           limit: { type: 'number', description: '返回数量上限，默认 10。' },
+          includeFullDocument: { type: 'boolean', description: '是否允许子agent读取全文，默认 false。' },
         },
         required: ['keyword'],
       },
@@ -712,24 +433,7 @@ const descriptions = [
       description: '删除知识库目录（默认删除命令执行目录下的 .deepfish-rag）。',
       parameters: {
         type: 'object',
-        properties: {
-          knowledgeBasePath: { type: 'string', description: '知识库目录路径，默认 .deepfish-rag。' },
-        },
-        required: [],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'rebuildKnowledgeBase',
-      description: '重建知识库：先删除原知识库，再从源目录/文件重新构建。',
-      parameters: {
-        type: 'object',
-        properties: {
-          sourcePath: { type: 'string', description: '源文件目录或文件路径。为空时会交互输入。' },
-          knowledgeBasePath: { type: 'string', description: '知识库目录路径，默认 .deepfish-rag。' },
-        },
+        properties: {},
         required: [],
       },
     },
@@ -737,20 +441,15 @@ const descriptions = [
 ]
 
 const functions = {
-  getKnowledgeBaseCreationDescription,
-  getKnowledgeBaseRetrievalDescription,
-  buildKnowledgeBase,
-  readKnowledgeBase,
-  readKnowledgeBaseDocument,
-  getKnowledgeBaseInfo,
-  searchKnowledgeBaseChunks,
+  createKnowledgeBase,
+  appendKnowledgeBase,
+  queryKnowledgeBase,
   deleteKnowledgeBase,
-  rebuildKnowledgeBase,
 }
 
 const EmbeddingTool = {
   name: 'EmbeddingTool',
-  description: '提供本地知识库构建/读取能力，默认知识库路径为命令执行目录下的 .deepfish-rag',
+  description: '提供本地知识库创建、续加、查询、删除能力（索引仅存摘要和绝对路径）',
   platform: 'all',
   descriptions,
   functions,
@@ -758,6 +457,3 @@ const EmbeddingTool = {
 }
 
 module.exports = EmbeddingTool
-
-
-

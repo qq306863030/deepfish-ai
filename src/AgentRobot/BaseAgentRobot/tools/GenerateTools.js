@@ -1,5 +1,3 @@
-const path = require('path')
-
 const descriptions = [
   {
     type: 'function',
@@ -176,8 +174,8 @@ const functions = {
   },
   systemFileManagement_copyFile: function(srcPath, destPath) {
     try {
-        const fullSourcePath = path.resolve(process.cwd(), sourcePath)
-        const fullDestPath = path.resolve(process.cwd(), destinationPath)
+        const fullSourcePath = path.resolve(process.cwd(), srcPath)
+        const fullDestPath = path.resolve(process.cwd(), destPath)
         const destDirPath = path.dirname(fullDestPath)
     
         fs.ensureDirSync(destDirPath)
