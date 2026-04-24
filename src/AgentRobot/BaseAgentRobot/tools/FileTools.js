@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-24 21:41:41
+ * @LastEditTime: 2026-04-25 01:15:56
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\FileTools.js
  * @Description: 文件处理扩展函数
  * @
@@ -393,23 +393,22 @@ async function extractFileContent(filePrompt, filePathList) {
     for (const filePath of filePathList) {
       const absolutePath = path.resolve(process.cwd(), filePath)
       const fileName = path.basename(absolutePath)
-      const filePath = absolutePath
       if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
         result.push({
-          filePath,
+          filePath: absolutePath,
           fileName,
           errorContent: `File does not exist or is not a file: ${absolutePath}`,
         })
       }
       const successContent = await this.Tools.createSubAgent(
-        `你是文件内容提取助手。请从文件 ${fileName}（路径：${filePath}）中提取与“${filePrompt}”相关的内容。
+        `你是文件内容提取助手。请从文件 ${fileName}（路径：${absolutePath}）中提取与“${filePrompt}”相关的内容。
 要求：
 1. 只返回与该主题直接相关的原文片段，保持原始语言与措辞。
 2. 不要输出解释、总结、前后缀、Markdown 标记或任何额外说明。
 3. 如果没有相关内容，只返回：null。`,
       )
       return createSuccessResult({
-        filePath,
+        filePath: absolutePath,
         fileName,
         successContent,
       })
