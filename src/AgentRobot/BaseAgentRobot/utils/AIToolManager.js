@@ -80,6 +80,7 @@ class AIToolManager {
         }
         return item
       })
+      tool.isSystem = true
       if (tool.name && !tool.isSystem) {
         for (const funcName in tool.functions) {
           if (!funcName.includes('_')) {

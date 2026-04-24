@@ -70,6 +70,7 @@ function loadAttachTool(toolName) {
     this.agentRobot.toolManager.addTool(toolName)
     return `Tool ${toolName} loaded successfully`
   } catch (error) {
+    console.error(error)
     return `Failed to load tool ${toolName}: ${error.message}`
   }
 }
