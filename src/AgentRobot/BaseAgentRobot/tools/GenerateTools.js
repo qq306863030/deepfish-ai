@@ -84,7 +84,7 @@ async function getGenerateSkillRules(goal) {
     - README_CN.md（中文说明文档）
     - README.md（英文说明文档）
 
-### 第二步：核心代码开发
+### 第二步：工具函数开发规则
 #### 2.1 核心输出要求
 文件需输出四个核心字段，且代码逻辑清晰、可运行：
 - name：字符串类型，扩展的名称标识
@@ -102,9 +102,9 @@ async function getGenerateSkillRules(goal) {
    - this.Tools.requestAI(systemDescription, prompt, temperature)
    - this.Tools.executeCommand(command)
 4. 函数数量：至少包含1个可被AI工作流调用的函数
-5. 拆分成多个文件,保持文件结构清晰
-6. 对于大于5个的扩展功能，需要在functions中输出一个说明函数，只需返回一个markdown类型的英文字符串，专门用于解释当前扩展工具的使用方法、参数说明、示例等内容，函数名称为「readme」，如「systemFileManagement_readme」；函数描述需要强调调用该扩展模块前必须先阅读该规则文档。
-7. 仅进行简单逻辑性检查，不需要测试。
+5. 对于大于3个函数拆分成多个文件,保持文件结构清晰
+6. 对于大于3个函数的扩展功能，需要在functions中输出一个说明函数，只需返回一个markdown类型的英文字符串，专门用于解释当前扩展工具的使用方法、参数说明、示例等内容，函数名称为「readme」，如「systemFileManagement_readme」；函数描述需要强调调用该扩展模块前必须先阅读该规则文档。
+7. 仅输出代码，不需要测试。
 
 #### 2.3 基础代码模板（必须遵循）
 const descriptions = []
