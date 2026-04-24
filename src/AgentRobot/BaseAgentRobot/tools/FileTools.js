@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-07 14:06:37
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-04-24 21:41:41
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\FileTools.js
  * @Description: 文件处理扩展函数
  * @
@@ -46,7 +46,9 @@ async function modifyFile(filePath, content) {
     const fullPath = path.resolve(process.cwd(), filePath)
 
     if (!fs.existsSync(fullPath)) {
-      return createErrorResult(`File does not exist: ${fullPath}`, { filePath: fullPath })
+      return createErrorResult(`File does not exist: ${fullPath}`, {
+        filePath: fullPath,
+      })
     }
 
     fs.writeFileSync(fullPath, content)
@@ -61,7 +63,9 @@ async function readFile(filePath) {
     const fullPath = path.resolve(process.cwd(), filePath)
 
     if (!fs.existsSync(fullPath)) {
-      return createErrorResult(`File does not exist: ${fullPath}`, { filePath: fullPath })
+      return createErrorResult(`File does not exist: ${fullPath}`, {
+        filePath: fullPath,
+      })
     }
 
     const content = fs.readFileSync(fullPath, 'utf8')
@@ -101,7 +105,9 @@ async function replaceFileText(
     if (!modifyResult.success) {
       return modifyResult
     }
-    return createSuccessResult({ filePath: path.resolve(process.cwd(), filePath) })
+    return createSuccessResult({
+      filePath: path.resolve(process.cwd(), filePath),
+    })
   } catch (error) {
     return createErrorResult(error, { filePath })
   }
@@ -112,7 +118,9 @@ async function appendToFile(filePath, content) {
     const fullPath = path.resolve(process.cwd(), filePath)
 
     if (!fs.existsSync(fullPath)) {
-      return createErrorResult(`File does not exist: ${fullPath}`, { filePath: fullPath })
+      return createErrorResult(`File does not exist: ${fullPath}`, {
+        filePath: fullPath,
+      })
     }
 
     fs.appendFileSync(fullPath, content)
@@ -125,7 +133,10 @@ async function appendToFile(filePath, content) {
 function fileExists(filePath) {
   try {
     const fullPath = path.resolve(process.cwd(), filePath)
-    return createSuccessResult({ filePath: fullPath, exists: fs.existsSync(fullPath) })
+    return createSuccessResult({
+      filePath: fullPath,
+      exists: fs.existsSync(fullPath),
+    })
   } catch (error) {
     return createErrorResult(error, { filePath })
   }
@@ -197,12 +208,18 @@ async function copyFile(sourcePath, destinationPath) {
 
     if (fs.existsSync(fullSourcePath)) {
       fs.copyFileSync(fullSourcePath, fullDestPath)
-      return createSuccessResult({ sourcePath: fullSourcePath, destinationPath: fullDestPath })
-    } else {
-      return createErrorResult(`Source file does not exist: ${fullSourcePath}`, {
+      return createSuccessResult({
         sourcePath: fullSourcePath,
         destinationPath: fullDestPath,
       })
+    } else {
+      return createErrorResult(
+        `Source file does not exist: ${fullSourcePath}`,
+        {
+          sourcePath: fullSourcePath,
+          destinationPath: fullDestPath,
+        },
+      )
     }
   } catch (error) {
     return createErrorResult(error, { sourcePath, destinationPath })
@@ -221,7 +238,10 @@ async function moveFile(sourcePath, destinationPath) {
 
     if (fs.existsSync(fullSourcePath)) {
       fs.renameSync(fullSourcePath, fullDestPath)
-      return createSuccessResult({ sourcePath: fullSourcePath, destinationPath: fullDestPath })
+      return createSuccessResult({
+        sourcePath: fullSourcePath,
+        destinationPath: fullDestPath,
+      })
     }
     return createErrorResult(`Source file does not exist: ${fullSourcePath}`, {
       sourcePath: fullSourcePath,
@@ -237,7 +257,9 @@ async function getFileInfo(filePath) {
     const fullPath = path.resolve(process.cwd(), filePath)
 
     if (!fs.existsSync(fullPath)) {
-      return createErrorResult(`File does not exist: ${fullPath}`, { filePath: fullPath })
+      return createErrorResult(`File does not exist: ${fullPath}`, {
+        filePath: fullPath,
+      })
     }
 
     const stats = fs.statSync(fullPath)
@@ -259,9 +281,12 @@ async function getFileNameList(dirPath) {
   try {
     const fullPath = path.resolve(process.cwd(), dirPath)
     if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isDirectory()) {
-      return createErrorResult(`Directory does not exist or is not a directory: ${fullPath}`, {
-        dirPath: fullPath,
-      })
+      return createErrorResult(
+        `Directory does not exist or is not a directory: ${fullPath}`,
+        {
+          dirPath: fullPath,
+        },
+      )
     }
     const files = fs.readdirSync(fullPath)
     return createSuccessResult({ dirPath: fullPath, files })
@@ -275,11 +300,15 @@ async function clearDirectory(dirPath) {
     const fullPath = path.resolve(process.cwd(), dirPath)
 
     if (!fs.existsSync(fullPath)) {
-      return createErrorResult(`Directory does not exist: ${fullPath}`, { dirPath: fullPath })
+      return createErrorResult(`Directory does not exist: ${fullPath}`, {
+        dirPath: fullPath,
+      })
     }
 
     if (!fs.statSync(fullPath).isDirectory()) {
-      return createErrorResult(`Path is not a directory: ${fullPath}`, { dirPath: fullPath })
+      return createErrorResult(`Path is not a directory: ${fullPath}`, {
+        dirPath: fullPath,
+      })
     }
 
     const files = fs.readdirSync(fullPath)
@@ -323,7 +352,10 @@ async function compressToZip(inputPath, outputZipPath) {
     }
     // 写入 zip 文件
     await zip.writeZipPromise(absoluteOutput)
-    return createSuccessResult({ inputPath: absoluteInput, outputZipPath: absoluteOutput })
+    return createSuccessResult({
+      inputPath: absoluteInput,
+      outputZipPath: absoluteOutput,
+    })
   } catch (err) {
     return createErrorResult(err, { inputPath, outputZipPath })
   }
@@ -345,9 +377,45 @@ async function extractZip(zipFilePath, extractToPath) {
     await fs.mkdir(absoluteExtractPath, { recursive: true })
     // 解压所有文件
     zip.extractAllTo(absoluteExtractPath, true)
-    return createSuccessResult({ zipFilePath: absoluteZipPath, extractToPath: absoluteExtractPath })
+    return createSuccessResult({
+      zipFilePath: absoluteZipPath,
+      extractToPath: absoluteExtractPath,
+    })
   } catch (err) {
     return createErrorResult(err, { zipFilePath, extractToPath })
+  }
+}
+
+// 文档提取功能，提取文件相关内容
+async function extractFileContent(filePrompt, filePathList) {
+  try {
+    let result = []
+    for (const filePath of filePathList) {
+      const absolutePath = path.resolve(process.cwd(), filePath)
+      const fileName = path.basename(absolutePath)
+      const filePath = absolutePath
+      if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
+        result.push({
+          filePath,
+          fileName,
+          errorContent: `File does not exist or is not a file: ${absolutePath}`,
+        })
+      }
+      const successContent = await this.Tools.createSubAgent(
+        `你是文件内容提取助手。请从文件 ${fileName}（路径：${filePath}）中提取与“${filePrompt}”相关的内容。
+要求：
+1. 只返回与该主题直接相关的原文片段，保持原始语言与措辞。
+2. 不要输出解释、总结、前后缀、Markdown 标记或任何额外说明。
+3. 如果没有相关内容，只返回：null。`,
+      )
+      return createSuccessResult({
+        filePath,
+        fileName,
+        successContent,
+      })
+    }
+  } catch (error) {
+    return createErrorResult(error, null)
   }
 }
 
@@ -419,7 +487,8 @@ const descriptions = [
     type: 'function',
     function: {
       name: 'fileExists',
-      description: '检查指定文件是否存在。参数：filePath 为待检查的文件路径。返回值：对象，包含 success、data（含 exists 布尔值）、error。',
+      description:
+        '检查指定文件是否存在。参数：filePath 为待检查的文件路径。返回值：对象，包含 success、data（含 exists 布尔值）、error。',
       parameters: {
         type: 'object',
         properties: {
@@ -642,6 +711,29 @@ const descriptions = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'extractFileContent',
+      description:
+        '根据给定提示词从文件列表中提取相关内容。参数：filePrompt 为提取主题；filePathList 为待提取的文件路径数组。返回值：对象，包含 success、data（含 filePath、fileName、successContent）或 error。',
+      parameters: {
+        type: 'object',
+        properties: {
+          filePrompt: {
+            type: 'string',
+            description: '需要提取的主题或关键描述。',
+          },
+          filePathList: {
+            type: 'array',
+            items: { type: 'string' },
+            description: '待提取内容的文件路径数组。',
+          },
+        },
+        required: ['filePrompt', 'filePathList'],
+      },
+    },
+  },
 ]
 
 const functions = {
@@ -661,7 +753,8 @@ const functions = {
   clearDirectory,
   compressToZip,
   extractZip,
-  copyFile
+  copyFile,
+  extractFileContent,
 }
 
 const FileTool = {
@@ -670,7 +763,7 @@ const FileTool = {
     '提供文件和目录的创建、读取、修改、删除、移动、重命名、信息获取等文件系统操作功能',
   descriptions,
   functions,
-  isSystem: true
+  isSystem: true,
 }
 
 module.exports = FileTool
