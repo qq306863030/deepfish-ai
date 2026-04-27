@@ -2,17 +2,17 @@
 rem Force UTF-8 output
 chcp 65001 >nul 2>&1
 
-echo ========================================
-echo   DeepFish AI Offline Package Builder
-echo ========================================
-echo.
-
 :: Enable error catching
 if not defined DEBUG (
     set DEBUG=1
     cmd /c "%~f0"
     exit /b
 )
+
+echo ========================================
+echo   DeepFish AI Offline Package Builder
+echo ========================================
+echo.
 
 :: Check Environment
 where node >nul 2>&1
@@ -45,9 +45,8 @@ if not exist "%PROJECT_DIR%" (
 )
 
 set "OUTPUT_DIR=%~dp0offline-package"
-set "TIMESTAMP=%date:~0,4%%date:~5,2%%date:~8,2%-%time:~0,2%%time:~3,2%%time:~6,2%"
-set "TIMESTAMP=%TIMESTAMP: =0%"
-set "ZIP_NAME=deepfish-offline-%TIMESTAMP%.zip"
+for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd"') do set "DATESTAMP=%%i"
+set "ZIP_NAME=deepfish-offline-%DATESTAMP%.zip"
 
 echo [1/4] Cleaning old output directory...
 if exist "%OUTPUT_DIR%" rmdir /s /q "%OUTPUT_DIR%"
@@ -90,20 +89,69 @@ echo [4/4] Creating startup script...
 rem Create start.bat (run after npm link)
 (
 echo @echo off
+echo setlocal EnableExtensions
 echo chcp 65001 ^>nul 2^>^&1
 echo echo ========================================
 echo echo   DeepFish AI - Install ^& Start
 echo echo ========================================
+echo echo.
+echo.
+echo :: Check Node.js
+echo where node ^>nul 2^>^&1
+echo if errorlevel 1 ^(
+echo     echo [INFO] Node.js not found. Downloading and installing...
+echo     set "NODE_INSTALLER=%%~dp0node-installer.msi"
+echo     powershell -Command "Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.14.0/node-v22.14.0-x64.msi' -OutFile '%%NODE_INSTALLER%%'"
+echo     if not exist "%%NODE_INSTALLER%%" ^(
+echo         echo [ERROR] Failed to download Node.js installer. Please check your network connection.
+echo         pause
+echo         exit /b 1
+echo     ^)
+echo     echo Installing Node.js...
+echo     msiexec /i "%%NODE_INSTALLER%%" /qn ADDLOCAL=ALL
+echo     if errorlevel 1 ^(
+echo         echo [ERROR] Node.js installation failed.
+echo         del "%%NODE_INSTALLER%%" ^>nul 2^>^&1
+echo         pause
+echo         exit /b 1
+echo     ^)
+echo     del "%%NODE_INSTALLER%%" ^>nul 2^>^&1
+echo     set "PATH=%%ProgramFiles%%\nodejs;%%APPDATA%%\npm;%%PATH%%"
+echo     where node ^>nul 2^>^&1
+echo     if errorlevel 1 ^(
+echo         echo [WARNING] Node.js installed but not yet active in this session.
+echo         echo Please close this window and re-run start.bat.
+echo         pause
+echo         exit /b 1
+echo     ^)
+echo     where npm ^>nul 2^>^&1
+echo     if errorlevel 1 ^(
+echo         echo [WARNING] npm is not yet active in this session.
+echo         echo Please close this window and re-run start.bat.
+echo         pause
+echo         exit /b 1
+echo     ^)
+echo     echo [INFO] Node.js installed successfully.
+echo     echo.
+echo ^)
 echo.
 echo cd /d "%%~dp0"
-echo npm link
+echo echo Running npm link...
+echo call npm link
 echo if errorlevel 1 ^(
 echo     echo [ERROR] npm link failed.
 echo     pause
 echo     exit /b 1
 echo ^)
 echo echo.
-echo deepfish-cli %%*
+echo echo ========================================
+echo echo   DeepFish AI Installed Successfully!
+echo echo ========================================
+echo echo.
+echo echo You can now use the "ai" command anywhere.
+echo echo Example: ai 你叫什么名字
+echo echo.
+echo pause
 ) > "%OUTPUT_DIR%\start.bat"
 
 rem Create README for offline package
@@ -116,7 +164,7 @@ echo ## How to Use
 echo.
 echo Install as Global Command:
 echo 1. Double-click "start.bat" to install
-echo 2. After installation, you can use "deepfish-cli" command anywhere
+echo 2. After installation, you can use "ai xxx" command anywhere
 ) > "%OUTPUT_DIR%\README-OFFLINE.md"
 
 rem Packaging to ZIP
