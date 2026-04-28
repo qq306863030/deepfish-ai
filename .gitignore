@@ -1,4 +1,4 @@
 /node_modules
 /package-lock.json
 /offline-package
-/offline-package*.zip
+/deepfish-offline-*.zip

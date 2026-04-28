@@ -76,6 +76,7 @@ class Brain extends EventEmitterSuper {
       try {
         // 更新系统提示词
         if (messages[0].role === 'system') {
+          this.agentRobot.updateSessionTime()
           messages[0] = {
             role: 'system',
             content: this.agentRobot.systemPrompt,

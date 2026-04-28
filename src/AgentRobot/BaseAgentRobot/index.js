@@ -5,6 +5,7 @@ const BrainEvent = require('./BrainEvent.js')
 const ScreenPrinter = require('./ScreenPrinter.js')
 const { HandEvent, Hand } = require('./Hand.js')
 const AIToolManager = require('./utils/AIToolManager.js')
+const dayjs = require('dayjs')
 
 class BaseAgentRobot {
   id = '' // Agentid
@@ -187,6 +188,7 @@ class BaseAgentRobot {
 当前工作目录：${workspace}
 操作系统类型：${osType}
 语言类型: 与用户输入语言一致
+会话开始时间: ${dayjs().format('YYYY-MM-DD HH')}
 
 ### 工具使用
 执行任务前，应仔细阅读工具描述以及可以使用的Skills的描述内容，优先使用匹配到的工具或技能，避免自己发挥。
@@ -207,13 +209,22 @@ class BaseAgentRobot {
 
 ### 用户信息
 #### 用户信息记录规则
-当对话中出现用户信息时，如个人基础信息（如姓名、年龄、职业、兴趣、性格特征）、操作习惯、代码习惯、阅读习惯、常用目录、文档收藏夹目录等，必须使用用户信息读写函数进行记录。
+当对话中出现用户信息时，如个人基础信息（如姓名、昵称、年龄、职业、兴趣、性格特征等）、AI的基础信息（如昵称、性格特征等）、操作习惯、代码习惯、阅读习惯、用户常用目录等，必须使用用户信息读写函数进行记录。
 
 #### 当前用户信息
 ----user info start----
 ${this.toolManager.functions.readUserInfo()}
 ----user info end----
     `
+  }
+
+  // 更新系统提示词中的会话开始时间
+  updateSessionTime() {
+    const newTime = dayjs().format('YYYY-MM-DD HH')
+    this.systemPrompt = this.systemPrompt.replace(
+      /会话开始时间: \d{4}-\d{2}-\d{2} \d{2}/,
+      `会话开始时间: ${newTime}`,
+    )
   }
 
   async executeTask(goal) {
