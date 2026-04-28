@@ -44,6 +44,7 @@
   - [初始设置](#初始设置)
   - [配置命令](#配置命令)
   - [配置文件结构](#配置文件结构)
+  - [目录结构说明](#目录结构说明)
 - [5. 使用方法](#5-使用方法)
   - [交互模式](#交互模式)
   - [直接命令模式](#直接命令模式)
@@ -123,7 +124,7 @@ ai config add
 
 这将提示你配置以下内容：
 
-- **AI服务类型**：选择DeepSeek、Ollama或OpenAI
+- **AI服务类型**：选择DeepSeek、MiniMax、Qwen、Ollama或OpenAI
 - **API基础URL**：为每个服务提供默认URL
 - **模型名称**：选择要使用的AI模型
 - **API密钥**：DeepSeek和OpenAI需要
@@ -154,8 +155,8 @@ ai skill disable <name|index> # 通过名称或索引禁用 skill, exp: ai skill
 ai skill dir # 打开 skill 目录
 
 # 记忆命令
-ai memery clear # 清除当前目录的对话历史
-ai memery dir # 打开记忆目录
+ai memory clear # 清除当前目录的对话历史
+ai memory dir # 打开记忆目录
 ```
 
 ### 配置文件结构
@@ -179,14 +180,52 @@ export default {
   ],
   currentAi: "default", // 当前活动的AI配置名称
   maxIterations: -1, // ai完成工作流的最大迭代次数，-1表示无限制
-  maxMessagesLength: 150000, // 最大压缩长度，-1表示无限制
-  maxMessagesCount: 100, // 最大压缩数量，-1表示无限制
   maxMemoryExpireTime: 30, // 整个会话的最大过期时间，单位天，-1表示无限制，0表示不记录
   maxLogExpireTime: 3, // 日志过期时间，单位天，-1表示无限制，0表示不记录
   maxBlockFileSize: 20, // 最大分块文件大小，单位KB；超过该大小的文件需要分块处理
-  skills: [], // 技能配置列表
+  isThinkPrint: true, // 是否打印思考过程
   encoding: "auto", // 命令行编码格式，可设置为utf-8、gbk等，也可以设置成auto或空值自动判断
+  EMBEDDING_API: "", // 向量化接口地址
+  EMBEDDING_API_KEY: "", // 向量化接口密钥
 };
+```
+
+### 目录结构说明
+
+DeepFish 默认工作目录为 `.deepfish-ai`，可通过以下命令直接打开：
+
+```bash
+ai config dir
+```
+
+默认路径：
+
+- Windows: `C:/Users/<用户名>/.deepfish-ai`
+- macOS/Linux: `~/.deepfish-ai`
+
+参考 DevPlan 的目录结构示例如下：
+
+```text
+.deepfish-ai/
+├─ config.js                           # 全局配置
+├─ user-info/
+│  └─ user.md                          # 用户信息
+├─ clawSkills/
+│  ├─ clawSkills.json                  # OpenClaw 技能索引
+│  └─ <skill>/
+│     └─ SKILL.md                      # 单个技能说明
+└─ memery/
+   ├─ agentRecord.json                 # 工作目录与主 agent 映射
+   └─ <主agent编号>/
+      ├─ memery.json                   # 主 agent 记忆
+      ├─ memery-<子agent编号>.json     # 子 agent 记忆
+      ├─ agentTree.json                # agent 组织结构
+      ├─ bakup/
+      │  └─ <时间戳>/
+      │     ├─ record.json             # 备份记录
+      │     └─ <uuid>.*                # 备份文件
+      └─ logs/
+         └─ log-{YYYY-MM-DD HH}.txt    # 按小时滚动日志
 ```
 
 ## 5. 使用方法
@@ -384,8 +423,8 @@ AI始终使用相对于当前工作目录的相对路径。
 
 对话历史会在一定时间内自动清除（通过配置文件中的 `maxMemoryExpireTime` 字段控制，默认为 30 天）。您也可以手动管理对话历史：
 
-- `ai memery dir` — 打开记忆目录，查看已存储的对话上下文
-- `ai memery clear` — 清除当前目录的对话历史
+- `ai memory dir` — 打开记忆目录，查看已存储的对话上下文
+- `ai memory clear` — 清除当前目录的对话历史
 
 ## 9. 故障排除
 
@@ -400,7 +439,7 @@ ai config reset
 ### AI服务连接
 
 - **Ollama**：确保Ollama在本地11434端口上运行
-- **DeepSeek/OpenAI**：验证您的API密钥是否正确，并且您有足够的额度
+- **DeepSeek/MiniMax/Qwen/OpenAI**：验证您的API密钥是否正确，并且您有足够的额度
 
 ### 扩展未加载
 

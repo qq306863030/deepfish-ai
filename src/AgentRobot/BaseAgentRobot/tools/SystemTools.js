@@ -9,6 +9,7 @@
  */
 const path = require('path')
 const fs = require('fs-extra')
+const dayjs = require('dayjs')
 const iconv = require('iconv-lite')
 const { spawnSync } = require('child_process')
 const { detectEncoding } = require('../utils/normal.js')
@@ -126,6 +127,13 @@ async function executeJSCode(code) {
   }
 }
 
+// 获取当前系统时间
+function getCurrentTime() {
+  const now = dayjs()
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown'
+  return `Current system time: ${now.format('YYYY-MM-DD HH:mm:ss')} | ISO: ${now.toISOString()} | Timezone: ${timezone}`
+}
+
 // 了解自己
 function getSelfInfo() {
   // 返回自己的代码路径、package.json路径、readme路径等基本信息，供AI有选择的了解自己，回答用户的问题
@@ -211,6 +219,19 @@ const descriptions = [
   {
     type: 'function',
     function: {
+      name: 'getCurrentTime',
+      description:
+        '获取当前系统时间，返回本地时间、ISO时间和时区信息。适用于需要在任务中使用当前时间戳或进行时间记录的场景。',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'getSelfInfo',
       description:
         '获取DeepFish AI程序的基本信息、命令行等，供AI有选择的了解自己，回答用户的问题。',
@@ -226,6 +247,7 @@ const functions = {
   executeCommand,
   requestAI,
   executeJSCode,
+  getCurrentTime,
   getSelfInfo,
 }
 

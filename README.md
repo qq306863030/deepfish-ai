@@ -43,6 +43,7 @@
   - [Initial Setup](#initial-setup)
   - [Configuration Commands](#configuration-commands)
   - [Configuration File Structure](#configuration-file-structure)
+  - [Directory Structure](#directory-structure)
 - [5. Usage](#5-usage)
   - [Interactive Mode](#interactive-mode)
   - [Direct Command Mode](#direct-command-mode)
@@ -125,7 +126,7 @@ ai config add
 
 This will prompt you to configure the following:
 
-- **AI Service Type**: Choose DeepSeek, Ollama, or OpenAI
+- **AI Service Type**: Choose DeepSeek, MiniMax, Qwen, Ollama, or OpenAI
 - **API Base URL**: Default URL provided for each service
 - **Model Name**: Choose the AI model to use
 - **API Key**: Required for DeepSeek and OpenAI
@@ -156,8 +157,8 @@ ai skill disable <name|index> # Disable a skill by name or index, exp: ai skill 
 ai skill dir # Open the skill directory
 
 # Memory commands
-ai memery clear # Clear the history messages for the current directory
-ai memery dir # Open the memory directory
+ai memory clear # Clear the history messages for the current directory
+ai memory dir # Open the memory directory
 ```
 
 ### Configuration File Structure
@@ -181,14 +182,52 @@ export default {
   ],
   currentAi: "default", // Name of the currently active AI configuration
   maxIterations: -1, // Maximum iterations for AI to complete the workflow, -1 for unlimited
-  maxMessagesLength: 150000, // Maximum compression length, -1 for unlimited
-  maxMessagesCount: 100, // Maximum compression count, -1 for unlimited
   maxMemoryExpireTime: 30, // Maximum session expiration time in days, -1 for unlimited, 0 to disable recording
   maxLogExpireTime: 3, // Log expiration time in days, -1 for unlimited, 0 to disable recording
   maxBlockFileSize: 20, // Maximum block file size in KB; files exceeding this size need to be processed in blocks
-  skills: [], // List of skill configurations
+  isThinkPrint: true, // Whether to print the thinking process
   encoding: "auto", // Command line encoding format, can be set to utf-8, gbk, etc., or auto/empty for auto-detection
+  EMBEDDING_API: "", // Embedding API endpoint URL
+  EMBEDDING_API_KEY: "", // Embedding API key
 };
+```
+
+### Directory Structure
+
+DeepFish uses `.deepfish-ai` as the default working directory. You can open it directly with:
+
+```bash
+ai config dir
+```
+
+Default paths:
+
+- Windows: `C:/Users/<username>/.deepfish-ai`
+- macOS/Linux: `~/.deepfish-ai`
+
+Based on the structure in DevPlan, the directory layout is:
+
+```text
+.deepfish-ai/
+├─ config.js                           # Global configuration
+├─ user-info/
+│  └─ user.md                          # User profile data
+├─ clawSkills/
+│  ├─ clawSkills.json                  # OpenClaw skill index
+│  └─ <skill>/
+│     └─ SKILL.md                      # Single skill definition
+└─ memery/
+   ├─ agentRecord.json                 # Workspace to main-agent mapping
+   └─ <main-agent-id>/
+      ├─ memery.json                   # Main agent memory
+      ├─ memery-<sub-agent-id>.json    # Sub-agent memory
+      ├─ agentTree.json                # Agent hierarchy
+      ├─ bakup/
+      │  └─ <timestamp>/
+      │     ├─ record.json             # Backup operation record
+      │     └─ <uuid>.*                # Backup files
+      └─ logs/
+         └─ log-{YYYY-MM-DD HH}.txt    # Hourly rolling logs
 ```
 
 ## 5. Usage
@@ -388,8 +427,8 @@ Conversation history is created on a per-directory basis — each execution dire
 
 Conversation history will be automatically cleared after a configurable period (controlled by the `maxMemoryExpireTime` field in the configuration file, default is 30 days). You can also manage it manually:
 
-- `ai memery dir` — Open the memory directory to view stored conversation contexts
-- `ai memery clear` — Manually clear the conversation history for the current directory
+- `ai memory dir` — Open the memory directory to view stored conversation contexts
+- `ai memory clear` — Manually clear the conversation history for the current directory
 
 ## 9. Troubleshooting
 
@@ -404,7 +443,7 @@ ai config reset
 ### AI Service Connection
 
 - **Ollama**: Ensure Ollama is running locally on port 11434
-- **DeepSeek/OpenAI**: Verify your API key is correct and you have sufficient quota
+- **DeepSeek/MiniMax/Qwen/OpenAI**: Verify your API key is correct and you have sufficient quota
 
 ### Extension Not Loading
 
