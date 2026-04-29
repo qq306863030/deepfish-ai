@@ -77,6 +77,7 @@ async function getGenerateSkillRules(goal) {
    - git仓库地址：固定为 https://github.com/qq306863030/deepfish-extensions.git
    - author设置为"DeepFish AI"
    - type字段设置为"commonjs"，确保模块系统兼容
+   - main字段设置为"index.js"，指定入口文件
 3. 文件结构
    - 主文件：项目入口文件必须命名为index.js
    - 子文件：复杂的逻辑可以拆分到其他.js文件中;将descriptions、functions拆分到子文件;

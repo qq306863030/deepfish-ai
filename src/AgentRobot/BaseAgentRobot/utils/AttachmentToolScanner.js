@@ -51,7 +51,8 @@ class AttachmentToolScanner {
      */
     // 1. 子agent创建时，不能拥有其他附加能力
     // 2. 使用platform过滤
-    const dir1 = path.resolve(__dirname, '../../../../') // 程序所在目录
+    const dir1 = path.resolve(__dirname, '../../../../../') // 程序所在目录
+    console.log('扫描附加工具的目录:', dir1)
     const dir2 = path.resolve(workspace, './node_modules') // 工作目录下node_modules目录
     const dir3 = path.resolve(workspace, './') // 工作目录
     const dir4 = getGlobalNodeModulesPath()
@@ -81,6 +82,7 @@ class AttachmentToolScanner {
           dirName !== 'deepfish-ai'
         ) {
           const mainFile = AttachmentToolScanner._scanDeepFishPackage(dirPath, dirName)
+          console.log('扫描到潜在的附加工具包:', dirName, mainFile)
           if (mainFile) {
             result.push(mainFile)
           }
