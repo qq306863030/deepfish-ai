@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: roman_123 306863030@qq.com
- * @LastEditTime: 2026-04-24 00:07:22
+ * @LastEditTime: 2026-05-06 23:23:22
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数
  * @
@@ -12,7 +12,7 @@ const fs = require('fs-extra')
 const dayjs = require('dayjs')
 const iconv = require('iconv-lite')
 const { spawnSync } = require('child_process')
-const { detectEncoding } = require('../utils/normal.js')
+const { detectEncoding, analyzeReturn } = require('../utils/normal.js')
 const aiConsole = require('../utils/aiConsole.js')
 
 // 执行系统命令
@@ -82,11 +82,10 @@ async function requestAI(
 async function executeJSCode(code) {
   aiConsole.logSuccess('Executing JavaScript code: ')
   aiConsole.logSuccess(code)
-  // 检测code最后一行代码包含return，如果不包含，则返回一个错误信息，提示agent需要使用return返回结果
-  const codeLines = code.trim().split('\n')
-  const lastLine = codeLines[codeLines.length - 1].trim()
-  if (!lastLine.startsWith('return')) {
-    const error = new Error('The last line of the code must contain a return statement.')
+  // 校验代码片段中是否存在顶层 return，避免仅按最后一行判断导致误判。
+  const { hasReturnValue } = analyzeReturn(code)
+  if (!hasReturnValue) {
+    const error = new Error('The code must contain a return value.')
     throw error
   }
   try {

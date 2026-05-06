@@ -16,6 +16,7 @@ class MainAgentRobot extends BaseAgentRobot {
 
   // 初始化文件
   _initFiles(opt) {
+    this.logId = Date.now()
     this.workspace = opt.workspace || process.cwd() // 工作空间，目录
     this.basespace = opt.basespace || path.join(os.homedir(), '.deepfish-ai') // 记忆空间，目录
     this.userspace = path.join(this.basespace, 'user-info') // 用户空间，目录

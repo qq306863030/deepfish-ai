@@ -9,6 +9,7 @@ class Logger {
     this.maxLogExpireTime = agentRobot.config.maxLogExpireTime
     this.memorySpace = agentRobot.memorySpace
     this.logTimeMap = new Map()
+    this.logId = agentRobot.logId || agentRobot.root.logId
   }
   clearAllLogs() {
     const fileNames = fs.readdirSync(this.memorySpace)
@@ -55,11 +56,16 @@ class Logger {
     }
     const logFile = path.join(
       this.logDirPath,
-      `log-${dayjs().format('YYYY-MM-DD HH')}.txt`,
+      `log-${this.logId}-${dayjs().format('YYYY-MM-DD HH')}.txt`,
+    )
+    const logFile2 = path.join(
+      this.logDirPath,
+      `log-messeage-${this.logId}.txt`,
     )
     try {
       let logEntry = `[${new Date().toISOString()}][${message.role}] ${message.content}\n`
       fs.appendFileSync(logFile, logEntry)
+      fs.appendFileSync(logFile2, logEntry)
       return true
     } catch (error) {
       console.error('Failed to log message:', error.message)
@@ -72,7 +78,7 @@ class Logger {
     }
     const logFile = path.join(
       this.logDirPath,
-      `log-${dayjs().format('YYYY-MM-DD HH')}.txt`,
+      `log-${this.logId}-${dayjs().format('YYYY-MM-DD HH')}.txt`,
     )
     try {
       let logEntry = `[${new Date().toISOString()}][***COMPRESS START***] 
@@ -92,7 +98,7 @@ class Logger {
     }
     const logFile = path.join(
       this.logDirPath,
-      `log-${dayjs().format('YYYY-MM-DD HH')}.txt`,
+      `log-${this.logId}-${dayjs().format('YYYY-MM-DD HH')}.txt`,
     )
     try {
       let logEntry = `[${new Date().toISOString()}][###############] ${message}\n`

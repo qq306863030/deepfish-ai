@@ -1,3 +1,6 @@
+const fs = require('fs-extra')
+const path = require('path')
+
 const descriptions = [
   {
     type: 'function',
@@ -56,6 +59,22 @@ const descriptions = [
           rules: { type: 'string' },
         },
         required: ['rules'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'generateClawSkillByHistory',
+      description:
+        '根据用户目标与对话历史日志或指定日志文件自动生成 OpenClaw Skill 工具包。logfile参数为日志文件名称，默认从日志目录中查找，如果不存在则从当前目录查找；若未设置该参数，则使用最新日志文件；该参数也可设置为绝对路径。',
+      parameters: {
+        type: 'object',
+        properties: {
+          goal: { type: 'string' },
+          logfile: { type: 'string' },
+        },
+        required: ['goal'],
       },
     },
   },
@@ -329,11 +348,48 @@ async function generateClawSkill(rules) {
   return this.Tools.executeTaskList(rules)
 }
 
+// 根据对话历史生成一个skill工具包
+async function generateClawSkillByHistory(goal, logfile) {
+  const logDirPath = this.agentRobot.logDirPath
+  const workspace = this.agentRobot.workspace
+  let logFilePath
+  if (!logfile) {
+    // 如果没有明确提出对话历史文件，则从最新的对话日志中获取skill生成所需的对话历史内容
+    let logFiles = fs.readdirSync(logDirPath)
+    logFiles = logFiles.filter((file) => file.startsWith(`log-messeage-`))
+    if (logFiles.length === 0) {
+      throw new Error('No log file found for generating skill by history')
+    }
+    // 根据文件名称排序，获取最新的日志文件 log-messeage-{logId}.txt
+    let latestLogFile = logFiles[0]
+    if (logFiles.length > 1) {
+      latestLogFile = logFiles.sort((a, b) => {
+        const aTime = parseInt(a.slice(12, -4))
+        const bTime = parseInt(b.slice(12, -4))
+        return bTime - aTime
+      })[0]
+    }
+    logFilePath = path.join(logDirPath, latestLogFile)
+  } else {
+    logFilePath = path.join(logDirPath, logfile)
+    if (!fs.existsSync(logFilePath)) {
+      // 如果在日志目录中没有找到，则尝试在当前目录中查找
+      logFilePath = path.resolve(workspace, logfile)
+      if (!fs.existsSync(logFilePath)) {
+        throw new Error(`Log file not found: ${logfile}`)
+      }
+    }
+  }
+  const rules = await this.Tools.getGenerateClawSkillRules(`基于用户的任务目标和会话历史日志中的有效信息和，生成一个OpenClaw兼容的Skill工具包。用户目标: ${goal}, 会话历史路径: ${logFilePath}`)
+  return await this.Tools.generateClawSkill(rules)
+}
+
 const functions = {
   getGenerateClawSkillRules,
   getGenerateSkillRules,
   generateClawSkill,
   generateSkill,
+  generateClawSkillByHistory
 }
 
 const GenerateTools = {

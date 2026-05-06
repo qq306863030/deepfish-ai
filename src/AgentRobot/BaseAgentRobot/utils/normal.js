@@ -101,6 +101,227 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+// 判断代码是否有返回值
+function analyzeReturn(code) {
+  if (typeof code !== 'string' || !code.trim()) {
+    return {
+      hasReturn: false,
+      hasReturnValue: false,
+    }
+  }
+
+  // 移除字符串和注释，避免把文本中的 return 误判为代码关键字。
+  function stripStringsAndComments(input) {
+    const chars = input.split('')
+    let i = 0
+    let state = 'normal'
+
+    while (i < chars.length) {
+      const ch = chars[i]
+      const next = chars[i + 1]
+
+      if (state === 'normal') {
+        if (ch === '/' && next === '/') {
+          state = 'line-comment'
+          chars[i] = ' '
+          chars[i + 1] = ' '
+          i += 2
+          continue
+        }
+        if (ch === '/' && next === '*') {
+          state = 'block-comment'
+          chars[i] = ' '
+          chars[i + 1] = ' '
+          i += 2
+          continue
+        }
+        if (ch === "'") {
+          state = 'single-quote'
+          chars[i] = ' '
+          i += 1
+          continue
+        }
+        if (ch === '"') {
+          state = 'double-quote'
+          chars[i] = ' '
+          i += 1
+          continue
+        }
+        if (ch === '`') {
+          state = 'template'
+          chars[i] = ' '
+          i += 1
+          continue
+        }
+        i += 1
+        continue
+      }
+
+      if (state === 'line-comment') {
+        if (ch === '\n') {
+          state = 'normal'
+        } else {
+          chars[i] = ' '
+        }
+        i += 1
+        continue
+      }
+
+      if (state === 'block-comment') {
+        if (ch === '*' && next === '/') {
+          chars[i] = ' '
+          chars[i + 1] = ' '
+          state = 'normal'
+          i += 2
+        } else {
+          if (ch !== '\n') {
+            chars[i] = ' '
+          }
+          i += 1
+        }
+        continue
+      }
+
+      if (state === 'single-quote') {
+        if (ch === '\\') {
+          chars[i] = ' '
+          if (i + 1 < chars.length) {
+            chars[i + 1] = ' '
+          }
+          i += 2
+          continue
+        }
+        chars[i] = ch === '\n' ? '\n' : ' '
+        if (ch === "'") {
+          state = 'normal'
+        }
+        i += 1
+        continue
+      }
+
+      if (state === 'double-quote') {
+        if (ch === '\\') {
+          chars[i] = ' '
+          if (i + 1 < chars.length) {
+            chars[i + 1] = ' '
+          }
+          i += 2
+          continue
+        }
+        chars[i] = ch === '\n' ? '\n' : ' '
+        if (ch === '"') {
+          state = 'normal'
+        }
+        i += 1
+        continue
+      }
+
+      if (state === 'template') {
+        if (ch === '\\') {
+          chars[i] = ' '
+          if (i + 1 < chars.length) {
+            chars[i + 1] = ' '
+          }
+          i += 2
+          continue
+        }
+        chars[i] = ch === '\n' ? '\n' : ' '
+        if (ch === '`') {
+          state = 'normal'
+        }
+        i += 1
+      }
+    }
+
+    return chars.join('')
+  }
+
+  function isReturnWithValue(input, startIndex) {
+    let i = startIndex
+    while (i < input.length) {
+      const ch = input[i]
+      if (ch === ' ' || ch === '\t' || ch === '\r') {
+        i += 1
+        continue
+      }
+      if (ch === '\n' || ch === ';' || ch === '}' || ch === ')') {
+        return false
+      }
+      return true
+    }
+    return false
+  }
+
+  const cleaned = stripStringsAndComments(code)
+  const tokenRegex = /[A-Za-z_$][\w$]*|=>|[{}]/g
+  const stack = []
+  let functionDepth = 0
+  let pendingFunctionBlock = 0
+  let pendingArrow = false
+  let hasReturn = false
+  let hasReturnValue = false
+  let match
+
+  while ((match = tokenRegex.exec(cleaned)) !== null) {
+    const token = match[0]
+    const index = match.index
+
+    if (token === 'function') {
+      pendingFunctionBlock += 1
+      pendingArrow = false
+      continue
+    }
+
+    if (token === '=>') {
+      pendingArrow = true
+      continue
+    }
+
+    if (token === '{') {
+      if (pendingFunctionBlock > 0 || pendingArrow) {
+        stack.push('function')
+        functionDepth += 1
+        if (pendingFunctionBlock > 0) {
+          pendingFunctionBlock -= 1
+        }
+        pendingArrow = false
+      } else {
+        stack.push('block')
+      }
+      continue
+    }
+
+    if (token === '}') {
+      const top = stack.pop()
+      if (top === 'function' && functionDepth > 0) {
+        functionDepth -= 1
+      }
+      pendingArrow = false
+      continue
+    }
+
+    if (pendingArrow) {
+      // 箭头函数表达式体不带 {} 时，不会有 return 关键字参与判断。
+      pendingArrow = false
+    }
+
+    if (token === 'return' && functionDepth === 0) {
+      hasReturn = true
+      if (isReturnWithValue(cleaned, index + token.length)) {
+        hasReturnValue = true
+      }
+      if (hasReturn && hasReturnValue) {
+        break
+      }
+    }
+  }
+
+  return {
+    hasReturn,
+    hasReturnValue,
+  }
+}
+
 module.exports = {
   objStrToObj,
   delay,
@@ -108,4 +329,5 @@ module.exports = {
   openDirectory,
   detectEncoding,
   sleep,
+  analyzeReturn,
 }
