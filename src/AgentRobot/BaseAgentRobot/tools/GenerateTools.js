@@ -78,6 +78,19 @@ const descriptions = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'getSessionHistoryFile',
+      description:
+        '获取最后一次会话历史日志文件路径，用于生成Skill时引用会话历史。',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+      },
+    },
+  },
 ]
 
 async function getGenerateSkillRules(goal) {
@@ -244,7 +257,7 @@ async function generateSkill(rules) {
 }
 
 async function getGenerateClawSkillRules(goal) {
-   const newGoal = `
+  const newGoal = `
 ## 任务目标
 基于OpenClaw Skill规范创建一个标准化的Skill工具包，实现用户目标：${goal}，最终输出可被你直接加载使用。
 
@@ -367,7 +380,7 @@ async function generateClawSkillByHistory(goal, logfile) {
         const aTime = parseInt(a.slice(12, -4))
         const bTime = parseInt(b.slice(12, -4))
         return bTime - aTime
-      })[0]
+      })[1]
     }
     logFilePath = path.join(logDirPath, latestLogFile)
   } else {
@@ -380,8 +393,31 @@ async function generateClawSkillByHistory(goal, logfile) {
       }
     }
   }
-  const rules = await this.Tools.getGenerateClawSkillRules(`基于用户的任务目标和会话历史日志中的有效信息和，生成一个OpenClaw兼容的Skill工具包。用户目标: ${goal}, 会话历史路径: ${logFilePath}`)
+  const rules = await this.Tools.getGenerateClawSkillRules(
+    `基于用户的任务目标和会话历史日志中的有效信息和，生成一个OpenClaw兼容的Skill工具包。用户目标: ${goal}, 会话历史路径: ${logFilePath}`,
+  )
   return await this.Tools.generateClawSkill(rules)
+}
+
+// 获取会话历史文件
+function getSessionHistoryFile() {
+  const logDirPath = this.agentRobot.logDirPath
+  let logFiles = fs.readdirSync(logDirPath)
+  logFiles = logFiles.filter((file) => file.startsWith(`log-messeage-`))
+  if (logFiles.length === 0) {
+    throw new Error('No log file found for generating skill by history')
+  }
+  // 根据文件名称排序，获取最新的日志文件 log-messeage-{logId}.txt
+  let latestLogFile = logFiles[0]
+  if (logFiles.length > 1) {
+    latestLogFile = logFiles.sort((a, b) => {
+      const aTime = parseInt(a.slice(12, -4))
+      const bTime = parseInt(b.slice(12, -4))
+      return bTime - aTime
+    })[1]
+  }
+  const logFilePath = path.join(logDirPath, latestLogFile)
+  return logFilePath
 }
 
 const functions = {
@@ -389,15 +425,17 @@ const functions = {
   getGenerateSkillRules,
   generateClawSkill,
   generateSkill,
-  generateClawSkillByHistory
+  generateClawSkillByHistory,
+  getSessionHistoryFile,
 }
 
 const GenerateTools = {
   name: 'GenerateTools',
-  description: '提供扩展工具与Skill工具包生成规则能力，用于辅助AI构建标准化扩展项目模板',
+  description:
+    '提供扩展工具与Skill工具包生成规则能力，用于辅助AI构建标准化扩展项目模板',
   descriptions,
   functions,
-  isSystem: true
+  isSystem: true,
 }
 
 module.exports = GenerateTools
