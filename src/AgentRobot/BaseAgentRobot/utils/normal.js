@@ -240,10 +240,32 @@ function analyzeReturn(code) {
     let i = startIndex
     while (i < input.length) {
       const ch = input[i]
+      const next = input[i + 1]
       if (ch === ' ' || ch === '\t' || ch === '\r') {
         i += 1
         continue
       }
+
+      if (ch === '/' && next === '/') {
+        i += 2
+        while (i < input.length && input[i] !== '\n') {
+          i += 1
+        }
+        continue
+      }
+
+      if (ch === '/' && next === '*') {
+        i += 2
+        while (i < input.length) {
+          if (input[i] === '*' && input[i + 1] === '/') {
+            i += 2
+            break
+          }
+          i += 1
+        }
+        continue
+      }
+
       if (ch === '\n' || ch === ';' || ch === '}' || ch === ')') {
         return false
       }
@@ -252,52 +274,103 @@ function analyzeReturn(code) {
     return false
   }
 
+  function isControlKeyword(token) {
+    return ['if', 'for', 'while', 'switch', 'catch', 'with'].includes(token)
+  }
+
   const cleaned = stripStringsAndComments(code)
-  const tokenRegex = /[A-Za-z_$][\w$]*|=>|[{}]/g
-  const stack = []
+  const tokenRegex = /[A-Za-z_$][\w$]*|=>|[{}()\[\]]/g
+  const blockStack = []
+  const parenStack = []
   let functionDepth = 0
   let pendingFunctionBlock = 0
   let pendingArrow = false
   let hasReturn = false
   let hasReturnValue = false
+  let lastToken = ''
+  let recentClosedParen = null
   let match
 
   while ((match = tokenRegex.exec(cleaned)) !== null) {
     const token = match[0]
     const index = match.index
 
+    if (token === '(') {
+      parenStack.push({
+        beforeToken: lastToken,
+      })
+      lastToken = token
+      continue
+    }
+
+    if (token === ')') {
+      recentClosedParen = parenStack.pop() || null
+      lastToken = token
+      continue
+    }
+
     if (token === 'function') {
       pendingFunctionBlock += 1
       pendingArrow = false
+      lastToken = token
+      recentClosedParen = null
       continue
     }
 
     if (token === '=>') {
       pendingArrow = true
+      lastToken = token
+      recentClosedParen = null
       continue
     }
 
     if (token === '{') {
+      let isFunctionBlock = false
       if (pendingFunctionBlock > 0 || pendingArrow) {
-        stack.push('function')
+        isFunctionBlock = true
+      } else if (lastToken === ')' && recentClosedParen) {
+        const beforeToken = recentClosedParen.beforeToken
+        if (beforeToken && !isControlKeyword(beforeToken)) {
+          // 识别 class/object method 这类无 function 关键字的方法体。
+          isFunctionBlock = true
+        }
+      }
+
+      if (isFunctionBlock) {
+        blockStack.push('function')
         functionDepth += 1
         if (pendingFunctionBlock > 0) {
           pendingFunctionBlock -= 1
         }
-        pendingArrow = false
       } else {
-        stack.push('block')
+        blockStack.push('block')
       }
+
+      pendingArrow = false
+      lastToken = token
+      recentClosedParen = null
       continue
     }
 
     if (token === '}') {
-      const top = stack.pop()
+      const top = blockStack.pop()
       if (top === 'function' && functionDepth > 0) {
         functionDepth -= 1
       }
       pendingArrow = false
+      lastToken = token
+      recentClosedParen = null
       continue
+    }
+
+    if (token === 'return' && functionDepth === 0) {
+      hasReturn = true
+      if (isReturnWithValue(code, index + token.length)) {
+        hasReturnValue = true
+      }
+      if (hasReturn && hasReturnValue) {
+        break
+      }
     }
 
     if (pendingArrow) {
@@ -305,15 +378,8 @@ function analyzeReturn(code) {
       pendingArrow = false
     }
 
-    if (token === 'return' && functionDepth === 0) {
-      hasReturn = true
-      if (isReturnWithValue(cleaned, index + token.length)) {
-        hasReturnValue = true
-      }
-      if (hasReturn && hasReturnValue) {
-        break
-      }
-    }
+    lastToken = token
+    recentClosedParen = null
   }
 
   return {

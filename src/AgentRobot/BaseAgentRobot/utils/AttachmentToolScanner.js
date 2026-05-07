@@ -174,7 +174,7 @@ ${table}
 - 使用用户请求匹配 skill description，
 - 一次只加载一个Skill，优先匹配最具体的Skill
 - 当用户请求不匹配任何Skill描述时，不加载任何Skill
-- 使用Skill前先使用readFile函数读取SKILL.md文件获取调用说明，通过仔细阅读说明文件学习Skill的使用方法，来完成任务 
+- 使用Skill前先使用readFile函数读取SKILL.md文件获取调用说明，通过仔细阅读说明文件学习Skill的使用方法，直接完成任务，无需创建子Agent来完成任务
 ## Available Skills
 
 | Skill | Type | Description | Location | SkillFilePath |
