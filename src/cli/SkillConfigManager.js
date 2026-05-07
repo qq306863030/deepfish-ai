@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-23 15:23:42
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-04-17 09:38:33
+ * @LastEditTime: 2026-05-06 14:53:07
  * @FilePath: \deepfish\src\cli\SkillConfigManager.js
  * @Description: Skill configuration manager
  */
@@ -89,7 +89,8 @@ class SkillConfigManager {
     // 如果数组的数量与目录中的数量不一致，则自动同步
     const skills = this.readSkills()
     const skillDirs = fs.readdirSync(this.skillDir).filter((file) => {
-      return fs.statSync(path.join(this.skillDir, file)).isDirectory()
+      const fullPath = path.join(this.skillDir, file)
+      return fs.statSync(fullPath).isDirectory() && fs.existsSync(path.join(fullPath, 'SKILL.md'))
     })
     if (skills.length === skillDirs.length) {
       return

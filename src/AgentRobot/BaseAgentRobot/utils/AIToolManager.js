@@ -49,6 +49,7 @@ class AIToolManager {
     // 外部工具扫描
     this.toolCollection = AttachmentToolScanner.getToolCollection(
       this.agentRobot.workspace,
+      this.agentRobot.basespace,
     ) // 加载工具集合
     this.clawSkillCollection = AttachmentToolScanner.getClawSkillCollection(
       this.agentRobot.basespace,

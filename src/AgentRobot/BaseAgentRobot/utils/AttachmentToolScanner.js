@@ -9,7 +9,7 @@ class AttachmentToolType {
 
 class AttachmentToolScanner {
   // 获取附加工具
-  static getToolCollection(workspace) {
+  static getToolCollection(workspace, basespace) {
     // 从文件中加载附加技能
     // 动态加载这些文件，获取工具对象
     const attachTools = []
@@ -55,8 +55,10 @@ class AttachmentToolScanner {
     const dir2 = path.resolve(workspace, './node_modules') // 工作目录下node_modules目录
     const dir3 = path.resolve(workspace, './') // 工作目录
     const dir4 = getGlobalNodeModulesPath()
+    const dir5 = path.resolve(basespace, 'skills') // 工作目录的父目录
+    const dir6 = path.resolve(basespace, 'clawSkills') // 工作目录的父目录
     const result = []
-    const searchDirs = [...new Set([dir1, dir2, dir3, dir4])]
+    const searchDirs = [...new Set([dir1, dir2, dir3, dir4, dir5, dir6])]
     for (const dirPath of searchDirs) {
       if (!fs.existsSync(dirPath)) {
         continue
