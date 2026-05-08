@@ -269,7 +269,7 @@ async function getGenerateClawSkillRules(goal) {
 3. 文档文件：目录中需新增2个说明文档：
    - README_CN.md（中文说明文档）
    - README.md（英文说明文档）
-4. 辅助文件：如果Skill涉及复杂逻辑，可在目录中创建辅助脚本文件（如 .js、.sh、.py 等），并在 SKILL.md 中说明其用途和调用方式
+4. 辅助文件：如果Skill涉及复杂逻辑，可在目录中创建辅助脚本文件（如 .js、.sh、.py 等），并在 SKILL.md 中说明其用途和调用方式；如果是js文件，可以在函数中通过this.Tools调用内置函数，如直接使用this.Tools.createSubAgent(workGoal)。
 
 #### 标准目录结构
 \`\`\`

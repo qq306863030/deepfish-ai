@@ -65,6 +65,7 @@ class BaseAgentRobot {
   ) {
     this.opt = opt
     this.config = opt
+    this.aiConfig = opt.aiConfig || {}
     this.id = opt.id || Date.now().toString()
     this.name = opt.name || 'AgentRobot'
     this.screenPrinter = new ScreenPrinter() // 屏幕打印机
