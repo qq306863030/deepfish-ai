@@ -1,6 +1,7 @@
 const { OpenAI } = require('openai')
 
 function creatClient(aiConfig) {
+  aiConfig.max_tokens = (!aiConfig.maxTokens || aiConfig.maxTokens === -1) ? undefined : aiConfig.maxTokens * 1024 // 转换为token数量，假设1KB约等于1024 tokens
   return new OpenAI({
     baseURL: aiConfig.baseUrl,
     apiKey: aiConfig.apiKey || '',
