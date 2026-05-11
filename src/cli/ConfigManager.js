@@ -130,6 +130,29 @@ class ConfigManager {
     return this.config.ai.find((item) => item.name === aiName)
   }
 
+  getAiConfig(aiName) {
+    return this._getAiConfig(aiName)
+  }
+
+  updateAiConfigByName(aiName, updater) {
+    const existingIndex = this.config.ai.findIndex(
+      (item) => item.name === aiName,
+    )
+    if (existingIndex === -1) {
+      aiConsole.logError(`Configuration with name "${aiName}" not found.`)
+      return null
+    }
+
+    const current = this.config.ai[existingIndex]
+    const next = typeof updater === 'function'
+      ? updater(lodash.cloneDeep(current))
+      : lodash.merge(lodash.cloneDeep(current), updater)
+
+    this.config.ai[existingIndex] = next
+    this.writeConfig(this.config)
+    return next
+  }
+
   // 获取Ai列表
   getAiList() {
     console.log('AI Configurations')
@@ -188,7 +211,8 @@ class ConfigManager {
     aiConsole.logInfo(`API Base URL: ${aiConfig.baseUrl}`)
     aiConsole.logInfo(`Model: ${aiConfig.model}`)
     if (aiConfig.apiKey) {
-      aiConsole.logInfo(`API Key: ${aiConfig.apiKey}`)
+      const maskPrefix = String(aiConfig.apiKey).slice(0, 6)
+      aiConsole.logInfo(`API Key: ${maskPrefix}... (masked)`)
     }
     aiConsole.logInfo(`Temperature: ${aiConfig.temperature}`)
     aiConsole.logInfo(`Max Tokens: ${aiConfig.maxTokens}`)

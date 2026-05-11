@@ -21,7 +21,7 @@ const aiCliConfig = {
     type: 'deepseek',
     apiKey: '',
     temperature: 0.7,
-    maxTokens: 8, // 单位KB
+    maxTokens: -1, // 单位KB
     maxContextLength: 64, // 单位KB
     stream: true,
   },
@@ -34,7 +34,7 @@ const aiCliConfig = {
     type: 'minimax',
     apiKey: '',
     temperature: 0.7,
-    maxTokens: 8, // 单位KB
+    maxTokens: -1, // 单位KB
     maxContextLength: 64, // 单位KB
     stream: true,
   },
@@ -47,7 +47,7 @@ const aiCliConfig = {
     type: 'qwen',
     apiKey: '',
     temperature: 0.7,
-    maxTokens: 8, // 单位KB
+    maxTokens: -1, // 单位KB
     maxContextLength: 64, // 单位KB
     stream: true,
   },
@@ -60,7 +60,7 @@ const aiCliConfig = {
     type: 'ollama',
     apiKey: 'ollama',
     temperature: 0.7,
-    maxTokens: 8, // 单位KB
+    maxTokens: -1, // 单位KB
     maxContextLength: 64, // 单位KB
     stream: true,
   },
@@ -73,8 +73,26 @@ const aiCliConfig = {
     type: 'openai',
     apiKey: '',
     temperature: 0.7,
-    maxTokens: 8, // 单位KB
+    maxTokens: -1, // 单位KB
     maxContextLength: 64, // 单位KB
+    stream: true,
+  },
+  Copilot: {
+    baseUrl: 'https://models.github.ai/inference',
+    model: {
+      list: [
+        'gpt-5.4-pro',
+        'gpt-5.4',
+        'claude-opus-4.6',
+        'claude-sonnet-4.6'
+      ],
+      defaultValue: 'gpt-5.4-pro',
+    },
+    type: 'github-models',
+    apiKey: '',
+    temperature: 0.7,
+    maxTokens: -1, // 单位KB
+    maxContextLength: 400, // 单位KB
     stream: true,
   }
 }

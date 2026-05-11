@@ -1,10 +1,42 @@
 const { OpenAI } = require('openai')
+const {
+  refreshGithubModelsTokenIfNeeded,
+  buildDefaultHeaders,
+} = require('./copilot.js')
+
+function normalizeAiRequestConfig(aiConfig = {}) {
+  const max_tokens = (!aiConfig.maxTokens || aiConfig.maxTokens === -1)
+    ? undefined
+    : aiConfig.maxTokens * 1024 // 兼容旧配置，按 1KB ~= 1024 tokens 估算
+
+  const requestConfig = {
+    model: aiConfig.model,
+    temperature: aiConfig.temperature,
+    stream: aiConfig.stream,
+    max_tokens,
+  }
+
+  // 仅 DeepSeek 兼容端注入扩展字段，避免其它网关因未知参数报错
+  if (aiConfig.type === 'deepseek') {
+    requestConfig.extra_body = { reasoning_split: true }
+  }
+
+  return requestConfig
+}
 
 function creatClient(aiConfig) {
-  aiConfig.max_tokens = (!aiConfig.maxTokens || aiConfig.maxTokens === -1) ? undefined : aiConfig.maxTokens * 1024 // 转换为token数量，假设1KB约等于1024 tokens
+  if (aiConfig.type === 'github-models') {
+    if (!aiConfig.apiKey || !String(aiConfig.apiKey).trim()) {
+      throw new Error(
+        'GitHub Models requires apiKey. Please set a GitHub token with models:read permission in your current AI config.',
+      )
+    }
+  }
+
   return new OpenAI({
     baseURL: aiConfig.baseUrl,
     apiKey: aiConfig.apiKey || '',
+    defaultHeaders: buildDefaultHeaders(aiConfig),
   })
 }
 
@@ -29,13 +61,15 @@ async function think(
   streamEnd,
 ) {
   try {
+    await refreshGithubModelsTokenIfNeeded(aiConfig)
+    const requestClient = creatClient(aiConfig)
+    const requestConfig = normalizeAiRequestConfig(aiConfig)
     const opt = {
       messages: messages,
-      extra_body: {"reasoning_split": true},
-      ...aiConfig,
+      ...requestConfig,
     }
     await thinkBefore()
-    const response = await openAiClient.chat.completions.create(opt)
+    const response = await requestClient.chat.completions.create(opt)
     if (aiConfig.stream) {
       const messageRes = await _streamToNonStream(
         response,
@@ -74,13 +108,15 @@ async function thinkByTool(
   streamEnd,
 ) {
   try {
+    await refreshGithubModelsTokenIfNeeded(aiConfig)
+    const requestClient = creatClient(aiConfig)
+    const requestConfig = normalizeAiRequestConfig(aiConfig)
     await thinkBefore()
-    const response = await openAiClient.chat.completions.create({
+    const response = await requestClient.chat.completions.create({
       messages: messages,
       tools: functionDescriptions,
       tool_choice: 'auto',
-      extra_body: {"reasoning_split": true},
-      ...aiConfig,
+      ...requestConfig,
     })
     if (aiConfig.stream) {
       const messageRes = await _streamToNonStream(

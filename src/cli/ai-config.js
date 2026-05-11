@@ -11,6 +11,8 @@ const { program } = require('commander')
 const { aiCliConfig } = require('./DefaultConfig.js')
 const ConfigManager = require('./ConfigManager.js')
 const aiInquirer = require('../AgentRobot/BaseAgentRobot/utils/aiInquirer.js')
+const aiConsole = require('../AgentRobot/BaseAgentRobot/utils/aiConsole.js')
+const { githubDeviceLogin } = require('./ai-auth.js')
 
 const configManager = new ConfigManager()
 const configCommand = program
@@ -87,6 +89,7 @@ configCommand
         type: 'input',
         name: 'baseUrl',
         message: 'Enter API base URL:',
+        when: (answers) => answers.Type !== 'Copilot',
         default: (answers) => {
           return aiCliConfig[answers.Type].baseUrl
         },
@@ -122,6 +125,7 @@ configCommand
         type: 'input',
         name: 'apiKey',
         message: 'Enter API key:',
+        when: (answers) => answers.Type !== 'Copilot',
         default: (answers) => {
           return aiCliConfig[answers.Type].apiKey
         },
@@ -143,7 +147,6 @@ configCommand
         default: (answers) => {
           return aiCliConfig[answers.Type].maxTokens
         },
-        validate: (value) => value > 0 || 'Max tokens must be greater than 0',
       },
       {
         type: 'number',
@@ -167,14 +170,29 @@ configCommand
     const aiConfig = {
       name: answers.name,
       type: aiCliConfig[answers.Type].type,
-      baseUrl: answers.baseUrl,
+      baseUrl: answers.baseUrl || aiCliConfig[answers.Type].baseUrl,
       model: answers.model,
-      apiKey: answers.apiKey,
+      apiKey: answers.apiKey || aiCliConfig[answers.Type].apiKey,
       temperature: answers.temperature,
       maxTokens: answers.maxTokens,
       maxContextLength: answers.maxContextLength,
       stream: answers.stream,
     }
+
+    if (answers.Type === 'Copilot') {
+      const loginRes = await githubDeviceLogin({
+        configManager,
+        targetName: answers.name,
+        saveToConfig: false,
+      })
+      if (!loginRes) {
+        aiConsole.logError('Copilot login failed. Configuration was not added.')
+        return
+      }
+      aiConfig.apiKey = loginRes.accessToken
+      aiConfig.githubAuth = loginRes.githubAuth
+    }
+
     return configManager.addAiConfig(aiConfig)
   })
 

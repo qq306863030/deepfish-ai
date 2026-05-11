@@ -5,6 +5,7 @@ const { GlobalVariable } = require('./GlobalVariable.js')
 require('./ai-config.js')
 require('./ai-skill.js')
 require('./ai-memory.js')
+require('./ai-auth.js')
 const aiConsole = require('../AgentRobot/BaseAgentRobot/utils/aiConsole.js')
 program
   .version('1.0.0')
@@ -23,7 +24,8 @@ async function main() {
     if (
       (program.args &&
         (program.args[0] === 'config' ||
-          program.args[0] === 'skill')) ||
+          program.args[0] === 'skill' ||
+          program.args[0] === 'auth')) ||
           program.args[0] === 'memory'
     ) {
       return
