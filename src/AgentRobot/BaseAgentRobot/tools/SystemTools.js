@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-05-12 18:00:00
+ * @LastEditTime: 2026-05-12 17:20:51
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数（含AST-grep/ripgrep/comby代码搜索替换工具）
  * @
@@ -147,6 +147,37 @@ function getSelfInfo() {
     codePath: {
       description: 'DeepFish AI程序代码路径',
       value: homeDir,
+    },
+    configPath: {
+      description: 'DeepFish AI程序配置文件路径',
+      value: path.resolve(this.agentRobot.basespace, 'config.js'),
+    },
+    selfCmd: {
+      description: 'DeepFish AI程序系统命令说明',
+      value: ```bash
+# Configuration commands
+ai config add # Add a new AI configuration
+ai config ls # List all AI configurations
+ai config use <name> # Set the specified AI configuration as the current one
+ai config del <name> # Delete the specified AI configuration
+ai config view [name] # View details of the specified AI configuration
+ai config edit # Edit the configuration file manually
+ai config dir # Open the configuration file directory
+ai config reset # Reset configuration
+
+# Skill commands
+ai skill ls # List all registered skills
+ai skill add <name> # Add a local skill directory or zip file from the current directory
+ai skill del <name|index> # Remove a skill by name or index, exp: ai skill del 1
+ai skill install <url> # Install a skill from ClawHub，exp: ai skill install https://clawhub.ai/TheSethRose/agent-browser
+ai skill enable <name|index> # Enable a skill by name or index, exp: ai skill enable 1
+ai skill disable <name|index> # Disable a skill by name or index, exp: ai skill disable 1
+ai skill dir # Open the skill directory
+
+# Memory commands
+ai memory clear # Clear the history messages for the current directory
+ai memory dir # Open the memory directory
+```
     },
     packageJsonPath: {
       description: 'DeepFish AI程序package.json文件路径',
