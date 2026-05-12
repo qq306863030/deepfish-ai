@@ -199,6 +199,14 @@ const descriptions = [
                   type: 'array',
                   description:
                     '选项数组，适用于list/checkbox/rawlist/expand类型',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      value: { type: 'string' },
+                      short: { type: 'string' },
+                    },
+                  },
                 },
                 validate: {
                   type: 'string',

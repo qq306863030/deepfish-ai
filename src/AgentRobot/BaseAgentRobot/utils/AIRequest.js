@@ -32,6 +32,13 @@ function creatClient(aiConfig) {
       )
     }
   }
+  if (aiConfig.type === 'copilot') {
+    if (!aiConfig.apiKey || !String(aiConfig.apiKey).trim()) {
+      throw new Error(
+        'GitHub Copilot requires apiKey. Please set a GitHub Copilot access token in your current AI config.',
+      )
+    }
+  }
 
   return new OpenAI({
     baseURL: aiConfig.baseUrl,
@@ -69,7 +76,8 @@ async function think(
       ...requestConfig,
     }
     await thinkBefore()
-    const response = await requestClient.chat.completions.create(opt)
+    const extraHeaders = aiConfig.type === 'copilot' ? { 'x-initiator': 'user' } : undefined
+    const response = await requestClient.chat.completions.create(opt, extraHeaders ? { headers: extraHeaders } : undefined)
     if (aiConfig.stream) {
       const messageRes = await _streamToNonStream(
         response,
@@ -112,12 +120,16 @@ async function thinkByTool(
     const requestClient = creatClient(aiConfig)
     const requestConfig = normalizeAiRequestConfig(aiConfig)
     await thinkBefore()
-    const response = await requestClient.chat.completions.create({
-      messages: messages,
-      tools: functionDescriptions,
-      tool_choice: 'auto',
-      ...requestConfig,
-    })
+    const extraHeaders = aiConfig.type === 'copilot' ? { 'x-initiator': 'agent' } : undefined
+    const response = await requestClient.chat.completions.create(
+      {
+        messages: messages,
+        tools: functionDescriptions,
+        tool_choice: 'auto',
+        ...requestConfig,
+      },
+      extraHeaders ? { headers: extraHeaders } : undefined,
+    )
     if (aiConfig.stream) {
       const messageRes = await _streamToNonStream(
         response,

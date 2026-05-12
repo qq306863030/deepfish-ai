@@ -20,7 +20,7 @@ function secondsToISO(seconds) {
 }
 
 async function refreshGithubModelsTokenIfNeeded(aiConfig = {}) {
-	if (aiConfig.type !== 'github-models') {
+	if (aiConfig.type !== 'github-models' && aiConfig.type !== 'copilot') {
 		return
 	}
 	const githubAuth = aiConfig.githubAuth || {}
@@ -101,6 +101,11 @@ function buildDefaultHeaders(aiConfig = {}) {
 		return {
 			Accept: 'application/vnd.github+json',
 			'X-GitHub-Api-Version': '2026-03-10',
+		}
+	}
+	if (aiConfig.type === 'copilot') {
+		return {
+			'Openai-Intent': 'conversation-edits',
 		}
 	}
 	return undefined

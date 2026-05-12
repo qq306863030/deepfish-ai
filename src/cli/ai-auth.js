@@ -39,9 +39,9 @@ async function githubDeviceLogin({
       aiConsole.logError(`Configuration with name "${targetName}" not found.`)
       return null
     }
-    if (aiConfig.type !== 'github-models') {
+    if (aiConfig.type !== 'copilot') {
       aiConsole.logError(
-        `Configuration "${targetName}" is type "${aiConfig.type}". GitHub login only supports "github-models" type.`,
+        `Configuration "${targetName}" is type "${aiConfig.type}". GitHub login only supports "copilot" type.`,
       )
       return null
     }
@@ -212,7 +212,7 @@ const authCommand = program
 
 authCommand
   .command('github-login [name]')
-  .description('Login with GitHub account (Device Flow) and store short-lived token into a github-models config')
+  .description('Login with GitHub account (Device Flow) and store short-lived token into a copilot config')
   .action(async (name) => {
     const configManager = getConfigManager()
     const targetName = name || configManager.getCurrentAi()

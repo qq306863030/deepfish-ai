@@ -15,7 +15,7 @@ const aiCliConfig = {
   DeepSeek: {
     baseUrl: 'https://api.deepseek.com',
     model: {
-      list: ['deepseek-chat', 'deepseek-reasoner', 'other'],
+      list: ['deepseek-chat', 'deepseek-reasoner', 'deepseek-v4-flash', 'deepseek-v4-pro', 'other'],
       defaultValue: '',
     },
     type: 'deepseek',
@@ -78,17 +78,15 @@ const aiCliConfig = {
     stream: true,
   },
   Copilot: {
-    baseUrl: 'https://models.github.ai/inference',
+    baseUrl: 'https://api.githubcopilot.com',
     model: {
       list: [
-        'gpt-5.4-pro',
-        'gpt-5.4',
-        'claude-opus-4.6',
-        'claude-sonnet-4.6'
+        'gpt-4o',
+        'gpt-4o-mini',
       ],
-      defaultValue: 'gpt-5.4-pro',
+      defaultValue: 'gpt-4o',
     },
-    type: 'github-models',
+    type: 'copilot',
     apiKey: '',
     temperature: 0.7,
     maxTokens: -1, // 单位KB
