@@ -2,9 +2,9 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-05-07 14:17:50
+ * @LastEditTime: 2026-05-12 18:00:00
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
- * @Description: 默认扩展函数
+ * @Description: 默认扩展函数（含AST-grep/ripgrep/comby代码搜索替换工具）
  * @
  */
 const path = require('path')
@@ -167,6 +167,235 @@ function getSelfInfo() {
   }
 }
 
+// ========== 代码搜索与结构替换工具 ==========
+
+/**
+ * 查找 CLI 工具是否可用，返回可用的命令路径或 null
+ * @param {string[]} candidateCmds 候选命令列表
+ * @returns {string|null} 找到的第一个可用命令
+ */
+function findAvailableCommand(candidateCmds) {
+  for (const cmd of candidateCmds) {
+    try {
+      const check = spawnSync(cmd, ['--version'], {
+        shell: true,
+        windowsHide: true,
+        timeout: 8000,
+        encoding: 'buffer',
+      })
+      if (check.status === 0) return cmd
+    } catch (_) {
+      // 继续尝试下一个
+    }
+  }
+  return null
+}
+
+/**
+ * AST结构化代码搜索与替换（基于ast-grep）
+ * 通过AST模式精准匹配代码结构，避免正则误匹配。
+ * 支持 JavaScript/TypeScript/Python/Java/Go/Rust 等30+语言。
+ *
+ * @param {string} pattern - AST模式，如 'class $NAME { $$ }'、'function $FUNC($$$ARGS) { $$ }'
+ * @param {string} filePath - 目标文件或目录路径（相对于工作目录）
+ * @param {string} [language] - 语言选择器，如 'javascript'、'typescript'、'python'
+ * @param {string} [rewrite] - 替换模板，如 'class $NAME extends Base { $$ }'
+ * @param {boolean} [update=false] - 是否直接修改源文件（默认false，仅预览）
+ * @returns {string} 搜索匹配结果或替换统计信息
+ */
+function astGrepSearch(pattern, filePath, language, rewrite, update) {
+  aiConsole.logSuccess(
+    `AST-grep: pattern="${pattern}", path="${filePath}", lang=${language || 'auto'}, rewrite=${!!rewrite}, update=${!!update}`,
+  )
+  try {
+    const resolvedPath = path.resolve(process.cwd(), filePath)
+
+    // 候选命令：npx 调用 / 本地 node_modules / 全局安装
+    const nodeBin = path.resolve(__dirname, '../../../../node_modules/.bin')
+    const candidateCmds = [
+      `npx ast-grep`,
+      `"${path.join(nodeBin, 'ast-grep')}"`,
+      `"${path.join(nodeBin, 'ast-grep.cmd')}"`,
+      'ast-grep',
+      'sg',
+    ]
+
+    const astGrepCmd = findAvailableCommand(candidateCmds)
+    if (!astGrepCmd) {
+      return `[AST-grep] 工具未安装。安装方法：npm install @ast-grep/cli（项目级）或 npm install -g @ast-grep/cli（全局）`
+    }
+
+    const args = ['--pattern', pattern]
+    if (language) args.push('--selector', language)
+    if (rewrite) args.push('--rewrite', rewrite)
+    if (update) args.push('--update')
+    args.push(resolvedPath)
+
+    const result = spawnSync(astGrepCmd, args, {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+      shell: true,
+      encoding: 'buffer',
+      windowsHide: true,
+      timeout: 60000,
+    })
+
+    const stdout = iconv.decode(result.stdout, 'utf8')
+    const stderr = iconv.decode(result.stderr, 'utf8')
+
+    if (result.status !== 0 && stderr && !stderr.includes('no matches')) {
+      return `[AST-grep] 错误: ${stderr.trim()}`
+    }
+
+    const output = stdout.trim()
+    if (!output) {
+      return '[AST-grep] 搜索完成，未找到匹配项。'
+    }
+
+    const lines = output.split('\n').length
+    const actionLabel = rewrite ? (update ? '已替换' : '可替换（预览模式，未修改文件）') : '匹配'
+    return `[AST-grep] ${actionLabel} ${lines} 处:\n${output}`
+  } catch (error) {
+    return `[AST-grep] 执行失败: ${error.message}`
+  }
+}
+
+/**
+ * 超快速文本搜索（基于ripgrep）
+ * 比 grep/findstr 快数倍，支持正则、文件类型过滤、上下文行。
+ * 适合在大型项目中快速定位代码/文本片段。
+ *
+ * @param {string} searchValue - 搜索关键词或正则表达式
+ * @param {string} filePath - 文件或目录路径（相对于工作目录）
+ * @param {string} [fileTypes] - 文件类型过滤，如 'js,ts,json'（可选）
+ * @param {number} [contextLines=2] - 显示匹配行前后上下文行数
+ * @returns {string} 搜索结果
+ */
+function ripgrepSearch(searchValue, filePath, fileTypes, contextLines = 2) {
+  aiConsole.logSuccess(
+    `ripgrep: pattern="${searchValue}", path="${filePath}", types=${fileTypes || 'all'}, context=${contextLines}`,
+  )
+  try {
+    const resolvedPath = path.resolve(process.cwd(), filePath)
+
+    const candidateCmds = ['rg', 'rg.exe']
+    const rgCmd = findAvailableCommand(candidateCmds)
+    if (!rgCmd) {
+      const platform = process.platform
+      const installHint =
+        platform === 'win32'
+          ? 'Windows: winget install BurntSushi.ripgrep.MSVC 或 choco install ripgrep 或 scoop install ripgrep'
+          : platform === 'darwin'
+            ? 'macOS: brew install ripgrep'
+            : 'Linux: apt install ripgrep 或 yum install ripgrep'
+      return `[ripgrep] 工具未安装。安装方法：${installHint}`
+    }
+
+    const args = ['--no-heading', '--line-number', '--color', 'never']
+    if (fileTypes) {
+      const types = fileTypes.split(',').map((t) => t.trim())
+      for (const t of types) args.push('--type', t)
+    }
+    if (contextLines > 0) {
+      args.push('--context', String(contextLines))
+    }
+    args.push(searchValue, resolvedPath)
+
+    const result = spawnSync(rgCmd, args, {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+      shell: true,
+      encoding: 'buffer',
+      windowsHide: true,
+      timeout: 60000,
+    })
+
+    const stdout = iconv.decode(result.stdout, 'utf8')
+    const stderr = iconv.decode(result.stderr, 'utf8')
+
+    // rg returns code 1 when no matches
+    if (result.status > 1 && stderr) {
+      return `[ripgrep] 错误: ${stderr.trim()}`
+    }
+
+    const output = stdout.trim()
+    if (!output) {
+      return '[ripgrep] 搜索完成，未找到匹配项。'
+    }
+
+    const matchCount = output.split('\n').filter((l) => !l.startsWith('--')).length
+    return `[ripgrep] 找到 ${matchCount} 处匹配:\n${output}`
+  } catch (error) {
+    return `[ripgrep] 执行失败: ${error.message}`
+  }
+}
+
+/**
+ * 结构化代码替换（基于comby）
+ * 通过模式变量（:[var]）匹配并替换代码，比正则更安全精准。
+ * 支持多种语言的文件扩展名过滤。
+ *
+ * @param {string} matchTemplate - 匹配模板，如 'foo(:[a], :[b])'、'if (:[cond]) { :[body] }'
+ * @param {string} rewriteTemplate - 重写模板，如 'bar(:[b], :[a])'、'if (!:[cond]) { :[body] }'
+ * @param {string} filePath - 文件或目录路径（相对于工作目录）
+ * @param {string} [language] - 文件扩展名过滤，如 '.js'、'.ts'、'.py'
+ * @returns {string} 替换结果统计
+ */
+function combyReplace(matchTemplate, rewriteTemplate, filePath, language) {
+  aiConsole.logSuccess(
+    `comby: match="${matchTemplate}", rewrite="${rewriteTemplate}", path="${filePath}", lang=${language || 'all'}`,
+  )
+  try {
+    const resolvedPath = path.resolve(process.cwd(), filePath)
+
+    const candidateCmds = ['comby', 'comby.exe']
+    const combyCmd = findAvailableCommand(candidateCmds)
+    if (!combyCmd) {
+      const platform = process.platform
+      const installHint =
+        platform === 'win32'
+          ? 'Windows: scoop install comby 或从 https://github.com/comby-tools/comby/releases 下载'
+          : platform === 'darwin'
+            ? 'macOS: brew install comby'
+            : 'Linux: bash <(curl -sL get.comby.dev)'
+      return `[comby] 工具未安装。安装方法：${installHint}`
+    }
+
+    const args = [
+      `"${matchTemplate}"`,
+      `"${rewriteTemplate}"`,
+      resolvedPath,
+      '-i',
+    ]
+    if (language) args.push(language)
+
+    const result = spawnSync(combyCmd, args, {
+      cwd: process.cwd(),
+      stdio: 'pipe',
+      shell: true,
+      encoding: 'buffer',
+      windowsHide: true,
+      timeout: 60000,
+    })
+
+    const stdout = iconv.decode(result.stdout, 'utf8')
+    const stderr = iconv.decode(result.stderr, 'utf8')
+
+    if (result.status !== 0 && stderr) {
+      return `[comby] 错误: ${stderr.trim()}`
+    }
+
+    const output = stdout.trim()
+    if (!output) {
+      return '[comby] 替换完成，未找到匹配项。'
+    }
+
+    return `[comby] 替换结果:\n${output}`
+  } catch (error) {
+    return `[comby] 执行失败: ${error.message}`
+  }
+}
+
 const descriptions = [
   {
     type: 'function',
@@ -242,6 +471,100 @@ const descriptions = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'astGrepSearch',
+      description:
+        '【推荐】使用AST-grep进行结构化代码搜索与精准替换。通过AST语法树模式匹配代码结构（而非正则文本），避免误匹配注释/字符串。支持JavaScript/TypeScript/Python/Java/Go/Rust等30+语言。适用于：重命名函数、修改API调用、重构类继承、批量清理TODO等场景。参数：pattern-AST模式（如"class $NAME { $$ }"匹配类定义）；filePath-目标文件或目录路径；language-可选，语言选择器（如javascript/typescript/python，不指定则自动检测）；rewrite-可选，替换模板（如"class $NAME extends Base { $$ }"）；update-可选，是否直接修改源文件（默认false仅预览）。比replaceFileText更精准，比手动逐个修改高效。',
+      parameters: {
+        type: 'object',
+        properties: {
+          pattern: {
+            type: 'string',
+            description: 'AST匹配模式，如 "function $FUNC($$$ARGS) { $$ }"',
+          },
+          filePath: {
+            type: 'string',
+            description: '目标文件或目录路径',
+          },
+          language: {
+            type: 'string',
+            description: '语言选择器，如 javascript/typescript/python/java/go/rust，默认自动检测',
+          },
+          rewrite: {
+            type: 'string',
+            description: '替换模板，如 "function $FUNC($$$ARGS) { log(); $$ }"',
+          },
+          update: {
+            type: 'boolean',
+            description: '是否直接修改源文件，默认false（仅预览）',
+          },
+        },
+        required: ['pattern', 'filePath'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'ripgrepSearch',
+      description:
+        '【推荐】使用ripgrep(rg)进行超快速文本搜索。比grep/findstr快数倍，自动忽略.gitignore和隐藏文件。支持正则表达式、文件类型过滤、上下文行显示。适用于：大型项目中快速定位代码片段、查找所有引用、搜索日志/配置文件中的关键词。参数：searchValue-搜索关键词或正则；filePath-文件或目录路径；fileTypes-可选，逗号分隔的文件类型（如"js,ts,json"）；contextLines-可选，显示匹配行前后的上下文行数（默认2）。比readFile+手动查找高效N倍。',
+      parameters: {
+        type: 'object',
+        properties: {
+          searchValue: {
+            type: 'string',
+            description: '搜索关键词或正则表达式',
+          },
+          filePath: {
+            type: 'string',
+            description: '文件或目录路径',
+          },
+          fileTypes: {
+            type: 'string',
+            description: '逗号分隔的文件类型过滤，如 "js,ts,json"',
+          },
+          contextLines: {
+            type: 'number',
+            description: '匹配行前后的上下文行数，默认2',
+          },
+        },
+        required: ['searchValue', 'filePath'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'combyReplace',
+      description:
+        '【推荐】使用comby进行结构化代码替换。通过模式变量（:[var]）匹配并替换代码结构，比正则更安全、比手动逐个替换高效。自动处理括号配对和嵌套结构。适用于：批量重命名函数参数、交换参数顺序、替换条件表达式、统一API调用风格等场景。参数：matchTemplate-匹配模板（如"foo(:[a], :[b])"）；rewriteTemplate-重写模板（如"bar(:[b], :[a])"）；filePath-文件或目录路径；language-可选，文件扩展名过滤（如".js"、".ts"）。',
+      parameters: {
+        type: 'object',
+        properties: {
+          matchTemplate: {
+            type: 'string',
+            description: '匹配模板，使用:[变量名]捕获代码片段，如 "deprecatedFn(:[args])"',
+          },
+          rewriteTemplate: {
+            type: 'string',
+            description: '重写模板，引用捕获的变量，如 "newFn(:[args])"',
+          },
+          filePath: {
+            type: 'string',
+            description: '目标文件或目录路径',
+          },
+          language: {
+            type: 'string',
+            description: '文件扩展名过滤，如 ".js"、".ts"、".py"',
+          },
+        },
+        required: ['matchTemplate', 'rewriteTemplate', 'filePath'],
+      },
+    },
+  },
 ]
 const functions = {
   executeCommand,
@@ -249,12 +572,15 @@ const functions = {
   executeJSCode,
   getCurrentTime,
   getSelfInfo,
+  astGrepSearch,
+  ripgrepSearch,
+  combyReplace,
 }
 
 const SystemTool = {
   name: 'SystemTool',
   description:
-    '提供系统命令执行、AI请求、JS代码执行、扩展文件生成规则、AI配置管理、Tool加载执行等核心系统功能',
+    '提供系统命令执行、AI请求、JS代码执行、AST-grep结构化搜索替换、ripgrep超快文本搜索、comby结构化代码替换、扩展文件生成规则、AI配置管理、Tool加载执行等核心系统功能',
   descriptions,
   functions,
   isSystem: true

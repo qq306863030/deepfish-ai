@@ -35,6 +35,7 @@
   },
   "homepage": "https://github.com/qq306863030/deepfish-ai#readme",
   "dependencies": {
+    "@ast-grep/cli": "^0.37.0",
     "adm-zip": "^0.5.16",
     "axios": "^1.13.5",
     "canvas": "^3.2.3",
@@ -43,6 +44,7 @@
     "cheerio": "^1.2.0",
     "commander": "^11.0.0",
     "dayjs": "^1.11.19",
+    "deepfish-ai": "file:",
     "docx": "^9.6.1",
     "docxtemplater": "^3.68.4",
     "echarts": "^6.0.0",
