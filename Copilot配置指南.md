@@ -7,7 +7,7 @@
 - 你需要一个 GitHub 账号。
 - deepfish 项目已安装依赖，可执行 CLI 命令。
 - 当前项目的 Copilot 类型使用 GitHub Models 网关：
-  - baseUrl: https://models.github.ai/inference
+  - baseUrl: https://api.githubcopilot.com
   - type: github-models
 
 ## 二、OAuth 参数分别是什么
