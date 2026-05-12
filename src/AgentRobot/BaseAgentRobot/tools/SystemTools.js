@@ -2,7 +2,7 @@
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
  * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-05-12 17:20:51
+ * @LastEditTime: 2026-05-12 18:49:29
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数（含AST-grep/ripgrep/comby代码搜索替换工具）
  * @
@@ -291,141 +291,7 @@ function astGrepSearch(pattern, filePath, language, rewrite, update) {
   }
 }
 
-/**
- * 超快速文本搜索（基于ripgrep）
- * 比 grep/findstr 快数倍，支持正则、文件类型过滤、上下文行。
- * 适合在大型项目中快速定位代码/文本片段。
- *
- * @param {string} searchValue - 搜索关键词或正则表达式
- * @param {string} filePath - 文件或目录路径（相对于工作目录）
- * @param {string} [fileTypes] - 文件类型过滤，如 'js,ts,json'（可选）
- * @param {number} [contextLines=2] - 显示匹配行前后上下文行数
- * @returns {string} 搜索结果
- */
-function ripgrepSearch(searchValue, filePath, fileTypes, contextLines = 2) {
-  aiConsole.logSuccess(
-    `ripgrep: pattern="${searchValue}", path="${filePath}", types=${fileTypes || 'all'}, context=${contextLines}`,
-  )
-  try {
-    const resolvedPath = path.resolve(process.cwd(), filePath)
 
-    const candidateCmds = ['rg', 'rg.exe']
-    const rgCmd = findAvailableCommand(candidateCmds)
-    if (!rgCmd) {
-      const platform = process.platform
-      const installHint =
-        platform === 'win32'
-          ? 'Windows: winget install BurntSushi.ripgrep.MSVC 或 choco install ripgrep 或 scoop install ripgrep'
-          : platform === 'darwin'
-            ? 'macOS: brew install ripgrep'
-            : 'Linux: apt install ripgrep 或 yum install ripgrep'
-      return `[ripgrep] 工具未安装。安装方法：${installHint}`
-    }
-
-    const args = ['--no-heading', '--line-number', '--color', 'never']
-    if (fileTypes) {
-      const types = fileTypes.split(',').map((t) => t.trim())
-      for (const t of types) args.push('--type', t)
-    }
-    if (contextLines > 0) {
-      args.push('--context', String(contextLines))
-    }
-    args.push(searchValue, resolvedPath)
-
-    const result = spawnSync(rgCmd, args, {
-      cwd: process.cwd(),
-      stdio: 'pipe',
-      shell: true,
-      encoding: 'buffer',
-      windowsHide: true,
-      timeout: 60000,
-    })
-
-    const stdout = iconv.decode(result.stdout, 'utf8')
-    const stderr = iconv.decode(result.stderr, 'utf8')
-
-    // rg returns code 1 when no matches
-    if (result.status > 1 && stderr) {
-      return `[ripgrep] 错误: ${stderr.trim()}`
-    }
-
-    const output = stdout.trim()
-    if (!output) {
-      return '[ripgrep] 搜索完成，未找到匹配项。'
-    }
-
-    const matchCount = output.split('\n').filter((l) => !l.startsWith('--')).length
-    return `[ripgrep] 找到 ${matchCount} 处匹配:\n${output}`
-  } catch (error) {
-    return `[ripgrep] 执行失败: ${error.message}`
-  }
-}
-
-/**
- * 结构化代码替换（基于comby）
- * 通过模式变量（:[var]）匹配并替换代码，比正则更安全精准。
- * 支持多种语言的文件扩展名过滤。
- *
- * @param {string} matchTemplate - 匹配模板，如 'foo(:[a], :[b])'、'if (:[cond]) { :[body] }'
- * @param {string} rewriteTemplate - 重写模板，如 'bar(:[b], :[a])'、'if (!:[cond]) { :[body] }'
- * @param {string} filePath - 文件或目录路径（相对于工作目录）
- * @param {string} [language] - 文件扩展名过滤，如 '.js'、'.ts'、'.py'
- * @returns {string} 替换结果统计
- */
-function combyReplace(matchTemplate, rewriteTemplate, filePath, language) {
-  aiConsole.logSuccess(
-    `comby: match="${matchTemplate}", rewrite="${rewriteTemplate}", path="${filePath}", lang=${language || 'all'}`,
-  )
-  try {
-    const resolvedPath = path.resolve(process.cwd(), filePath)
-
-    const candidateCmds = ['comby', 'comby.exe']
-    const combyCmd = findAvailableCommand(candidateCmds)
-    if (!combyCmd) {
-      const platform = process.platform
-      const installHint =
-        platform === 'win32'
-          ? 'Windows: scoop install comby 或从 https://github.com/comby-tools/comby/releases 下载'
-          : platform === 'darwin'
-            ? 'macOS: brew install comby'
-            : 'Linux: bash <(curl -sL get.comby.dev)'
-      return `[comby] 工具未安装。安装方法：${installHint}`
-    }
-
-    const args = [
-      `"${matchTemplate}"`,
-      `"${rewriteTemplate}"`,
-      resolvedPath,
-      '-i',
-    ]
-    if (language) args.push(language)
-
-    const result = spawnSync(combyCmd, args, {
-      cwd: process.cwd(),
-      stdio: 'pipe',
-      shell: true,
-      encoding: 'buffer',
-      windowsHide: true,
-      timeout: 60000,
-    })
-
-    const stdout = iconv.decode(result.stdout, 'utf8')
-    const stderr = iconv.decode(result.stderr, 'utf8')
-
-    if (result.status !== 0 && stderr) {
-      return `[comby] 错误: ${stderr.trim()}`
-    }
-
-    const output = stdout.trim()
-    if (!output) {
-      return '[comby] 替换完成，未找到匹配项。'
-    }
-
-    return `[comby] 替换结果:\n${output}`
-  } catch (error) {
-    return `[comby] 执行失败: ${error.message}`
-  }
-}
 
 const descriptions = [
   {
@@ -535,67 +401,7 @@ const descriptions = [
         required: ['pattern', 'filePath'],
       },
     },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'ripgrepSearch',
-      description:
-        '【推荐】使用ripgrep(rg)进行超快速文本搜索。比grep/findstr快数倍，自动忽略.gitignore和隐藏文件。支持正则表达式、文件类型过滤、上下文行显示。适用于：大型项目中快速定位代码片段、查找所有引用、搜索日志/配置文件中的关键词。参数：searchValue-搜索关键词或正则；filePath-文件或目录路径；fileTypes-可选，逗号分隔的文件类型（如"js,ts,json"）；contextLines-可选，显示匹配行前后的上下文行数（默认2）。比readFile+手动查找高效N倍。',
-      parameters: {
-        type: 'object',
-        properties: {
-          searchValue: {
-            type: 'string',
-            description: '搜索关键词或正则表达式',
-          },
-          filePath: {
-            type: 'string',
-            description: '文件或目录路径',
-          },
-          fileTypes: {
-            type: 'string',
-            description: '逗号分隔的文件类型过滤，如 "js,ts,json"',
-          },
-          contextLines: {
-            type: 'number',
-            description: '匹配行前后的上下文行数，默认2',
-          },
-        },
-        required: ['searchValue', 'filePath'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'combyReplace',
-      description:
-        '【推荐】使用comby进行结构化代码替换。通过模式变量（:[var]）匹配并替换代码结构，比正则更安全、比手动逐个替换高效。自动处理括号配对和嵌套结构。适用于：批量重命名函数参数、交换参数顺序、替换条件表达式、统一API调用风格等场景。参数：matchTemplate-匹配模板（如"foo(:[a], :[b])"）；rewriteTemplate-重写模板（如"bar(:[b], :[a])"）；filePath-文件或目录路径；language-可选，文件扩展名过滤（如".js"、".ts"）。',
-      parameters: {
-        type: 'object',
-        properties: {
-          matchTemplate: {
-            type: 'string',
-            description: '匹配模板，使用:[变量名]捕获代码片段，如 "deprecatedFn(:[args])"',
-          },
-          rewriteTemplate: {
-            type: 'string',
-            description: '重写模板，引用捕获的变量，如 "newFn(:[args])"',
-          },
-          filePath: {
-            type: 'string',
-            description: '目标文件或目录路径',
-          },
-          language: {
-            type: 'string',
-            description: '文件扩展名过滤，如 ".js"、".ts"、".py"',
-          },
-        },
-        required: ['matchTemplate', 'rewriteTemplate', 'filePath'],
-      },
-    },
-  },
+  }
 ]
 const functions = {
   executeCommand,
@@ -604,8 +410,6 @@ const functions = {
   getCurrentTime,
   getSelfInfo,
   astGrepSearch,
-  ripgrepSearch,
-  combyReplace,
 }
 
 const SystemTool = {

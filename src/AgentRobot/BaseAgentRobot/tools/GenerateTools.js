@@ -413,7 +413,7 @@ function getSessionHistoryFile() {
     latestLogFile = logFiles.sort((a, b) => {
       const aTime = parseInt(a.slice(12, -4))
       const bTime = parseInt(b.slice(12, -4))
-      return bTime - aTime
+      return aTime - bTime
     })[1]
   }
   const logFilePath = path.join(logDirPath, latestLogFile)
