@@ -7,6 +7,7 @@
  * @Description: Skill configuration manager
  */
 const path = require('path')
+const { spawnSync } = require('child_process')
 const fs = require('fs-extra')
 const axios = require('axios')
 const cheerio = require('cheerio')
@@ -154,6 +155,16 @@ class SkillConfigManager {
     // 从ClawHub下载zip并解压到skills目录下，并添加到config中
     if (!skillUrl || typeof skillUrl !== 'string') {
       aiConsole.logError('Invalid skill URL. Please provide a valid ClawHub URL.')
+      return
+    }
+    // 判断url是否是github的url，如果是github的url则使用git命令拉取、执行add函数、删除目录
+    if (skillUrl.endsWith('.git')) {
+      spawnSync('git', ['clone', skillUrl], {
+        stdio: 'inherit',
+      })
+      const repoName = path.basename(skillUrl, '.git')
+      await this.add(repoName)
+      fs.removeSync(path.join(process.cwd(), repoName))
       return
     }
 
