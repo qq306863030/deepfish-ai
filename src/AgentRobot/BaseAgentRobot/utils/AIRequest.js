@@ -6,9 +6,10 @@ const {
 const { ModelListManager } = require('./ModelListManager.js')
 
 function normalizeAiRequestConfig(aiConfig = {}) {
-  const max_tokens = (!aiConfig.maxTokens || aiConfig.maxTokens === -1)
-    ? undefined
-    : aiConfig.maxTokens * 1024 // 兼容旧配置，按 1KB ~= 1024 tokens 估算
+  const max_tokens =
+    !aiConfig.maxTokens || aiConfig.maxTokens === -1
+      ? undefined
+      : aiConfig.maxTokens * 1024 // 兼容旧配置，按 1KB ~= 1024 tokens 估算
 
   const requestConfig = {
     model: aiConfig.model,
@@ -77,8 +78,12 @@ async function think(
       ...requestConfig,
     }
     await thinkBefore()
-    const extraHeaders = aiConfig.type === 'copilot' ? { 'x-initiator': 'user' } : undefined
-    const response = await requestClient.chat.completions.create(opt, extraHeaders ? { headers: extraHeaders } : undefined)
+    const extraHeaders =
+      aiConfig.type === 'copilot' ? { 'x-initiator': 'user' } : undefined
+    const response = await requestClient.chat.completions.create(
+      opt,
+      extraHeaders ? { headers: extraHeaders } : undefined,
+    )
     if (aiConfig.stream) {
       const messageRes = await _streamToNonStream(
         response,
@@ -121,7 +126,8 @@ async function thinkByTool(
     const requestClient = creatClient(aiConfig)
     const requestConfig = normalizeAiRequestConfig(aiConfig)
     await thinkBefore()
-    const extraHeaders = aiConfig.type === 'copilot' ? { 'x-initiator': 'agent' } : undefined
+    const extraHeaders =
+      aiConfig.type === 'copilot' ? { 'x-initiator': 'agent' } : undefined
     const response = await requestClient.chat.completions.create(
       {
         messages: messages,
@@ -140,7 +146,9 @@ async function thinkByTool(
         streamEnd,
       )
       await thinkAfter()
-      messageRes.choices[0].message.content = clearThinkTag(messageRes.choices[0].message.content)
+      messageRes.choices[0].message.content = clearThinkTag(
+        messageRes.choices[0].message.content,
+      )
       return {
         content: messageRes.choices[0].message.content,
         tool_calls: messageRes.choices[0].message.tool_calls,
@@ -148,7 +156,9 @@ async function thinkByTool(
       }
     }
     await thinkAfter()
-    response.choices[0].message.content = clearThinkTag(response.choices[0].message.content)
+    response.choices[0].message.content = clearThinkTag(
+      response.choices[0].message.content,
+    )
     return {
       content: response.choices[0].message.content,
       tool_calls: response.choices[0].message.tool_calls,
@@ -156,28 +166,28 @@ async function thinkByTool(
     }
   } catch (error) {
     console.log('****', error.message)
-    if (error.message.includes('429')) {
-      const modelListManager = new ModelListManager()
-      modelListManager.updateModelList(aiConfig.model, false)
-      const isSet = modelListManager.setModel(aiConfig)
-      if (isSet) {
-        return thinkByTool(
-          openAiClient,
-          aiConfig,
-          messages,
-          functionDescriptions,
-          thinkBefore,
-          thinkAfter,
-          streamThinkOutput,
-          streamContentOutput,
-          streamToolCallsOutput,
-          streamEnd,
-        )
-      } else {
-        throw new Error(`AI response error: ${error.message}`)
-      }
+    if (error.message.includes('400')) {
+      throw new Error(`AI response error: ${error.message}`)
     }
-    throw new Error(`AI response error: ${error.message}`)
+    const modelListManager = new ModelListManager()
+    modelListManager.updateModelList(aiConfig.model, false)
+    const isSet = modelListManager.setModel(aiConfig)
+    if (isSet) {
+      return thinkByTool(
+        openAiClient,
+        aiConfig,
+        messages,
+        functionDescriptions,
+        thinkBefore,
+        thinkAfter,
+        streamThinkOutput,
+        streamContentOutput,
+        streamToolCallsOutput,
+        streamEnd,
+      )
+    } else {
+      throw new Error(`AI response error: ${error.message}`)
+    }
   }
 }
 
@@ -284,7 +294,9 @@ async function _streamToNonStream(
             const toolCall = toolCallBuffers.get(id)
             if (toolCall && toolCallChunk.function?.arguments) {
               if (toolCall.function.arguments.length === 0) {
-                streamToolCallsOutput(`\r\n[ToolCalls...][${toolCall.function.name}]`)
+                streamToolCallsOutput(
+                  `\r\n[ToolCalls...][${toolCall.function.name}]`,
+                )
               }
               toolCall.function.arguments += toolCallChunk.function.arguments
               streamToolCallsOutput(toolCallChunk.function.arguments)
@@ -315,6 +327,5 @@ async function _streamToNonStream(
     throw error // 抛出错误让上层处理
   }
 }
-
 
 module.exports = { creatClient, think, thinkByTool }
