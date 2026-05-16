@@ -2,7 +2,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const aiConsole = require('./aiConsole.js')
 
-export class ModelListManager {
+class ModelListManager {
     // 查看模型列表 model_list.json [{model: "gpt-3.5-turbo", isAvailable: true}, ...]
     setModel(aiConfig) {
         const modelListPath = path.join(process.cwd(), 'model_list.json')
@@ -42,5 +42,6 @@ export class ModelListManager {
         const modelList = fs.readJSONSync(modelListPath)
         return modelList.some(model => model.isAvailable)
     }
-    
 }
+
+exports.ModelListManager = ModelListManager

@@ -155,6 +155,7 @@ async function thinkByTool(
       message: response.choices[0].message,
     }
   } catch (error) {
+    console.log('****', error.message)
     if (error.message.includes('429')) {
       const modelListManager = new ModelListManager()
       modelListManager.updateModelList(aiConfig.model, false)
