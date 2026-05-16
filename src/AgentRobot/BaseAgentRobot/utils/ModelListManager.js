@@ -1,8 +1,6 @@
-import { logSuccess } from './aiConsole'
-
 const path = require('path')
 const fs = require('fs-extra')
-const os = require('os')
+const aiConsole = require('./aiConsole.js')
 
 export class ModelListManager {
     // 查看模型列表 model_list.json [{model: "gpt-3.5-turbo", isAvailable: true}, ...]
@@ -15,9 +13,12 @@ export class ModelListManager {
         // 返回第一个可用的模型
         const availableModel = modelList.find(model => model.isAvailable)
         if (availableModel) {
-            aiConfig.model = availableModel.model
-            logSuccess(`Switched to available model: ${availableModel.model}`)
-            return true
+            aiConfig = {
+                ...aiConfig,
+                ...availableModel
+            }
+            aiConsole.logSuccess(`Switched to available model: ${availableModel.model}`)
+            return aiConfig
         }
         return false
     }
@@ -31,7 +32,7 @@ export class ModelListManager {
         const modelIndex = modelList.findIndex(item => item.model === model)
         if (modelIndex !== -1) {
             modelList[modelIndex].isAvailable = isAvailable
-            logSuccess(`Model list updated: ${model} is now ${isAvailable ? 'available' : 'unavailable'}.`)
+            aiConsole.logSuccess(`Model list updated: ${model} is now ${isAvailable ? 'available' : 'unavailable'}.`)
         }
         return true
     }
