@@ -3,6 +3,7 @@ const {
   refreshGithubModelsTokenIfNeeded,
   buildDefaultHeaders,
 } = require('./copilot.js')
+const { ModelListManager } = require('./ModelListManager.js')
 
 function normalizeAiRequestConfig(aiConfig = {}) {
   const max_tokens = (!aiConfig.maxTokens || aiConfig.maxTokens === -1)
@@ -154,6 +155,27 @@ async function thinkByTool(
       message: response.choices[0].message,
     }
   } catch (error) {
+    if (error.message.includes('429')) {
+      const modelListManager = new ModelListManager()
+      modelListManager.updateModelList(aiConfig.model, false)
+      const isSet = modelListManager.setModel(aiConfig)
+      if (isSet) {
+        return thinkByTool(
+          openAiClient,
+          aiConfig,
+          messages,
+          functionDescriptions,
+          thinkBefore,
+          thinkAfter,
+          streamThinkOutput,
+          streamContentOutput,
+          streamToolCallsOutput,
+          streamEnd,
+        )
+      } else {
+        throw new Error(`AI response error: ${error.message}`)
+      }
+    }
     throw new Error(`AI response error: ${error.message}`)
   }
 }

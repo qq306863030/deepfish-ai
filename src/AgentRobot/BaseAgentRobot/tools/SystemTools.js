@@ -1,8 +1,8 @@
 /**
  * @Author: Roman 306863030@qq.com
  * @Date: 2026-03-17 11:59:19
- * @LastEditors: Roman 306863030@qq.com
- * @LastEditTime: 2026-05-12 18:49:29
+ * @LastEditors: roman_123 306863030@qq.com
+ * @LastEditTime: 2026-05-16 23:50:00
  * @FilePath: \deepfish\src\AgentRobot\BaseAgentRobot\tools\SystemTools.js
  * @Description: 默认扩展函数（含AST-grep/ripgrep/comby代码搜索替换工具）
  * @
@@ -82,12 +82,6 @@ async function requestAI(
 async function executeJSCode(code) {
   aiConsole.logSuccess('Executing JavaScript code: ')
   aiConsole.logSuccess(code)
-  // 校验代码片段中是否存在顶层 return，避免仅按最后一行判断导致误判。
-  const { hasReturnValue } = analyzeReturn(code)
-  if (!hasReturnValue) {
-    const error = new Error('The code must contain a return value.')
-    throw error
-  }
   try {
     const functions = this.agentRobot.toolManager.functions
     const Func = new Function(
@@ -118,8 +112,15 @@ async function executeJSCode(code) {
       }
       return originalRequire(modulePath)
     }
-
     const result = await Func(functions, newRequire)
+    if (!result) {
+      // 校验代码片段中是否存在顶层 return，避免仅按最后一行判断导致误判。
+      const { hasReturnValue } = analyzeReturn(code)
+      if (!hasReturnValue) {
+        const error = new Error('The code must contain a return value.')
+        throw error
+      }
+    }
     return result || ''
   } catch (error) {
     aiConsole.logError(`Error executing code: ${error.stack}`)
