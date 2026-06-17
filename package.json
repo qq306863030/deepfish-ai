@@ -1,6 +1,6 @@
 {
   "name": "deepfish-ai",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": false,
   "description": "AI Agent CLI tool with agent-room for multi-agent collaboration",
   "main": "./dist/index.js",
@@ -8,7 +8,8 @@
     "ai": "./dist/index.js"
   },
   "files": [
-    "dist/"
+    "dist/",
+    "images/"
   ],
   "scripts": {
     "build": "tsup src/index.ts src/serve/pm2-server.ts --format cjs --out-dir dist --clean --external iconv-lite && npm run build:ui",

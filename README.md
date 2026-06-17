@@ -26,7 +26,7 @@
 
 <img src="./images/banner.png" alt="banner" style="width:100%;text-align:center;" />
 
-- [English](EADME_CN.md) | [中文](README.md)
+- [English](README_EN.md) | [中文](README.md)
 
 ## 目录
 
