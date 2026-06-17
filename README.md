@@ -1,5 +1,5 @@
 <div align="center" style="display:flex;align-items: center;justify-content: center;">
-  <img src="./images/title-img.png" alt="DeepFish" width="300" />
+  <img src="https://github.com/qq306863030/deepfish-ai/blob/master/images/title-img.png" alt="DeepFish" width="300" />
 </div>
 
 ---
@@ -24,7 +24,7 @@
   />
 </div>
 
-<img src="./images/banner.png" alt="banner" style="width:100%;text-align:center;" />
+<img src="https://github.com/qq306863030/deepfish-ai/blob/master/images/banner.png" alt="banner" style="width:100%;text-align:center;" />
 
 - [English](README_EN.md) | [中文](README.md)
 
