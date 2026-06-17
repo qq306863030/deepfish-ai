@@ -1,4 +1,40 @@
-/node_modules
+# Node / Bun dependencies
+node_modules/
+bun.lockb
+
+# Build output
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+.env.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor directories and files
+.vscode/
+.idea/
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Caches
+.cache/
+.next/
+.vite/
+coverage/
+
+# Misc
+*.log
+
 /package-lock.json
-/offline-package
-/deepfish-offline-*.zip

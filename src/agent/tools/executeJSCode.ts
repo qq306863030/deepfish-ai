@@ -1,0 +1,106 @@
+import { logError, logInfo } from '@/utils/print';
+import { tool } from 'langchain';
+import { z } from 'zod';
+import { getCodePath } from '@/cli/cli-utils/getGlobalPath';
+import path from 'path';
+import fs from 'fs-extra';
+import { executeCommand } from './executeCommand';
+
+declare const require: any;
+// CJS 模式下 require 直接可用
+const _require: any = require;
+
+/**
+ * 执行一段 Node.js 代码字符串，返回执行结果
+ * @param {string} code - 要执行的代码
+ * @returns {Promise<any>} 执行结果
+ */
+export async function executeJSCode(code: string) {
+  logInfo('Executing JavaScript code: ');
+  logInfo(code);
+  try {
+    // 在代码最后一条表达式前注入 return，使 async wrapper 能返回其结果
+    const wrapped = `return (async () => {
+        ${code}
+        const result = await __main()
+        return result || "Code executed successfully, but __main() did not return anything."
+    })()`;
+    const fn = new Function('require', wrapped);
+    const result = await fn(_require);
+    return result;
+  } catch (error: any) {
+    logError(`Error executing code: ${error.stack}`);
+    throw error;
+  }
+}
+
+// 获取当前已安装的包的列表
+const getInstalledPackagesTool = tool(
+  async () => {
+    const packageJson = path.join(getCodePath(), './package.json');
+    const pkg = fs.readJsonSync(packageJson);
+    return JSON.stringify(pkg.dependencies);
+  },
+  {
+    name: 'get_installed_packages',
+    description: '获取 deepfish-ai CLI 工具自身已安装的 npm 依赖包列表',
+    schema: z.object({}),
+  },
+);
+
+const checkPackageInstalledTool = tool(
+  async ({ packageName }) => {
+    const packageJson = path.join(getCodePath(), './package.json');
+    const pkg = fs.readJsonSync(packageJson);
+    const installed = Object.prototype.hasOwnProperty.call(pkg.dependencies, packageName);
+    return installed
+      ? `Package "${packageName}" is installed.`
+      : `Package "${packageName}" is NOT installed.`;
+  },
+  {
+    name: 'check_package_installed',
+    description: '检查指定的 npm 包是否已在 deepfish-ai CLI 工具中安装',
+    schema: z.object({
+      packageName: z.string().describe('要检查的 npm 包名称'),
+    }),
+  },
+);
+
+const installPackageTool = tool(
+  async ({ packageName }) => {
+    const packageJson = path.join(getCodePath(), './package.json');
+    const pkg = fs.readJsonSync(packageJson);
+    if (Object.prototype.hasOwnProperty.call(pkg.dependencies, packageName)) {
+      return `Package "${packageName}" is already installed.`;
+    }
+    return executeCommand(`npm install ${packageName}`, 120000, getCodePath());
+  },
+  {
+    name: 'install_package',
+    description: '在 deepfish-ai CLI 工具中安装指定的 npm 包，使 execute_js_code 可以 require 该包',
+    schema: z.object({
+      packageName: z.string().describe('要安装的 npm 包名称'),
+    }),
+  },
+);
+
+export const packageTools = [getInstalledPackagesTool, checkPackageInstalledTool, installPackageTool];
+
+export const executeJSCodeTool = tool(
+  async ({ code }) => {
+    const result = await executeJSCode(code);
+    return result;
+  },
+  {
+    name: 'execute_js_code',
+    description: `在当前 Node.js 环境中执行一段 JavaScript 代码字符串并返回执行结果。注意：代码必须包含一个__main()函数作为执行入口，__main()函数内必须是一个使用async前缀的函数。示例代码：
+        async function __main() {
+          const data = await fs.readFile("data.txt", "utf-8")
+          return data
+        }
+        `,
+    schema: z.object({
+      code: z.string().describe('要执行的 JavaScript 代码'),
+    }),
+  },
+);

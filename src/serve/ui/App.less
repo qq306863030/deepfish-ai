@@ -1,0 +1,147 @@
+/* App.less — 从 index.html 提取的全局样式，按 Less 结构化整理 */
+
+// 变量（浅色极简主题）
+@page-bg: #f5f7fa;
+@panel-bg: #ffffff;
+@panel-border: #e6e6e6;
+@muted: #6b7280;
+@text: #2c3e50;
+@mono-font: 'SF Mono', 'JetBrains Mono', Consolas, monospace;
+
+// 全局重置与基础
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: @page-bg;
+  color: @text;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.01em;
+}
+
+// 布局
+.app-shell {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+}
+.app-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 18px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.app-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: @text;
+}
+.app-subtitle { margin: 6px 0 0; font-size: 0.82rem; color: @muted; font-family: @mono-font; letter-spacing: 0.06em; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #f3f6fb;
+  border: 1px solid @panel-border;
+  font-size: 0.78rem;
+  font-family: @mono-font;
+  color: @muted;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+.status-dot.is-connected { background: #38bdf8; }
+.status-dot.is-connecting { background: #f59e0b; }
+.status-dot.is-disconnected { background: #cbd5e1; }
+.status-dot.is-error { background: #ef4444; }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.55; transform: scale(0.85); } }
+
+// 面板
+.panel {
+  position: relative;
+  background: @panel-bg;
+  border: 1px solid @panel-border;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(30,41,59,0.06);
+  overflow: hidden;
+}
+.panel::before { display: none; }
+.panel-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #f0f2f5; }
+.panel-title { margin:0; font-size:0.95rem; font-weight:600; color:@text; letter-spacing:0.02em; display:flex; align-items:center; gap:10px; }
+.panel-title .badge { font-family: @mono-font; font-size:0.72rem; padding:2px 8px; border-radius:6px; background: #eef2ff; color:#3b82f6; border:1px solid rgba(59,130,246,0.12); font-weight:500; }
+
+// 表格
+.table-wrap { width:100%; overflow-x: visible; }
+table.sessions { width:100%; border-collapse: separate; border-spacing:0; font-size:0.88rem; }
+table.sessions thead th { text-align:center; font-weight:600; font-size:0.8rem; color:@muted; padding:12px 18px; background: transparent; border-bottom:1px solid #f0f2f5; }
+table.sessions tbody td { padding:14px 18px; border-bottom:1px solid #f0f2f5; color:@text; vertical-align:middle; white-space:normal; }
+table.sessions tbody tr { transition: background 160ms ease; }
+table.sessions tbody tr:hover { background: #fbfbfd; }
+table.sessions tbody tr:last-child td { border-bottom: none; }
+table.sessions .th-actions, table.sessions .cell-actions { text-align:center; white-space:nowrap; }
+
+.btn-delete { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:6px; border:1px solid rgba(239,68,68,0.12); background: transparent; color:#ef4444; font-family:@mono-font; font-size:0.86rem; font-weight:600; letter-spacing:0.02em; cursor:pointer; transition: all 160ms ease; }
+.btn-delete:hover { background: rgba(239,68,68,0.06); box-shadow: none; }
+.btn-delete:active { transform: translateY(1px); }
+.btn-delete:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.cell-mono { font-family: @mono-font; color:#64748b; font-size:0.86rem; }
+.cell-name { font-weight:600; color:@text; }
+.cell-time { color:#64748b; font-size:0.86rem; font-family:@mono-font; }
+.status-tag { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:0.74rem; font-family:@mono-font; font-weight:500; letter-spacing:0.04em; }
+.status-tag::before { content: ''; width:6px; height:6px; border-radius:50%; background:currentColor; box-shadow:0 0 6px currentColor; }
+.status-tag.is-online { color:#4ade80; background: rgba(74,222,128,0.08); border:1px solid rgba(74,222,128,0.25); }
+.status-tag.is-offline { color:#94a3b8; background: rgba(148,163,184,0.06); border:1px solid rgba(148,163,184,0.18); }
+
+// 空状态
+.empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; color:@muted; font-size:0.98rem; gap:10px; }
+.empty-state .icon { font-size:1.6rem; opacity:0.6; }
+
+// 响应式
+@media (max-width: 720px) {
+  .app-shell { padding: 24px 14px 40px; }
+  .app-header { flex-direction: column; align-items: flex-start; }
+  table.sessions thead th, table.sessions tbody td { padding: 10px 12px; }
+}
+
+// Modal 确认框样式（浅色）
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16,24,40,0.08);
+  z-index: 1200;
+  padding: 20px;
+}
+.modal {
+  width: 100%;
+  max-width: 520px;
+  background: @panel-bg;
+  border: 1px solid @panel-border;
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: 0 8px 30px rgba(16,24,40,0.06);
+}
+.modal-body { color: @text; font-size: 0.98rem; margin-bottom: 18px; }
+.modal-actions { display:flex; gap:12px; justify-content:flex-end; }
+.btn { padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-cancel { background: transparent; color: @muted; border: 1px solid #f0f2f5; }
+.btn-confirm { background: linear-gradient(90deg,#3b82f6,#60a5fa); color: #fff; box-shadow: 0 6px 18px rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.06); }

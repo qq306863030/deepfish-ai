@@ -1,45 +1,127 @@
 ## 开发计划
 
-### .deepfish-ai目录结构
--config.js
--user-info
-    -user.md
--clawSkills
-    -skill // 扩展技能
-        -SKILL.md
-    -clawSkills.json // openclaw的技能数据
--memery
-    -agentRecord.json // 记录文件目录与主agent编号的映射，创建时间
-    -主agent编号
-        -memery.json // 主agent的记忆数据
-        -memery-子agent编号.json // 子agent的记忆数据,如果执行完毕则删除
-        -bakup // 备份目录
-            -stamp // 以时间戳命名，最多备份n个版本， 通过"ai recover ls" "ai recover latest" "ai recover index" // 恢复备份文件
-                -uuid.xxx // 备份文件
-                -record.json // 备份记录文件 {"uuid": {"originPath": "原文件路径","optionType": "操作类型（创建、更新、删除）","timestamp": "操作时间戳"}}
-            
-        -agentTree.json // 主agent的组织架构数据,每次子agent创建或者销毁都要更新这个文件
-            -{
-                "agentId": "主agent编号",
-                "children": [
-                    {
-                        "agentId": "子agent编号",
-                        "type": "sub", // "sub"、"sub-skill"
-                        "skillName": "子agent执行的技能",
-                        "children": []
-                    }
-                    ...
-                ]
-            }
-        -logs // 日志目录
-            -log-{YYYY-MM-DD HH}.txt // 以小时为单位的日志文件
+### 配置文件
 
-8. 守护进程
-9. agent连接
-10. 看板、对话界面
-12. 文档处理、图像生成、视频生成agent
-14. 日志记录
-15. 命令行
-16. 多进程
-17. 文件恢复
-        
+```js
+module.exports = {
+  aiList: [
+    // AI 配置列表，可配置多个 AI
+    {
+      name: 'minimax', // AI 配置名称，用于标识
+      type: 'openai', // AI 类型：openai/deepseek/minimax/qwen/ollama/copilot
+      baseUrl: 'http://10.1.111.154:3001/v1', // API 地址
+      model: 'MiniMax-M2.7', // 模型名称
+      apiKey: 'sk-xCj0q3BeXI2mg46m87076a1eDc7b41AaB02cAa8329Cc7eAf', // API 密钥
+      temperature: 0.7, // 温度参数
+      maxContextLength: 128, // 单位KB，最大上下文长度
+    },
+    {
+      name: 'deepseek',
+      type: 'deepseek',
+      baseUrl: 'https://api.deepseek.com',
+      model: 'deepseek-v4-pro',
+      apiKey: 'sk-2d8113ed65cb473fac9828b683c18798',
+      temperature: 0.7,
+      maxContextLength: 64, // 单位KB
+    },
+  ],
+  currentModel: 'deepseek', // 当前使用的 AI 配置名称
+  maxIterations: -1, // AI 完成工作流的最大迭代次数，-1 表示无限制
+  maxMemoryExpireTime: 30, // 整个会话的最大过期时间，单位天，-1 表示无限制，0 表示不记录
+  maxLogExpireTime: 3, // 日志过期时间，单位天，-1 表示无限制，0 表示不记录
+  maxBlockFileSize: 50, // 最大分块文件大小，单位KB；超过该大小的文件需要分块处理
+  encoding: 'auto', // 命令行编码格式，可设置为 utf-8、gbk 等，也可以设置成 auto 或空值自动判断
+  maxSubAgentCount: 2, // "最大子agent并行执行数量", -1 表示无限制
+  serve: {
+      port: 8866,
+  }
+};
+```
+
+### 命令
+
+```bash
+ai "xxx"
+
+# Configuration commands
+ai config edit
+ai config view
+ai config reset
+ai config dir
+
+# Model commands
+ai models add # Add a new AI configuration
+ai models ls # List all AI configurations
+ai models use <name> # Set the specified AI configuration as the current one
+ai models del <name> # Delete the specified AI configuration
+
+# Skill commands
+ai skills ls # List all registered skills
+ai skills add <name> # Add a local skill directory from the current directory
+ai skills del <index> # Remove a skill by name or index, exp: ai skill del 1
+ai skills enable <name|index> # Enable a skill by name or index, exp: ai skill enable 1
+ai skills disable <name|index> # Disable a skill by name or index, exp: ai skill disable 1
+ai skills dir # Open the skill directory
+ai skills generate xxx
+
+# Tools commands
+ai tools dir # Open the skill directory
+ai tools generate xxx
+
+# Session commands
+ai session clear # Clear the history messages for the current directory
+ai session dir # Open the memory directory
+
+ai task ls
+ai task add <task>
+ai task del <index>
+ai task clear
+
+ai mcp edit
+
+ai serve # 启动服务，并打开页面
+ai serve start # 启动服务
+ai serve open # 打开页面
+ai serve stop # 停止服务
+ai serve restart # 重启服务
+
+ai cache ls # 显示[index] [id] [description前20个字,超过20字用...代替]
+ai cache edit <index|id>
+ai cache del <index|id>
+```
+
+### 扩展
+
+skills
+tools
+mcp
+
+### 新的.deepfish目录结构
+
+```
+-config.json5
+-mcp.json
+-user
+    -memory.md
+    -user-info.md
+    -agent-rules.md
+    -cache
+-skills
+    -skill1
+    -skill2
+    ...
+    -register.json
+-tools
+    -tool1
+    -tool2
+    ...
+    -register.json
+-sessions
+    -sessions.json // 目录和agentId的映射表
+    -[agentId]
+      -main-session // 主agent的记忆数据
+      -main-msg-queue.json // 主agent的消息队列
+```
+
+# 计划完成
+1. 并行执行任务的子agent

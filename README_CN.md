@@ -1,4 +1,4 @@
-<div align="center" style="display:flex;align-items: center;justify-content: center;">
+﻿<div align="center" style="display:flex;align-items: center;justify-content: center;">
   <img src="./images/title-img.png" alt="DeepFish" width="300" />
 </div>
 
@@ -26,76 +26,71 @@
 
 <img src="./images/banner.png" alt="banner" style="width:100%;text-align:center;" />
 
+- [English](EADME_CN.md) | [中文](README.md)
+
+## Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [1. Introduction](#1-introduction)
+- [2. Installation](#2-installation)
+  - [Prerequisites](#prerequisites)
+  - [Install via npm](#install-via-npm)
+  - [Install from source](#install-from-source)
+- [3. Quick Start](#3-quick-start)
+- [4. Command Reference](#4-command-reference)
+  - [Basic Chat](#basic-chat)
+  - [Configuration](#configuration)
+  - [Model Management](#model-management)
+  - [Skill Management](#skill-management)
+  - [Tool Management](#tool-management)
+  - [Session Management](#session-management)
+  - [Task Management](#task-management)
+  - [MCP Management](#mcp-management)
+  - [Serve Management](#serve-management)
+  - [Cache Management (AI Self-Learning Cache)](#cache-management-ai-self-learning-cache)
+- [5. MCP Extension Configuration](#5-mcp-extension-configuration)
+  - [Configuration Example](#configuration-example)
+- [6. Contributing](#6-contributing)
+- [7. License](#7-license)
+- [8. Support](#8-support)
+
+## 1. Introduction
+
+An efficient AI-driven command-line tool designed to bridge the gap between natural language and operating system commands, file operations, and more. It enables non-developers to quickly generate executable instructions through simple natural language descriptions, significantly improving terminal operation efficiency.
+
+Core Features:
+
+- **Multi-Model Compatibility**: Seamlessly supports DeepSeek, Ollama, and all AI models following the OpenAI API specification. Switch between models flexibly to adapt to different scenarios.
+
+- **Natural Language to Command**: Accurately parses natural language requests and automatically converts them into corresponding operating system commands (Linux, Windows, macOS terminal commands) and file operation instructions (create, delete, modify files/directories), eliminating the need to write complex commands manually.
+
+- **Skill Extension**: Skills are AI workflow knowledge packages defined via Markdown files that encapsulate best practices for specific domains. After installing a Skill, AI automatically follows its guidelines to execute tasks, such as code review workflows, document generation templates, etc. Compatible with the OpenClaw Skill ecosystem, installable and manageable via `ai skills` commands.
+
+- **Tool Extension**: Tools are custom function tools callable by AI, defined via TypeScript files. You can write Tools to extend AI's capabilities, such as calling third-party APIs, operating databases, processing specific file formats, etc. Supported by `ai tools generate` for AI-powered automatic Tool generation, lowering the development barrier.
+
+- **MCP Extension**: MCP (Model Context Protocol) is a standardized model context protocol that allows AI to connect to external tools and data sources. By configuring MCP Servers, AI gains capabilities like browser automation, database queries, file system access, and more. DeepFish has built-in MCP support—just simple configuration to integrate various MCP services.
+
+- **Highly Extensible**: Supports an extension mechanism to expand functionality boundaries. Beyond basic terminal and file operations, you can easily implement translation, novel writing, file format conversion, data processing, and other complex tasks to meet diverse needs.
+
+- **AI-Generated Extensions**: No need to manually develop complex extension tools—generate custom extensions directly through AI, lowering the barrier to extending functionality and making it more efficient and flexible. [Extension Examples](https://github.com/qq306863030/deepfish-extensions)
+
+Suitable for developers, operations personnel, and everyday terminal users. Whether it's quickly executing terminal operations, batch processing files, or implementing personalized needs through extensions, this tool simplifies workflows and improves efficiency, bringing AI to every terminal operation.
 
 
+## 2. Installation
 
-- [English](README.md) | [中文](README_CN.md)
+### Prerequisites
 
-## 目录
+- Node.js (v22.14.0 or higher)
+- npm or yarn
 
-- [目录](#目录)
-- [1. 介绍](#1-介绍)
-- [2. 安装](#2-安装)
-  - [前置要求](#前置要求)
-  - [通过npm安装](#通过npm安装)
-  - [从源码安装](#从源码安装)
-- [3. 快速使用](#3-快速使用)
-- [4. 配置](#4-配置)
-  - [初始设置](#初始设置)
-  - [配置命令](#配置命令)
-  - [配置文件结构](#配置文件结构)
-  - [目录结构说明](#目录结构说明)
-- [5. 使用方法](#5-使用方法)
-  - [交互模式](#交互模式)
-  - [直接命令模式](#直接命令模式)
-  - [使用示例](#使用示例)
-- [6. 扩展开发](#6-扩展开发)
-  - [创建扩展](#创建扩展)
-  - [注册扩展](#注册扩展)
-- [7. 建议](#7-建议)
-  - [AI服务选择](#ai服务选择)
-- [8. 使用说明](#8-使用说明)
-  - [使用相对路径](#使用相对路径)
-  - [对话历史](#对话历史)
-- [9. 故障排除](#9-故障排除)
-  - [配置问题](#配置问题)
-  - [AI服务连接](#ai服务连接)
-  - [扩展未加载](#扩展未加载)
-- [10. 贡献](#10-贡献)
-- [11. 许可证](#11-许可证)
-- [12. 支持](#12-支持)
-
-## 1. 介绍
-
-一款高效便捷的AI驱动命令行工具，致力于打破自然语言与操作系统指令、文件操作指令之间的壁垒，让非专业开发者也能通过简单的自然语言描述，快速生成可直接执行的操作指令，大幅提升终端操作效率。
-核心特性：
-
-- 多模型兼容：无缝支持DeepSeek、Ollama，以及所有遵循OpenAI API规范的AI模型，可根据需求灵活切换，适配不同场景下的指令生成需求。
-
-- OpenClaw Skill 兼容：支持适配 OpenClaw 的 Skill 生态，可通过现有 Skill 命令进行安装、启用与管理，快速扩展工作流能力。
-
-- 自然语言转指令：精准解析自然语言需求，自动转换为对应的操作系统命令（如Linux、Windows、macOS终端指令）和文件操作指令（如创建、删除、修改文件/目录），无需手动编写复杂命令。
-
-- 高度可扩展：支持通过扩展机制拓展功能边界，除基础的终端、文件操作外，可轻松实现翻译、小说创作、文件格式转换、数据处理等复杂任务，满足多样化使用需求。
-
-- AI自动生成扩展：无需手动开发复杂扩展工具，可通过AI直接生成自定义扩展，降低扩展开发门槛，让功能拓展更高效、更灵活。[扩展示例](https://github.com/qq306863030/deepfish-extensions)
-
-适用于开发者、运维人员、日常终端使用者等各类人群，无论是快速执行终端操作、批量处理文件，还是通过扩展实现个性化需求，都能通过该工具简化操作流程，提升工作效率，让AI赋能每一次终端操作。
-
-## 2. 安装
-
-### 前置要求
-
-- Node.js（v22.14.0或更高版本）
-- npm或yarn
-
-### 通过npm安装
+### Install via npm
 
 ```bash
 npm install -g deepfish-ai
 ```
 
-### 从源码安装
+### Install from source
 
 ```bash
 git clone https://github.com/qq306863030/deepfish-ai.git
@@ -104,357 +99,130 @@ npm install
 npm link
 ```
 
-## 3. 快速使用
+## 3. Quick Start
 
 ```bash
-ai config add # 输入名称, 然后选择deepseek，并输入你的deepseek api key
-ai config use 你输入的名称
-ai ”帮我在当前目录写一篇关于未来科技的文章，用markdown格式输出“
+ai models add # Enter name, then enter your model configuration
+ai config use your-model-name
+ai "Write an article about future technology in the current directory, output in markdown format"
 ```
 
-## 4. 配置
+## 4. Command Reference
 
-### 初始设置
-
-运行配置向导来设置您的AI服务：
+### Basic Chat
 
 ```bash
-ai config add
+ai "your question or instruction"
 ```
 
-这将提示你配置以下内容：
+Enter natural language directly, and AI will automatically parse and execute the corresponding operations.
 
-- **AI服务类型**：选择DeepSeek、MiniMax、Qwen、Ollama或OpenAI
-- **API基础URL**：为每个服务提供默认URL
-- **模型名称**：选择要使用的AI模型
-- **API密钥**：DeepSeek和OpenAI需要
-- **Temperature**：控制响应随机性（0-2）
-- **Max Tokens**：最大响应长度
-- **Streaming Output**：启用/禁用流式响应
+### Configuration
 
-### 配置命令
+| Command | Description |
+|---------|-------------|
+| `ai config edit` | Edit configuration file |
+| `ai config view` | View current configuration |
+| `ai config reset` | Reset configuration |
+| `ai config dir` | View configuration directory |
 
-```bash
-# 配置命令
-ai config add # 添加新的AI配置
-ai config ls # 列出所有AI配置
-ai config use <name> # 设置指定的AI配置为当前配置
-ai config del <name> # 删除指定的AI配置
-ai config view [name] # 查看指定AI配置的详细信息
-ai config edit # 编辑配置文件手动编辑配置文件
-ai config dir # 打开配置文件所在目录
-ai config reset # 重置配置
+### Model Management
 
-# Skill 命令
-ai skill ls # 列出所有已注册的 skill
-ai skill add <name> # 从当前目录添加本地 skill 目录或 zip 文件
-ai skill del <name|index> # 通过名称或索引删除 skill, exp: ai skill del 1
-ai skill install <url> # 从 ClawHub 安装 skill，exp: ai skill install https://clawhub.ai/TheSethRose/agent-browser
-ai skill enable <name|index> # 通过名称或索引启用 skill, exp: ai skill enable 1
-ai skill disable <name|index> # 通过名称或索引禁用 skill, exp: ai skill disable 1
-ai skill dir # 打开 skill 目录
+| Command | Description |
+|---------|-------------|
+| `ai models add` | Add a new model |
+| `ai models ls` | List all models |
+| `ai models use <name>` | Switch the model in use |
+| `ai models del <name>` | Delete specified model |
 
-# 记忆命令
-ai memory clear # 清除当前目录的对话历史
-ai memory dir # 打开记忆目录
-```
+### Skill Management
 
-### 配置文件结构
+| Command | Description |
+|---------|-------------|
+| `ai skills ls` | List all Skills |
+| `ai skills add <name>` | Add a Skill |
+| `ai skills del <index>` | Delete specified Skill |
+| `ai skills enable <name\|index>` | Enable a Skill |
+| `ai skills disable <name\|index>` | Disable a Skill |
+| `ai skills dir` | View Skill directory |
+| `ai skills generate xxx` | Generate a Skill via AI |
 
-配置文件 (`~/.deepfish-ai/config.js`) 具有以下结构：
+### Tool Management
 
-```javascript
-export default {
-  ai: [
-    {
-      name: "default", // AI配置名称
-      type: "deepseek", // AI服务类型："ollama"、"deepseek"或"openai"
-      baseUrl: "https://api.deepseek.com", // API基础URL
-      model: "deepseek-reasoner", // AI模型名称
-      apiKey: "", // API密钥（DeepSeek和OpenAI需要）
-      temperature: 0.7, // 响应随机性（0-2）
-      maxTokens: 8, // 最大响应长度（KB）
-      maxContextLength: 64, // 最大上下文长度（KB）
-      stream: true, // 启用/禁用流式输出
-    }
-  ],
-  currentAi: "default", // 当前活动的AI配置名称
-  maxIterations: -1, // ai完成工作流的最大迭代次数，-1表示无限制
-  maxMemoryExpireTime: 30, // 整个会话的最大过期时间，单位天，-1表示无限制，0表示不记录
-  maxLogExpireTime: 3, // 日志过期时间，单位天，-1表示无限制，0表示不记录
-  maxBlockFileSize: 20, // 最大分块文件大小，单位KB；超过该大小的文件需要分块处理
-  isThinkPrint: true, // 是否打印思考过程
-  encoding: "auto", // 命令行编码格式，可设置为utf-8、gbk等，也可以设置成auto或空值自动判断
-  EMBEDDING_API: "", // 向量化接口地址
-  EMBEDDING_API_KEY: "", // 向量化接口密钥
-};
-```
+| Command | Description |
+|---------|-------------|
+| `ai tools dir` | View tool directory |
+| `ai tools generate xxx` | Generate a tool via AI |
 
-### 目录结构说明
+### Session Management
 
-DeepFish 默认工作目录为 `.deepfish-ai`，可通过以下命令直接打开：
+| Command | Description |
+|---------|-------------|
+| `ai session clear` | Clear session history |
+| `ai session dir` | View session directory |
 
-```bash
-ai config dir
-```
+### Task Management
 
-默认路径：
+| Command | Description |
+|---------|-------------|
+| `ai task ls` | List all tasks |
+| `ai task add <task>` | Add a task |
+| `ai task del <index>` | Delete specified task |
+| `ai task clear` | Clear all tasks |
 
-- Windows: `C:/Users/<用户名>/.deepfish-ai`
-- macOS/Linux: `~/.deepfish-ai`
+### MCP Management
 
-参考 DevPlan 的目录结构示例如下：
+| Command | Description |
+|---------|-------------|
+| `ai mcp edit` | Edit MCP configuration |
 
-```text
-.deepfish-ai/
-├─ config.js                           # 全局配置
-├─ user-info/
-│  └─ user.md                          # 用户信息
-├─ clawSkills/
-│  ├─ clawSkills.json                  # OpenClaw 技能索引
-│  └─ <skill>/
-│     └─ SKILL.md                      # 单个技能说明
-└─ memery/
-   ├─ agentRecord.json                 # 工作目录与主 agent 映射
-   └─ <主agent编号>/
-      ├─ memery.json                   # 主 agent 记忆
-      ├─ memery-<子agent编号>.json     # 子 agent 记忆
-      ├─ agentTree.json                # agent 组织结构
-      ├─ bakup/
-      │  └─ <时间戳>/
-      │     ├─ record.json             # 备份记录
-      │     └─ <uuid>.*                # 备份文件
-      └─ logs/
-         └─ log-{YYYY-MM-DD HH}.txt    # 按小时滚动日志
-```
+### Serve Management
 
-## 5. 使用方法
+| Command | Description |
+|---------|-------------|
+| `ai serve` | Start the service |
+| `ai serve start` | Start the service |
+| `ai serve stop` | Stop the service |
+| `ai serve restart` | Restart the service |
 
-### 交互模式
+### Cache Management (AI Self-Learning Cache)
 
-启动交互式会话（多轮对话）：
+| Command | Description |
+|---------|-------------|
+| `ai cache ls` | List cache |
+| `ai cache edit <index\|id>` | Edit cache entry |
+| `ai cache del <index\|id>` | Delete cache entry |
 
-```bash
-ai
-```
+## 5. MCP Extension Configuration
 
-或显式指定：
+MCP (Model Context Protocol) allows AI to connect to external tools and services. Edit the MCP configuration file via `ai mcp edit` command to add the MCP Servers you need.
 
-```bash
-ai -i 或 ai -interactive
-```
+### Configuration Example
 
-### 直接命令模式
+The following example configures a Chrome DevTools MCP Server, enabling AI to perform browser automation:
 
-执行单个命令：
-
-```bash
-ai "创建一个名为hello.txt的文件，内容为'Hello World'"
-```
-
-### 使用示例
-
-**文件操作：**
-
-```bash
-ai "创建10个文本文档，分别输入100个随机文本"
-ai "清空当前目录"
-```
-
-**代码生成：**
-
-```bash
-ai "创建一个带有/hello端点的简单Express服务器"
-ai "创建一个基于浏览器的飞机大战游戏"
-```
-
-**系统命令：**
-
-```bash
-ai "列出当前目录中所有文件及其大小"
-ai "检查当前目录的磁盘使用情况"
-```
-
-**扩展工具生成：**
-
-```bash
-ai "创建一个用于查询天气的扩展工具weather.js"
-```
-
-**Skill 管理：**
-
-```bash
-ai skill install https://clawhub.ai/TheSethRose/agent-browser
-ai skill install https://clawhub.ai/steipete/weather
-ai skill ls
-ai skill enable 1
-ai skill disable 0
-```
-
-**OpenClaw Skill 生成：**
-
-```bash
-ai "创建一个查询天气的skill"
-ai skill add weather-query
-ai skill enable weather-query
-```
-
-**媒体处理：**
-
-```bash
-ai "我的系统上安装了ffmpeg5，帮我将目录中的所有MP4文件转换为AVI格式"
-```
-
-**文件组织：**
-
-```bash
-ai "将model目录下的所有文件按月份分类到model2目录中，日期格式为YYYY-MM"
-```
-
-**任务列表执行：**
-
-```bash
-ai "创建一个任务列表，1.xxxx；2.xxxx；..."
-ai "执行任务列表" # 开始执行
-
-ai "我要实现一个用于长篇小说创作的扩展工具，支持大篇幅写作，保持上下文逻辑连贯，避免AI上下文爆炸问题。这个扩展工具实现起来可能有点复杂，你需要先仔细阅读扩展工具生成规则，然后创建一个任务列表"
-ai "执行任务列表" # 开始执行
-```
-
-## 6. 扩展开发
-
-扩展允许您添加AI可以在其工作流中使用的自定义函数, 对于复杂的流程也可以自行开发或尝试使用本程序生成扩展，然后将扩展注册到程序中，在使用命令行来完成任务。
-
-### 创建扩展
-
-1. 扩展应导出包含 `descriptions`（工具描述数组）和 `functions`（函数对象）的对象。
-2. 提示：可以通过AI生成扩展，例如"ai "创建一个用于查询天气的扩展工具weather.js"
-3. 可查看[示例扩展](https://github.com/qq306863030/deepfish-extensions)。
-
-```javascript
-// 示例扩展：天气扩展
-const axios = require('axios');
-
-const descriptions = [
-  {
-    type: 'function',
-    function: {
-      name: 'getWeather',
-      description: '获取城市的当前天气信息',
-      parameters: {
-        type: 'object',
-        properties: {
-          city: { type: 'string' }
-        },
-        required: ['city']
-      }
+```json
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
     }
   }
-];
-
-const functions = {
-  async getWeather(city) {
-    // 实现天气API调用
-    const response = await axios.get(`https://api.weatherapi.com/v1/current.json?key=YOUR_KEY&q=${city}`);
-    return `${city}的天气：${response.data.current.temp_c}°C，${response.data.current.condition.text}`;
-  }
-};
-
-module.exports = {
-  descriptions,
-  functions
-};
+}
 ```
 
-### 注册扩展
+After configuration, AI will automatically load the tools provided by the MCP Server, and you can directly instruct AI to use these capabilities in your conversations.
 
-**方法1：手动配置**
+## 6. Contributing
 
-1. ai config edit
-2. 将其添加到您的配置中：
+Contributions are welcome! Feel free to submit Pull Requests at any time.
 
-```javascript
-export default {
-  // ... 其他配置
-  extensions: [
-    '/path/to/weather-extension.js'
-  ],
-};
-```
+## 7. License
 
-**方法2：自动扫描**
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-程序启动时自动扫描扩展模块的规则:
-1. 扫描位置:
-  - 程序安装目录（deepfish-ai 程序所在目录）
-  - 当前工作目录的 node_modules 目录
-  - 当前工作目录
-2. 扫描文件:
-  - 在以上目录中扫描 `@deepfish-ai/*` 作用域包
-  - 在以上目录中扫描 `deepfish-` 开头的包（排除 `deepfish-ai` 本体）
-  - 在当前工作目录额外扫描顶层 `.js` / `.mjs` 文件, 文件内容包含 `module.exports`、`descriptions`、`functions` 字符串时视为可自动加载扩展
+## 8. Support
 
-## 7. 建议
+For questions and inquiries, please submit an issue on the GitHub repository.
 
-### AI服务选择
-
-**建议：使用在线AI服务（DeepSeek/OpenAI）以获得最佳效果**
-
-虽然本地AI服务（如Ollama）提供隐私保护和离线能力，但它们可能存在以下限制：
-
-- **响应准确性**：本地模型可能不如在线模型严谨和精确
-- **代码质量**：生成的代码可能需要更多的人工审查和修正
-- **复杂任务处理**：在多步骤或复杂操作上可能遇到困难
-- **语言理解**：在线服务提供更好的语言模型
-
-对于生产环境或复杂任务，我们建议使用DeepSeek或OpenAI服务，或Ollama中的云端服务，以获得更可靠和准确的结果。
-
-## 8. 使用说明
-
-### 使用相对路径
-
-AI始终使用相对于当前工作目录的相对路径。
-
-### 对话历史
-
-对话历史是以程序执行目录为单位创建的，每个程序的执行目录会对应一个独立的 Agent 上下文。这意味着在不同目录下启动的对话是相互独立的。
-
-> **⚠️ 重要提示：** AI上下文是以目录为单位的，一个目录对应一个上下文。**请不要在同一个目录下开启两个命令行对话框**，以免造成上下文冲突和意外行为。
-
-对话历史会在一定时间内自动清除（通过配置文件中的 `maxMemoryExpireTime` 字段控制，默认为 30 天）。您也可以手动管理对话历史：
-
-- `ai memory dir` — 打开记忆目录，查看已存储的对话上下文
-- `ai memory clear` — 清除当前目录的对话历史
-
-## 9. 故障排除
-
-### 配置问题
-
-如果遇到配置错误，请尝试重置：
-
-```bash
-ai config reset
-```
-
-### AI服务连接
-
-- **Ollama**：确保Ollama在本地11434端口上运行
-- **DeepSeek/MiniMax/Qwen/OpenAI**：验证您的API密钥是否正确，并且您有足够的额度
-
-### 扩展未加载
-
-- 检查配置中的文件路径
-- 确保文件导出正确的对象
-- 验证文件没有语法错误
-
-## 10. 贡献
-
-欢迎贡献！请随时提交Pull Request。
-
-## 11. 许可证
-
-本项目采用MIT许可证 - 详见[LICENSE](LICENSE)文件。
-
-## 12. 支持
-
-如有问题和疑问，请在GitHub仓库上提交issue。
