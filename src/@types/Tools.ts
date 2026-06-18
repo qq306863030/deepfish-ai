@@ -1,9 +1,9 @@
-export type succsessResult = {
+export type SuccsessResult = {
   success: true;
   data: any;
 };
 
-export type errorResult = {
+export type ErrorResult = {
   success: false;
   error: string;
   data?: any;

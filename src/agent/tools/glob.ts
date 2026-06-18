@@ -2,6 +2,7 @@ import path from 'path';
 import { tool } from 'langchain';
 import { z } from 'zod';
 import { formatJson, matchesGlob, normalizePathForMatch, resolveWorkspacePath, truncateOutput, walkFiles } from './fileTools';
+import { safeTool } from './utils';
 
 export async function globFiles(pattern: string, cwd?: string, maxResults = 200, includeHidden = false): Promise<string> {
   const rootDir = resolveWorkspacePath(cwd || '.');
@@ -16,7 +17,7 @@ export async function globFiles(pattern: string, cwd?: string, maxResults = 200,
 }
 
 export const globTool = tool(
-  async ({ pattern, cwd, maxResults, includeHidden }) => globFiles(pattern, cwd, maxResults, includeHidden),
+  async ({ pattern, cwd, maxResults, includeHidden }) => safeTool(() => globFiles(pattern, cwd, maxResults, includeHidden)),
   {
     name: 'glob_files',
     description: '按 glob 模式查找当前工作目录下的文件，例如 **/*.ts、src/**/*.tsx。默认忽略隐藏目录、node_modules、dist、.git。',

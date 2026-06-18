@@ -3,11 +3,11 @@ import { spawnSync } from 'child_process';
 import chardet from 'chardet';
 import os from 'os';
 import iconv from 'iconv-lite';
-import { tool, type ToolRuntime } from 'langchain';
+import { tool } from 'langchain';
 import { z } from 'zod';
 import { getTrueCwd } from '@/utils/normal';
 import { getEncoding } from '@/cli/cli-utils/getGlobalData';
-
+import { safeTool } from './utils';
 
 export function executeCommand(command: string, timeout = -1, cwd?: string): string {
   logSuccess(`Executing system command: ${command}; ${timeout > 0 ? `Timeout: ${timeout}ms` : 'No timeout limit'}`);
@@ -28,15 +28,13 @@ export function executeCommand(command: string, timeout = -1, cwd?: string): str
     const stderr = iconv.decode(result.stderr, targetEncoding);
     const code = result.status;
     if (stderr && !stderr.trim().startsWith('WARNING')) {
-      const error = new Error(`Command failed (code ${code}): ${stderr.trim()}`);
-      logError(`Execute error: ${error.message}`);
-      return `Execute error: ${error.message}`;
+      throw new Error(`Command failed (code ${code}): ${stderr.trim()}`);
     }
     logSuccess(`${stdout}\nCommand executed successfully`);
     return stdout || 'Command executed successfully';
-  } catch (decodeError: any) {
-    logError(`Encoding convert error: ${decodeError.message}`);
-    return `Failed to parse command output: ${decodeError.message}`;
+  } catch (error: any) {
+    logError(`Execute error: ${error.message}`);
+    throw error;
   }
 }
 
@@ -55,17 +53,11 @@ function detectEncoding(buffer: any): string {
   return os.platform() === 'win32' ? 'gbk' : 'utf-8';
 }
 
-export const executeCommandTool = tool(
-  ({ command, timeout }, config: ToolRuntime) => {
-    return executeCommand(command, timeout);
-  },
-  {
-    name: 'execute_command',
-    description:
-      `在本地系统(${os.platform()})上执行一条 shell 命令并返回输出结果。适用于running脚本、操作文件系统、启动进程等场景。必须注意操作系统的兼容性，当前操作系统为 ${os.platform()}。`,
-    schema: z.object({
-      command: z.string().describe('要执行的 shell 命令'),
-      timeout: z.number().default(-1).describe('超时时间（毫秒），-1 表示不限制'),
-    }),
-  },
-);
+export const executeCommandTool = tool(({ command, timeout }) => safeTool(() => executeCommand(command, timeout)), {
+  name: 'execute_command',
+  description: `在本地系统(${os.platform()})上执行一条 shell 命令并返回输出结果。适用于running脚本、操作文件系统、启动进程等场景。必须注意操作系统的兼容性，当前操作系统为 ${os.platform()}。`,
+  schema: z.object({
+    command: z.string().describe('要执行的 shell 命令'),
+    timeout: z.number().default(-1).describe('超时时间（毫秒），-1 表示不限制'),
+  }),
+});

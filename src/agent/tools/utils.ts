@@ -4,17 +4,42 @@ import { z } from 'zod';
 import path from 'path';
 import fs from 'fs-extra';
 import { randomUUID } from 'crypto';
-import type { Description, errorResult, succsessResult } from '@/@types/Tools';
+import type { Description, ErrorResult, SuccsessResult } from '@/@types/Tools';
+import { truncateOutput } from './fileTools';
+
+export type ToolResult = SuccsessResult | ErrorResult;
+
+export function successResult(data: any): SuccsessResult {
+  return { success: true, data };
+}
+
+export function errorResult(error: unknown, data?: any): ErrorResult {
+  const message = error instanceof Error ? error.message : String(error);
+  return data === undefined ? { success: false, error: message } : { success: false, error: message, data };
+}
+
+export function serializeToolResult(result: ToolResult): string {
+  return truncateOutput(JSON.stringify(result, null, 2));
+}
+
+export async function safeTool<T>(handler: () => T | Promise<T>): Promise<string> {
+  try {
+    const data = await handler();
+    return serializeToolResult(successResult(data));
+  } catch (error) {
+    return serializeToolResult(errorResult(error));
+  }
+}
 
 // 将一个普通函数转换为 LangChain 的工具函数
-function toLangChainTool(func: (...args: any[]) => succsessResult | errorResult | string, description: Description): DynamicStructuredTool {
+function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult | string, description: Description): DynamicStructuredTool {
   const { name, description: desc, parameters } = description.function;
-  const { properties, required } = parameters;
+  const { properties } = parameters;
 
   // 将 description 中的 parameters 转换为 zod schema
   const zodProperties: Record<string, z.ZodTypeAny> = {};
   for (const [key, value] of Object.entries(properties)) {
-    const { type, description: desc, ...rest } = value as { type: string; description?: string };
+    const { type, description: desc } = value as { type: string; description?: string };
     let zodType: z.ZodTypeAny;
     switch (type) {
       case 'string':
@@ -41,12 +66,15 @@ function toLangChainTool(func: (...args: any[]) => succsessResult | errorResult 
   const schema = z.object(zodProperties);
 
   // 包装函数，提取 args 中的参数传递给原函数，并处理返回值
-  const wrappedFunc = (args: any) => {
-    const result = func(...Object.values(args));
-    if (typeof result === 'object') {
-      return JSON.stringify(result);
-    } else {
-      return result;
+  const wrappedFunc = async (args: any) => {
+    try {
+      const result = await func(...Object.values(args));
+      if (typeof result === 'object' && result !== null && 'success' in result) {
+        return serializeToolResult(result as ToolResult);
+      }
+      return serializeToolResult(successResult(result));
+    } catch (error) {
+      return serializeToolResult(errorResult(error));
     }
   };
 

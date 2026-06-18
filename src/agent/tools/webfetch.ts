@@ -1,6 +1,7 @@
 import { tool } from 'langchain';
 import { z } from 'zod';
 import { truncateOutput } from './fileTools';
+import { safeTool } from './utils';
 
 export async function webFetch(url: string, timeout = 30_000, maxLength = 60_000): Promise<string> {
   const controller = new AbortController();
@@ -30,23 +31,17 @@ export async function webFetch(url: string, timeout = 30_000, maxLength = 60_000
       ),
       maxLength,
     );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return `Web fetch error: ${message}`;
   } finally {
     clearTimeout(timer);
   }
 }
 
-export const webFetchTool = tool(
-  async ({ url, timeout, maxLength }) => webFetch(url, timeout, maxLength),
-  {
-    name: 'web_fetch',
-    description: '通过 HTTP GET 获取网页、接口或远程文本内容，并返回状态码、content-type 和响应正文。',
-    schema: z.object({
-      url: z.string().url().describe('要请求的完整 URL，例如 https://example.com'),
-      timeout: z.number().default(30000).describe('请求超时时间（毫秒）'),
-      maxLength: z.number().default(60000).describe('最大返回字符数，超出会截断'),
-    }),
-  },
-);
+export const webFetchTool = tool(async ({ url, timeout, maxLength }) => safeTool(() => webFetch(url, timeout, maxLength)), {
+  name: 'web_fetch',
+  description: '通过 HTTP GET 获取网页、接口或远程文本内容，并返回状态码、content-type 和响应正文。',
+  schema: z.object({
+    url: z.string().url().describe('要请求的完整 URL，例如 https://example.com'),
+    timeout: z.number().default(30000).describe('请求超时时间（毫秒）'),
+    maxLength: z.number().default(60000).describe('最大返回字符数，超出会截断'),
+  }),
+});

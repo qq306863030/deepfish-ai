@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { tool } from 'langchain';
 import { z } from 'zod';
+import { safeTool } from './utils';
 
 const DEFAULT_MEMORY_MARKDOWN = `# 用户语义记忆
 
@@ -24,7 +25,7 @@ function getMemoryFilePath(runtimeMemoryFilePath: unknown): string | undefined {
 
 export async function readSemanticMemory(memoryFilePath: string | undefined): Promise<string> {
   if (!memoryFilePath) {
-    return 'Semantic memory error: 当前运行上下文未提供 memoryFilePath，无法读取用户语义记忆';
+    throw new Error('当前运行上下文未提供 memoryFilePath，无法读取用户语义记忆');
   }
 
   if (!(await fs.pathExists(memoryFilePath))) {
@@ -36,7 +37,7 @@ export async function readSemanticMemory(memoryFilePath: string | undefined): Pr
 
 export async function updateSemanticMemory(memoryFilePath: string | undefined, content: string): Promise<string> {
   if (!memoryFilePath) {
-    return 'Semantic memory error: 当前运行上下文未提供 memoryFilePath，无法更新用户语义记忆';
+    throw new Error('当前运行上下文未提供 memoryFilePath，无法更新用户语义记忆');
   }
 
   await fs.ensureDir(path.dirname(memoryFilePath));
@@ -46,9 +47,7 @@ export async function updateSemanticMemory(memoryFilePath: string | undefined, c
 }
 
 export const readSemanticMemoryTool = tool(
-  async (_input, runtime) => {
-    return readSemanticMemory(getMemoryFilePath(runtime.context?.memoryFilePath));
-  },
+  async (_input, runtime) => safeTool(() => readSemanticMemory(getMemoryFilePath(runtime.context?.memoryFilePath))),
   {
     name: 'read_user_semantic_memory',
     description:
@@ -58,9 +57,7 @@ export const readSemanticMemoryTool = tool(
 );
 
 export const updateSemanticMemoryTool = tool(
-  async ({ content }, runtime) => {
-    return updateSemanticMemory(getMemoryFilePath(runtime.context?.memoryFilePath), content);
-  },
+  async ({ content }, runtime) => safeTool(() => updateSemanticMemory(getMemoryFilePath(runtime.context?.memoryFilePath), content)),
   {
     name: 'update_user_semantic_memory',
     description:

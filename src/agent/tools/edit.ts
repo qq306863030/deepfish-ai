@@ -2,22 +2,23 @@ import fs from 'fs-extra';
 import { tool } from 'langchain';
 import { z } from 'zod';
 import { resolveWorkspacePath } from './fileTools';
+import { safeTool } from './utils';
 
 export async function editFileByReplace(filePath: string, oldString: string, newString: string, replaceAll = false): Promise<string> {
   const absPath = resolveWorkspacePath(filePath);
   if (!(await fs.pathExists(absPath))) {
-    return `Edit error: 文件不存在 ${absPath}`;
+    throw new Error(`文件不存在 ${absPath}`);
   }
   const content = await fs.readFile(absPath, 'utf-8');
   const matches = content.split(oldString).length - 1;
   if (!oldString) {
-    return 'Edit error: oldString 不能为空';
+    throw new Error('oldString 不能为空');
   }
   if (matches === 0) {
-    return 'Edit error: 未找到 oldString，请先读取文件确认精确内容';
+    throw new Error('未找到 oldString，请先读取文件确认精确内容');
   }
   if (!replaceAll && matches > 1) {
-    return `Edit error: oldString 匹配到 ${matches} 处。请提供更多上下文使其唯一，或设置 replaceAll=true`;
+    throw new Error(`oldString 匹配到 ${matches} 处。请提供更多上下文使其唯一，或设置 replaceAll=true`);
   }
   const nextContent = replaceAll ? content.split(oldString).join(newString) : content.replace(oldString, newString);
   await fs.writeFile(absPath, nextContent, 'utf-8');
@@ -25,7 +26,7 @@ export async function editFileByReplace(filePath: string, oldString: string, new
 }
 
 export const editFileTool = tool(
-  async ({ filePath, oldString, newString, replaceAll }) => editFileByReplace(filePath, oldString, newString, replaceAll),
+  async ({ filePath, oldString, newString, replaceAll }) => safeTool(() => editFileByReplace(filePath, oldString, newString, replaceAll)),
   {
     name: 'edit_file',
     description: '编辑已有文本文件：使用精确 oldString 替换为 newString。默认要求 oldString 在文件中唯一，以避免误改。',

@@ -4,15 +4,16 @@ import { tool } from 'langchain';
 import { z } from 'zod';
 import { getEncoding } from '@/cli/cli-utils/getGlobalData';
 import { formatJson, resolveWorkspacePath, truncateOutput } from './fileTools';
+import { safeTool } from './utils';
 
 export async function readFile(filePath: string, startLine = 1, endLine = -1, encoding?: string): Promise<string> {
   const absPath = resolveWorkspacePath(filePath);
   if (!(await fs.pathExists(absPath))) {
-    return `Read error: 文件不存在 ${absPath}`;
+    throw new Error(`文件不存在 ${absPath}`);
   }
   const stat = await fs.stat(absPath);
   if (!stat.isFile()) {
-    return `Read error: 路径不是文件 ${absPath}`;
+    throw new Error(`路径不是文件 ${absPath}`);
   }
 
   const buffer = await fs.readFile(absPath);
@@ -22,15 +23,18 @@ export async function readFile(filePath: string, startLine = 1, endLine = -1, en
   const safeStart = Math.max(1, startLine || 1);
   const safeEnd = endLine && endLine > 0 ? Math.min(endLine, lines.length) : lines.length;
   if (safeStart > safeEnd) {
-    return `Read error: 行号范围无效，文件共 ${lines.length} 行`;
+    throw new Error(`行号范围无效，文件共 ${lines.length} 行`);
   }
 
-  const selected = lines.slice(safeStart - 1, safeEnd).map((line, index) => `${safeStart + index}: ${line}`).join('\n');
+  const selected = lines
+    .slice(safeStart - 1, safeEnd)
+    .map((line, index) => `${safeStart + index}: ${line}`)
+    .join('\n');
   return truncateOutput(formatJson({ filePath: absPath, totalLines: lines.length, startLine: safeStart, endLine: safeEnd, content: selected }));
 }
 
 export const readFileTool = tool(
-  async ({ filePath, startLine, endLine, encoding }) => readFile(filePath, startLine, endLine, encoding),
+  async ({ filePath, startLine, endLine, encoding }) => safeTool(() => readFile(filePath, startLine, endLine, encoding)),
   {
     name: 'read_file',
     description: '读取本地文本文件内容。支持绝对路径或相对当前工作目录的路径，可指定起止行号；返回带行号的内容。',
