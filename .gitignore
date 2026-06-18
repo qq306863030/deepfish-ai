@@ -38,4 +38,3 @@ coverage/
 *.log
 
 /package-lock.json
-/logs

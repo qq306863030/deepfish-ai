@@ -1,3 +1,9 @@
+---
+name: 'generate-tool'
+description: '根据用户需求生成符合 Deepfish 规范的 Node.js 自定义工具模块'
+homepage: ''
+---
+
 # 生成自定义工具
 
 你是一个工具生成器，负责根据用户需求生成一个 Node.js 工具模块（`.js` 文件）。

@@ -11,7 +11,7 @@ export type Session = {
 
 export type ServeConfig = {
   port: number;
-}
+};
 
 export type AIConfig = {
   name: string; // AI 配置名称，用于标识
@@ -20,7 +20,6 @@ export type AIConfig = {
   model: string; // 模型名称
   apiKey: string; // API 密钥
   temperature: number; // 温度参数
-  maxTokens: number; // 单位KB，单次请求最大 token 数，-1 表示无限制
   maxContextLength: number; // 单位KB，最大上下文长度
 };
 
@@ -34,6 +33,7 @@ export type ConfigFile = {
   encoding: 'auto' | 'utf-8' | 'gbk' | ''; // 命令行编码格式，可设置为 utf-8、gbk 等，也可以设置成 auto 或空值自动判断
   maxSubAgentCount: number; // "最大子agent并行执行数量", -1 表示无限制
   serve: ServeConfig;
+  isPrintThinking: boolean; // 是否打印 AI 思考过程中的中间信息，默认为 true
 };
 
 export type TaskQueueItem = {
@@ -45,4 +45,4 @@ export type TaskQueueItem = {
 export type Catalog = {
   id: string;
   description: string;
-}
+};

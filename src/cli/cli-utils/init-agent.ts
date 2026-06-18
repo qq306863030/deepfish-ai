@@ -1,7 +1,7 @@
 ﻿import fs from 'fs-extra';
 import path from 'path';
 import { randomUUID } from 'crypto';
-import { getSessionPath, getSessionsPath, getUserFilePath, getWorkspacePath, getSessionDirPath} from './getGlobalPath';
+import { getSessionPath, getSessionsPath, getUserFilePath, getWorkspacePath, getSessionDirPath } from './getGlobalPath';
 import AIAgent from '../../agent/AIAgent/index';
 import type { ConfigFile, Session } from '@/@types/ConfigFile';
 import { getTrueCwd, openDirectory } from '@/utils/normal';
@@ -29,10 +29,12 @@ export async function initAgent(config: ConfigFile, skills?: string[]): Promise<
     memoryFilePath: userPath.memory,
     userStorePath: userPath.userStore,
     sessionDirPath: getSessionDirPath(id),
+    agentRulesPath: userPath.agentRules,
     maxBlockFileSize: config.maxBlockFileSize, // Max chunk file size in KB; files exceeding this size need to be processed in chunks
     encoding: config.encoding, // CLI encoding format, can be set to utf-8, gbk, etc., or left empty for auto-detection
     maxSubAgentCount: config.maxSubAgentCount, // Maximum parallel sub-agent execution count, -1 means unlimited
     skills,
+    isPrintThinking: config.isPrintThinking, // Whether to print intermediate information during AI thinking, default is true
   });
   await agent.init();
   return agent;
@@ -40,9 +42,7 @@ export async function initAgent(config: ConfigFile, skills?: string[]): Promise<
 
 // ─── agent-room Connection ──────────────────────────────
 
-export type ConnectAgentRoomResult =
-  | { ok: true; client: AgentRoomClient }
-  | { ok: false; reason: 'duplicate-id' | 'offline' };
+export type ConnectAgentRoomResult = { ok: true; client: AgentRoomClient } | { ok: false; reason: 'duplicate-id' | 'offline' };
 
 /**
  * Connect to the agent-room socket server and register as an agent.
@@ -132,7 +132,7 @@ export async function testServer(): Promise<boolean> {
           }
         } catch {
           // Wait for service to start
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
         retries--;
       }
@@ -148,12 +148,12 @@ export async function testServer(): Promise<boolean> {
 export function clearSession() {
   const agentId = getAgentId();
   if (agentId) {
-    removeSessionById(agentId)
+    removeSessionById(agentId);
   }
 }
 
 export function removeSessionById(agentId: string) {
-   if (!agentId) {
+  if (!agentId) {
     logWarning('No current session found, cannot open session directory');
     return;
   }

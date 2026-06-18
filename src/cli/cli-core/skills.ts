@@ -44,7 +44,7 @@ export async function handleSkillsAdd(name: string) {
   ]);
   const homePath = getHomePath();
   const globalSkillDir = path.join(homePath, 'skills');
-  const localSkillDir = path.join(workspace, '.deepfish', 'skills');
+  const localSkillDir = path.join(workspace, '.deepfish-ai', 'skills');
   if (scope === 'local') {
     fs.ensureDirSync(localSkillDir);
   } else {
@@ -164,7 +164,7 @@ export async function handleSkillsGenerate(target: string) {
 
   const currentModelName = config.currentModel;
   if (!currentModelName) {
-    logError('No AI model configured, please run ai model use <名称>');
+    logError('No AI model configured, please run ai model use <name>');
     return;
   }
 

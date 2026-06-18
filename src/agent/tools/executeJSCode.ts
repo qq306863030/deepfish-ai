@@ -53,9 +53,7 @@ const checkPackageInstalledTool = tool(
     const packageJson = path.join(getCodePath(), './package.json');
     const pkg = fs.readJsonSync(packageJson);
     const installed = Object.prototype.hasOwnProperty.call(pkg.dependencies, packageName);
-    return installed
-      ? `Package "${packageName}" is installed.`
-      : `Package "${packageName}" is NOT installed.`;
+    return installed ? `Package "${packageName}" is installed.` : `Package "${packageName}" is NOT installed.`;
   },
   {
     name: 'check_package_installed',
@@ -84,23 +82,22 @@ const installPackageTool = tool(
   },
 );
 
-export const packageTools = [getInstalledPackagesTool, checkPackageInstalledTool, installPackageTool];
-
-export const executeJSCodeTool = tool(
+const executeJSCodeTool = tool(
   async ({ code }) => {
     const result = await executeJSCode(code);
     return result;
   },
   {
     name: 'execute_js_code',
-    description: `在当前 Node.js 环境中执行一段 JavaScript 代码字符串并返回执行结果。注意：代码必须包含一个__main()函数作为执行入口，__main()函数内必须是一个使用async前缀的函数。示例代码：
+    description: `执行一段Node.js代码并返回执行结果。注意：代码必须包含一个__main()函数作为执行入口，__main()函数内必须是一个使用async前缀的函数。示例代码：
         async function __main() {
           const data = await fs.readFile("data.txt", "utf-8")
           return data
         }
         `,
     schema: z.object({
-      code: z.string().describe('要执行的 JavaScript 代码'),
+      code: z.string().describe('要执行的Node.js代码'),
     }),
   },
 );
+export const packageTools = [getInstalledPackagesTool, checkPackageInstalledTool, installPackageTool, executeJSCodeTool];

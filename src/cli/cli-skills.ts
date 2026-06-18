@@ -13,7 +13,7 @@ import {
 export function registerSkillsCommands(program: Command) {
   const skills = program.command('skills');
   skills.command('ls').description('列出所有技能').action(handleSkillsLs);
-  skills.command('add <name>').description('添加本地技能目录或 zip 文件').action(handleSkillsAdd);
+  skills.command('add <name>').description('添加本地技能目录').action(handleSkillsAdd);
   skills.command('del <index>').description('按索引删除技能').action(handleSkillsDel);
   // skills.command('install <url>').description('从 ClawHub 安装技能').action(handleSkillsInstall);
   skills.command('enable <index>').description('按索引启用技能').action(handleSkillsEnable);

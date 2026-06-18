@@ -24,7 +24,7 @@ export async function handleInput(args: string[]) {
     const currentModelName = config!.currentModel;
 
     if (!currentModelName) {
-      logError('No AI model configured, please run ai model use <名称>');
+      logError('No AI model configured, please run ai model use <name>');
       return;
     }
     const isServerRunning = await testServer();
@@ -68,7 +68,7 @@ export async function multiInput() {
     const currentModelName = config!.currentModel;
 
     if (!currentModelName) {
-      logError('No AI model configured, please run ai model use <名称>');
+      logError('No AI model configured, please run ai model use <name>');
       return;
     }
     const isServerRunning = await testServer();
@@ -81,7 +81,7 @@ export async function multiInput() {
     const connResult = await connectAgentRoom(agent);
     if (!connResult.ok) {
       if (connResult.reason === 'duplicate-id') {
-        logWarning(`[agent-room] agent "${agent.id}" is already running, task added to queue`);
+        logWarning(`[agent-room] agent "${agent.id}" is already running`);
         return null;
       } else {
         logWarning('[agent-room] agent-room service not detected, running in offline mode');

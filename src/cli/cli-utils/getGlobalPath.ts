@@ -12,7 +12,7 @@ export function getHomePath() {
 export function getCodePath(): string {
   let dir = getDirname();
   const rootMarker = 'package.json';
-  
+
   // 向上查找直到找到 package.json（项目根目录）
   for (let i = 0; i < 10; i++) {
     if (fs.existsSync(path.join(dir, rootMarker))) {
@@ -22,7 +22,7 @@ export function getCodePath(): string {
     if (parent === dir) break;
     dir = parent;
   }
-  
+
   return path.resolve(dir, '../../../');
 }
 
@@ -80,7 +80,7 @@ export function getScanDirPaths(): string[] {
   const workspacePath = getWorkspacePath();
   const homePath = getHomePath();
   const paths = new Set<string>();
-  paths.add(path.join(workspacePath, '.deepfish'));
+  paths.add(path.join(workspacePath, '.deepfish-ai'));
   paths.add(path.join(homePath));
   return Array.from(paths);
 }

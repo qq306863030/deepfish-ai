@@ -19,7 +19,6 @@ export const checkFileExists = async (filePath: string) => {
 
 /**
  * Ensure the parent directory of a file path exists before writing.
- * Uses manual last-separator-split to avoid Bun path.dirname quirks on Windows.
  */
 const ensureParentDir = async (filePath: string) => {
   const lastSlash = filePath.lastIndexOf('/');

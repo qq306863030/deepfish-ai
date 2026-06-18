@@ -1,3 +1,9 @@
+---
+name: 'generate-skill'
+description: '根据用户需求生成符合标准规范的自定义 Skill 工具包'
+homepage: ''
+---
+
 # 生成自定义技能
 
 你是一个技能生成器，基于 OpenClaw Skill 规范创建标准化的 Skill 工具包，最终输出可被系统直接加载使用。
@@ -33,6 +39,7 @@
 #### 2.1 文件结构
 
 SKILL.md 由两部分组成：
+
 - **YAML Frontmatter**（元数据区）：位于文件顶部，用 `---` 包裹
 - **Markdown Body**（指令正文区）：Frontmatter 之后的所有内容，是 AI 执行 Skill 的核心指令
 
@@ -40,13 +47,14 @@ SKILL.md 由两部分组成：
 
 ```yaml
 ---
-name: "skill-name"
-description: "简要描述该Skill的核心功能和适用场景（建议20-50字）"
-homepage: "https://github.com/your-repo/skill-name"
+name: 'skill-name'
+description: '简要描述该Skill的核心功能和适用场景（建议20-50字）'
+homepage: 'https://github.com/your-repo/skill-name'
 ---
 ```
 
 字段说明：
+
 - `name`：Skill 的唯一标识名称，使用小写字母和连字符，与目录名保持一致
 - `description`：Skill 功能的简要描述，用于在 Skill 列表中展示，帮助 AI 判断何时匹配使用该 Skill
 - `homepage`：Skill 的主页或仓库地址，可留空
@@ -56,15 +64,18 @@ homepage: "https://github.com/your-repo/skill-name"
 指令正文是 Skill 的核心，AI 在加载 Skill 后会仔细阅读此部分内容来学习如何使用该 Skill。正文需包含以下模块：
 
 **模块一：概述**
+
 - 清晰说明该 Skill 的核心功能、适用场景、能解决的问题
 - 列出 Skill 的能力边界（能做什么、不能做什么）
 
 **模块二：环境依赖**（如有）
+
 - 列出 Skill 运行所需的外部依赖（如 Node.js 包、Python 库、系统工具等）
 - 说明依赖的安装方式和版本要求
 - 如果无外部依赖，可省略此模块
 
 **模块三：使用指令**
+
 - 这是 AI 执行 Skill 时的核心参考，必须详细、精确、可操作
 - 以步骤化的方式描述 Skill 的使用流程
 - 每个步骤需说明：输入是什么、执行什么操作、输出是什么
@@ -73,11 +84,13 @@ homepage: "https://github.com/your-repo/skill-name"
 - 如果有多种使用场景，分场景给出说明
 
 **模块四：输入输出规范**
+
 - 定义 Skill 接受的输入格式和参数说明
 - 定义 Skill 输出的结果格式和内容说明
 - 提供输入输出的示例
 
 **模块五：注意事项与限制**
+
 - 说明使用过程中需要注意的关键点
 - 列出已知限制和边界条件
 - 提供常见问题的处理建议

@@ -4,6 +4,7 @@ import JSON5 from 'json5';
 import { ADD_MODEL_Config } from '../cli-utils/SystemConfig';
 import { getConfigPath } from '../cli-utils/getGlobalPath';
 import { logInfo, logSuccess, logWarning, logError } from '../../utils/print';
+import type { AIConfig, ConfigFile } from '@/@types/ConfigFile';
 
 type ModelAnswers = {
   name: string;
@@ -21,7 +22,7 @@ function readConfig() {
     return null;
   }
   const content = fs.readFileSync(configPath, 'utf-8');
-  return JSON5.parse(content);
+  return JSON5.parse(content) as ConfigFile;
 }
 
 function writeConfig(data: any) {
@@ -89,7 +90,7 @@ export async function handleModelAdd() {
     const answers = (await inquirer.prompt(questions)) as ModelAnswers;
 
     const selectedType = answers.Type as keyof typeof aiCliConfig;
-    const newModel = {
+    const newModel: AIConfig = {
       name: answers.name,
       type: aiCliConfig[selectedType].type,
       baseUrl: answers.baseUrl || aiCliConfig[selectedType].baseUrl,
@@ -106,7 +107,7 @@ export async function handleModelAdd() {
     }
 
     config.aiList = config.aiList || [];
-    if (config.aiList.some((item: any) => item.name === answers.name)) {
+    if (config.aiList.some((item: AIConfig) => item.name === answers.name)) {
       logError(`AI config "${answers.name}" already exists, please use a different name`);
       return;
     }
@@ -138,14 +139,13 @@ export function handleModelLs() {
   }
   const currentModel = config.currentModel;
   logInfo('='.repeat(50));
-  aiList.forEach((item: any, index: number) => {
-    const isCurrent = item.name === currentModel ? 'current' : ' ';
+  aiList.forEach((item: AIConfig, index: number) => {
+    const isCurrent = item.name === currentModel;
     if (isCurrent) {
-      logSuccess(`[${index}] ${item.name} (${item.model}) [${isCurrent}]`);
+      logSuccess(`[${index}] ${item.name} (${item.model}) [√]`);
     } else {
-      logInfo(`[${index}] ${item.name} (${item.model})`);
+      logInfo(`[${index}] ${item.name} (${item.model}) [×]`);
     }
-    
   });
   logInfo('='.repeat(50));
 }
@@ -191,7 +191,7 @@ export async function handleModelDel(nameOrIndex: string) {
   if (!isNaN(index) && index >= 0 && index < aiList.length) {
     targetIndex = index;
   } else {
-    targetIndex = aiList.findIndex((item: any) => item.name === nameOrIndex);
+    targetIndex = aiList.findIndex((item: AIConfig) => item.name === nameOrIndex);
   }
 
   if (targetIndex === -1) {

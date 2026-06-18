@@ -50,9 +50,15 @@
   - [Cache Management (AI Self-Learning Cache)](#cache-management-ai-self-learning-cache)
 - [5. MCP Extension Configuration](#5-mcp-extension-configuration)
   - [Configuration Example](#configuration-example)
-- [6. Contributing](#6-contributing)
-- [7. License](#7-license)
-- [8. Support](#8-support)
+- [6. Tool and Skill Extensions](#6-tool-and-skill-extensions)
+  - [Current Directory Extensions](#current-directory-extensions)
+  - [Global Extensions](#global-extensions)
+- [7. System Configuration File](#7-system-configuration-file)
+  - [Configuration Fields](#configuration-fields)
+  - [AI Model Configuration Fields](#ai-model-configuration-fields)
+- [8. Contributing](#8-contributing)
+- [9. License](#9-license)
+- [10. Support](#10-support)
 
 ## 1. Introduction
 
@@ -75,7 +81,6 @@ Core Features:
 - **AI-Generated Extensions**: No need to manually develop complex extension tools—generate custom extensions directly through AI, lowering the barrier to extending functionality and making it more efficient and flexible. [Extension Examples](https://github.com/qq306863030/deepfish-extensions)
 
 Suitable for developers, operations personnel, and everyday terminal users. Whether it's quickly executing terminal operations, batch processing files, or implementing personalized needs through extensions, this tool simplifies workflows and improves efficiency, bringing AI to every terminal operation.
-
 
 ## 2. Installation
 
@@ -119,79 +124,80 @@ Enter natural language directly, and AI will automatically parse and execute the
 
 ### Configuration
 
-| Command | Description |
-|---------|-------------|
-| `ai config edit` | Edit configuration file |
-| `ai config view` | View current configuration |
-| `ai config reset` | Reset configuration |
-| `ai config dir` | View configuration directory |
+| Command           | Description                  |
+| ----------------- | ---------------------------- |
+| `ai config edit`  | Edit configuration file      |
+| `ai config view`  | View current configuration   |
+| `ai config reset` | Reset configuration          |
+| `ai config dir`   | View configuration directory |
 
 ### Model Management
 
-| Command | Description |
-|---------|-------------|
-| `ai models add` | Add a new model |
-| `ai models ls` | List all models |
+| Command                | Description             |
+| ---------------------- | ----------------------- |
+| `ai models add`        | Add a new model         |
+| `ai models ls`         | List all models         |
 | `ai models use <name>` | Switch the model in use |
-| `ai models del <name>` | Delete specified model |
+| `ai models del <name>` | Delete specified model  |
 
 ### Skill Management
 
-| Command | Description |
-|---------|-------------|
-| `ai skills ls` | List all Skills |
-| `ai skills add <name>` | Add a Skill |
-| `ai skills del <index>` | Delete specified Skill |
-| `ai skills enable <name\|index>` | Enable a Skill |
-| `ai skills disable <name\|index>` | Disable a Skill |
-| `ai skills dir` | View Skill directory |
-| `ai skills generate xxx` | Generate a Skill via AI |
+| Command                           | Description             |
+| --------------------------------- | ----------------------- |
+| `ai skills ls`                    | List all Skills         |
+| `ai skills add <name>`            | Add a Skill             |
+| `ai skills del <index>`           | Delete specified Skill  |
+| `ai skills enable <name\|index>`  | Enable a Skill          |
+| `ai skills disable <name\|index>` | Disable a Skill         |
+| `ai skills dir`                   | View Skill directory    |
+| `ai skills generate xxx`          | Generate a Skill via AI |
 
 ### Tool Management
 
-| Command | Description |
-|---------|-------------|
-| `ai tools dir` | View tool directory |
-| `ai tools generate xxx` | Generate a tool via AI |
+| Command                 | Description                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| `ai tools dir`          | View the global tool directory                                               |
+| `ai tools add <name>`   | Add a local tool directory from the current workspace as local or global use |
+| `ai tools generate xxx` | Generate a tool via AI                                                       |
 
 ### Session Management
 
-| Command | Description |
-|---------|-------------|
-| `ai session clear` | Clear session history |
-| `ai session dir` | View session directory |
+| Command            | Description            |
+| ------------------ | ---------------------- |
+| `ai session clear` | Clear session history  |
+| `ai session dir`   | View session directory |
 
 ### Task Management
 
-| Command | Description |
-|---------|-------------|
-| `ai task ls` | List all tasks |
-| `ai task add <task>` | Add a task |
+| Command               | Description           |
+| --------------------- | --------------------- |
+| `ai task ls`          | List all tasks        |
+| `ai task add <task>`  | Add a task            |
 | `ai task del <index>` | Delete specified task |
-| `ai task clear` | Clear all tasks |
+| `ai task clear`       | Clear all tasks       |
 
 ### MCP Management
 
-| Command | Description |
-|---------|-------------|
+| Command       | Description            |
+| ------------- | ---------------------- |
 | `ai mcp edit` | Edit MCP configuration |
 
 ### Serve Management
 
-| Command | Description |
-|---------|-------------|
-| `ai serve` | Start the service |
-| `ai serve start` | Start the service |
-| `ai serve stop` | Stop the service |
+| Command            | Description         |
+| ------------------ | ------------------- |
+| `ai serve`         | Start the service   |
+| `ai serve start`   | Start the service   |
+| `ai serve stop`    | Stop the service    |
 | `ai serve restart` | Restart the service |
 
 ### Cache Management (AI Self-Learning Cache)
 
-| Command | Description |
-|---------|-------------|
-| `ai cache ls` | List cache |
-| `ai cache edit <index\|id>` | Edit cache entry |
-| `ai cache del <index\|id>` | Delete cache entry |
+| Command                     | Description        |
+| --------------------------- | ------------------ |
+| `ai cache ls`               | List cache         |
+| `ai cache edit <index\|id>` | Edit cache entry   |
+| `ai cache del <index\|id>`  | Delete cache entry |
 
 ## 5. MCP Extension Configuration
 
@@ -214,15 +220,101 @@ The following example configures a Chrome DevTools MCP Server, enabling AI to pe
 
 After configuration, AI will automatically load the tools provided by the MCP Server, and you can directly instruct AI to use these capabilities in your conversations.
 
-## 6. Contributing
+## 6. Tool and Skill Extensions
+
+DeepFish supports Tool and Skill extensions to expand AI capabilities. Extension files can be placed either in the `.deepfish-ai` directory of the current workspace or in the global configuration directory.
+
+- **Tool Extension**: Defines custom function tools that AI can call directly. It is suitable for wrapping API calls, database operations, file processing, and other capabilities.
+- **Skill Extension**: Defines AI workflow knowledge packages. It is suitable for storing task procedures, rules, and best practices for specific scenarios.
+
+### Current Directory Extensions
+
+If an extension should only be available in the current directory, copy it into the `.deepfish-ai` directory under the current workspace:
+
+```text
+current-directory/
+└── .deepfish-ai/
+    ├── tools/
+    │   └── your-tool/
+    └── skills/
+        └── your-skill/
+```
+
+- Place Tool extensions under `current-directory/.deepfish-ai/tools/`.
+- Place Skill extensions under `current-directory/.deepfish-ai/skills/`.
+- This approach only affects the current directory and is suitable for project-level extensions or capabilities used by a single project.
+
+### Global Extensions
+
+If an extension should be available in all directories, copy it into the `tools` or `skills` directory inside the global configuration directory.
+
+Use the following command to open the global configuration directory:
+
+```bash
+ai config dir
+```
+
+Example structure:
+
+```text
+global-config-directory/
+└── .deepfish-ai/
+    ├── tools/
+    │   └── your-tool/
+    └── skills/
+        └── your-skill/
+```
+
+- Place Tool extensions under `global-config-directory/.deepfish-ai/tools/`.
+- Place Skill extensions under `global-config-directory/.deepfish-ai/skills/`.
+- This approach is globally effective and is suitable for common tools or reusable workflow capabilities.
+
+## 7. System Configuration File
+
+DeepFish stores its system configuration file at `.deepfish-ai/config.json5` under the user directory. You can open or view it with the following commands:
+
+```bash
+ai config edit
+ai config view
+```
+
+### Configuration Fields
+
+| Field                 | Type      | Default  | Description                                                                                                              |
+| --------------------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `aiList`              | `array`   | `[]`     | List of AI model configurations. Multiple model configurations can be added.                                             |
+| `currentModel`        | `string`  | `''`     | Name of the currently active AI configuration. It should match the `name` of one item in `aiList`.                       |
+| `maxIterations`       | `number`  | `-1`     | Maximum number of iterations for an AI workflow. `-1` means unlimited.                                                   |
+| `maxMemoryExpireTime` | `number`  | `30`     | Maximum retention time for session memory, in days. `-1` means permanent retention, and `0` means no memory is recorded. |
+| `maxLogExpireTime`    | `number`  | `3`      | Maximum retention time for logs, in days. `-1` means permanent retention, and `0` means no logs are recorded.            |
+| `maxBlockFileSize`    | `number`  | `50`     | Maximum file block size in KB. Files larger than this value will be processed in chunks.                                 |
+| `encoding`            | `string`  | `'auto'` | Command-line output encoding, such as `utf-8` or `gbk`. `auto` or an empty value enables automatic detection.            |
+| `maxSubAgentCount`    | `number`  | `2`      | Maximum number of parallel sub-agents. `-1` means unlimited.                                                             |
+| `isPrintThinking`     | `boolean` | `true`   | Whether to print intermediate AI thinking information.                                                                   |
+| `serve.port`          | `number`  | `8866`   | Local service port used by DeepFish.                                                                                     |
+
+### AI Model Configuration Fields
+
+Each item in `aiList` represents one AI model configuration. Common fields are listed below:
+
+| Field              | Type     | Description                                                                                                              |
+| ------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `name`             | `string` | Model configuration name, used by `ai models use <name>` to switch models.                                               |
+| `type`             | `string` | Model provider type, such as `DeepSeek`, `Ollama`, or `OpenAICompatible`.                                                |
+| `baseUrl`          | `string` | Model API endpoint.                                                                                                      |
+| `model`            | `string` | Actual model name used for requests.                                                                                     |
+| `apiKey`           | `string` | API key for the model provider.                                                                                          |
+| `temperature`      | `number` | Randomness parameter for generation. Higher values produce more diverse output; lower values produce more stable output. |
+| `maxContextLength` | `number` | Maximum context length of the model, in tokens.                                                                          |
+
+## 8. Contributing
 
 Contributions are welcome! Feel free to submit Pull Requests at any time.
 
-## 7. License
+## 9. License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 8. Support
+## 10. Support
 
 For questions and inquiries, please submit an issue on the GitHub repository.
-

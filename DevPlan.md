@@ -32,9 +32,10 @@ module.exports = {
   maxBlockFileSize: 50, // 最大分块文件大小，单位KB；超过该大小的文件需要分块处理
   encoding: 'auto', // 命令行编码格式，可设置为 utf-8、gbk 等，也可以设置成 auto 或空值自动判断
   maxSubAgentCount: 2, // "最大子agent并行执行数量", -1 表示无限制
+  isPrintThinking: true,
   serve: {
-      port: 8866,
-  }
+    port: 8866,
+  },
 };
 ```
 
@@ -66,6 +67,7 @@ ai skills generate xxx
 
 # Tools commands
 ai tools dir # Open the skill directory
+ai tools add <name>
 ai tools generate xxx
 
 # Session commands
@@ -124,4 +126,5 @@ mcp
 ```
 
 # 计划完成
+
 1. 并行执行任务的子agent

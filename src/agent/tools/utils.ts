@@ -4,30 +4,7 @@ import { z } from 'zod';
 import path from 'path';
 import fs from 'fs-extra';
 import { randomUUID } from 'crypto';
-
-type succsessResult = {
-  success: true;
-  data: any;
-};
-
-type errorResult = {
-  success: false;
-  error: string;
-  data?: any;
-};
-
-interface Description {
-  type: string;
-  function: {
-    name: string;
-    description: string;
-    parameters: {
-      type: string;
-      properties: Record<string, any>;
-      required: string[];
-    };
-  };
-}
+import type { Description, errorResult, succsessResult } from '@/@types/Tools';
 
 // 将一个普通函数转换为 LangChain 的工具函数
 function toLangChainTool(func: (...args: any[]) => succsessResult | errorResult | string, description: Description): DynamicStructuredTool {

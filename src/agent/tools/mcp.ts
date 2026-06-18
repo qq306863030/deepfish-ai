@@ -8,32 +8,37 @@ import path from 'path';
 async function loadMcpToolsFromConfigPath(mcpFilePath: string): Promise<DynamicStructuredTool[]> {
   const jsonContent = fs.readJSONSync(mcpFilePath);
   const { mcpServers } = jsonContent;
-  if (!mcpServers || mcpServers.length === 0) {
+  if (!mcpServers || Object.keys(mcpServers).length === 0) {
     return [];
   }
-  for (const key of Object.keys(mcpServers)) {
-    const server = mcpServers[key];
-    if (!server.transport) {
-      if (server.url) {
-        if (server.url.startsWith('ws://') || server.url.startsWith('wss://')) {
-          server.transport = 'websocket';
-        } else if (server.url.startsWith('http://') || server.url.startsWith('https://')) {
-          server.transport = 'http';
+  try {
+    for (const key of Object.keys(mcpServers)) {
+      const server = mcpServers[key];
+      if (!server.transport) {
+        if (server.url) {
+          if (server.url.startsWith('ws://') || server.url.startsWith('wss://')) {
+            server.transport = 'websocket';
+          } else if (server.url.startsWith('http://') || server.url.startsWith('https://')) {
+            server.transport = 'http';
+          }
+        } else if (server.command === 'node' || server.command === 'npx') {
+          server.transport = 'stdio';
         }
-      } else if (server.command === 'node' || server.command === 'npx') {
-        server.transport = 'stdio';
+      }
+      if (!server.transport) {
+        logWarning(`Unable to determine transport for MCP server ${key}, skipping...`);
+        delete mcpServers[key];
       }
     }
-    if (!server.transport) {
-      logWarning(`Unable to determine transport for MCP server ${key}, skipping...`);
-      delete mcpServers[key];
-    }
+    logInfo(`Loading MCP tools from config path: ${mcpFilePath}`);
+    const client = new MultiServerMCPClient(jsonContent.mcpServers);
+    const tools = await client.getTools();
+    logInfo(`Loaded ${tools.length} tools from MCP config.`);
+    return tools;
+  } catch (error) {
+    console.log('Error loading MCP tools:', error);
+    return [];
   }
-  logInfo(`Loading MCP tools from config path: ${mcpFilePath}`);
-  const client = new MultiServerMCPClient(jsonContent.mcpServers);
-  const tools = await client.getTools();
-  logInfo(`Loaded ${tools.length} tools from MCP config.`);
-  return tools;
 }
 
 export async function scanUserMcp() {
