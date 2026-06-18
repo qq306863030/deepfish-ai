@@ -2,7 +2,23 @@
   "name": "deepfish-ai",
   "version": "2.0.3",
   "private": false,
-  "description": "AI Agent CLI tool with agent-room for multi-agent collaboration",
+  "description": "An efficient AI-driven command-line tool designed to bridge the gap between natural language and operating system commands, file operations, and more. It enables non-developers to quickly generate executable instructions through simple natural language descriptions, significantly improving terminal operation efficiency.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qq306863030/deepfish-ai.git"
+  },
+  "keywords": [
+    "ai",
+    "cli",
+    "agent",
+    "llm",
+    "deepfish",
+    "terminal",
+    "automation",
+    "langchain",
+    "mcp",
+    "natural-language"
+  ],
   "main": "./dist/index.js",
   "bin": {
     "ai": "./dist/index.js"
