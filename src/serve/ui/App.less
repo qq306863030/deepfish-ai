@@ -87,9 +87,10 @@ body {
 
 // Table
 .table-wrap { width:100%; overflow-x: visible; }
-table.sessions { width:100%; border-collapse: separate; border-spacing:0; font-size:0.88rem; }
+table.sessions { width:100%; border-collapse: separate; border-spacing:0; font-size:0.88rem; table-layout: fixed; }
 table.sessions thead th { text-align:center; font-weight:600; font-size:0.8rem; color:@muted; padding:12px 18px; background: transparent; border-bottom:1px solid #f0f2f5; }
-table.sessions tbody td { padding:14px 18px; border-bottom:1px solid #f0f2f5; color:@text; vertical-align:middle; white-space:normal; }
+table.sessions thead th:first-child { width:300px; }
+table.sessions tbody td { padding:14px 18px; border-bottom:1px solid #f0f2f5; color:@text; vertical-align:middle; white-space:normal; text-align:center; }
 table.sessions tbody tr { transition: background 160ms ease; }
 table.sessions tbody tr:hover { background: #fbfbfd; }
 table.sessions tbody tr:last-child td { border-bottom: none; }
@@ -104,7 +105,8 @@ table.sessions .cell-actions { display:flex; justify-content:center; gap:8px; }
 .btn-id:hover { background: rgba(59,130,246,0.06); box-shadow: none; }
 .btn-id:active { transform: translateY(1px); }
 
-.cell-mono { font-family: @mono-font; color:#64748b; font-size:0.86rem; }
+.cell-mono { font-family: @mono-font; color:#64748b; font-size:0.86rem; text-align:left; }
+table.sessions .cell-workspace { width:300px; max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
 .cell-name { font-weight:600; color:@text; }
 .cell-time { color:#64748b; font-size:0.86rem; font-family:@mono-font; }
 .status-tag { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:0.74rem; font-family:@mono-font; font-weight:500; letter-spacing:0.04em; }

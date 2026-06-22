@@ -114,7 +114,7 @@ export default function App() {
       <header class="app-header">
         <div>
           <h1 class="app-title">DeepFish Sessions</h1>
-          <p class="app-subtitle">// agent-room · realtime</p>
+          <p class="app-subtitle"></p>
         </div>
         <div class="status-pill" title={errorMsg()}>
           <span class={`status-dot ${STATUS_DOT_CLASS[status()]}`}></span>
@@ -149,8 +149,8 @@ export default function App() {
             <table class="sessions">
               <thead>
                 <tr>
-                  <th>Name</th>
                   <th>Workspace</th>
+                  <th>Name</th>
                   <th>Status</th>
                   <th>Created</th>
                   <th>Updated</th>
@@ -161,8 +161,8 @@ export default function App() {
                 <For each={sessions()}>
                   {(s) => (
                     <tr>
+                      <td class="cell-mono cell-workspace" title={s.workspace}>{s.workspace}</td>
                       <td class="cell-name">{s.name}</td>
-                      <td class="cell-mono">{s.workspace}</td>
                       <td>
                         <span
                           class={`status-tag ${

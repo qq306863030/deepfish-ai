@@ -120,7 +120,17 @@ ai "Write an article about future technology in the current directory, output in
 ai "your question or instruction"
 ```
 
-Enter natural language directly, and AI will automatically parse and execute the corresponding operations.
+Enter natural language directly, and AI will automatically parse and execute the corresponding operations. DeepFish keeps only one Agent session per directory, so multiple `ai` commands in the same directory reuse the same context.
+
+Example:
+
+```bash
+cd your-project
+ai "What is your name?"
+ai "What question did I just ask?"
+```
+
+On the second question, AI answers based on the same session context in the current directory.
 
 ### Configuration
 
@@ -224,8 +234,8 @@ After configuration, AI will automatically load the tools provided by the MCP Se
 
 DeepFish supports Tool and Skill extensions to expand AI capabilities. Extension files can be placed either in the `.deepfish-ai` directory of the current workspace or in the global configuration directory.
 
-- **Tool Extension**: Defines custom function tools that AI can call directly. It is suitable for wrapping API calls, database operations, file processing, and other capabilities.
-- **Skill Extension**: Defines AI workflow knowledge packages. It is suitable for storing task procedures, rules, and best practices for specific scenarios.
+- **Tool Extension**: Defines custom function tools that AI can call directly. It is suitable for wrapping API calls, database operations, file processing, and other capabilities. You can use `ai tools generate xxx` to ask AI to generate a Tool from your description.
+- **Skill Extension**: Defines AI workflow knowledge packages. It is suitable for storing task procedures, rules, and best practices for specific scenarios. You can use `ai skills generate xxx` to ask AI to generate a Skill from your description.
 
 ### Current Directory Extensions
 
