@@ -10,15 +10,15 @@ import { initAgent, testServer } from '../cli-utils/init-agent';
 
 export function handleSkillsLs() {
   const skills = _getAllSkills();
-  console.log('='.repeat(50));
+  logInfo('='.repeat(50));
   if (skills.length === 0) {
     logInfo('No skills registered yet');
   } else {
     skills.forEach((skill, index) => {
-      console.log(`[${index}] ${skill.name} (${skill.isEnabled ? 'enabled' : 'disabled'})`);
+      logInfo(`[${index}] ${skill.name} (${skill.isEnabled ? 'enabled' : 'disabled'})`);
     });
   }
-  console.log('='.repeat(50));
+  logInfo('='.repeat(50));
 }
 
 export async function handleSkillsAdd(name: string) {

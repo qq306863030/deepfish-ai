@@ -9,7 +9,7 @@ import { safeTool } from './utils';
 
 declare const require: any;
 // CJS 模式下 require 直接可用
-const _require: any = require;
+
 
 /**
  * 执行一段 Node.js 代码字符串，返回执行结果
@@ -27,7 +27,15 @@ export async function executeJSCode(code: string) {
         return result || "Code executed successfully, but __main() did not return anything."
     })()`;
     const fn = new Function('require', wrapped);
-    const result = await fn(_require);
+    const _require: any = require;
+    const newRequire = (modulePath:string) => {
+      if (modulePath.startsWith('./')) {
+        const resolvedPath = path.resolve(process.cwd(), modulePath)
+        return _require(resolvedPath)
+      }
+      return _require(modulePath)
+    }
+    const result = await fn(newRequire);
     return result;
   } catch (error: any) {
     logError(`Error executing code: ${error.stack}`);

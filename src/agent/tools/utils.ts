@@ -69,15 +69,13 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
   // 包装函数，提取 args 中的参数传递给原函数，并处理返回值
   const wrappedFunc = async (args: any, runtime: any) => {
     try {
-      console.log(runtime)
-
-      func.bind({
+      const boundFunc = func.bind({
         createSubAgent: (prompt: string) => {
-          const subAgent = runtime.mainAgent.createSubAgent();
+          const subAgent = runtime.context.mainAgent.createSubAgent();
           return subAgent.execute(prompt)
         }
       })
-      const result = await func(...Object.values(args));
+      const result = await boundFunc(...Object.values(args));
       if (typeof result === 'object' && result !== null && 'success' in result) {
         return serializeToolResult(result as ToolResult);
       }

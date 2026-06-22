@@ -230,6 +230,7 @@ MCP（Model Context Protocol）允许 AI 连接外部工具和服务。通过 `a
 DeepFish 支持通过 Tool 和 Skill 扩展 AI 的能力。扩展文件可以放在当前工作目录的 `.deepfish-ai` 目录中，也可以放在全局配置目录中。
 
 - **Tool 扩展**：用于定义 AI 可直接调用的自定义函数工具，适合封装 API 调用、数据库操作、文件处理等能力。可以使用 `ai tools generate xxx` 命令让 AI 根据描述生成 Tool。
+  - 在 Tool 函数中，可以通过调用 `this.createSubAgent(prompt: string)` 创建子 Agent，并将任务说明作为 `prompt` 传入。
 - **Skill 扩展**：用于定义 AI 的工作流知识包，适合沉淀某类任务的执行步骤、规范和最佳实践。可以使用 `ai skills generate xxx` 命令让 AI 根据描述生成 Skill。
 
 ### 当前目录扩展

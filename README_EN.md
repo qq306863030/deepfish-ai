@@ -235,6 +235,7 @@ After configuration, AI will automatically load the tools provided by the MCP Se
 DeepFish supports Tool and Skill extensions to expand AI capabilities. Extension files can be placed either in the `.deepfish-ai` directory of the current workspace or in the global configuration directory.
 
 - **Tool Extension**: Defines custom function tools that AI can call directly. It is suitable for wrapping API calls, database operations, file processing, and other capabilities. You can use `ai tools generate xxx` to ask AI to generate a Tool from your description.
+  - In a Tool function, you can call `this.createSubAgent(prompt: string)` to create a sub-agent and pass the task description as `prompt`.
 - **Skill Extension**: Defines AI workflow knowledge packages. It is suitable for storing task procedures, rules, and best practices for specific scenarios. You can use `ai skills generate xxx` to ask AI to generate a Skill from your description.
 
 ### Current Directory Extensions
