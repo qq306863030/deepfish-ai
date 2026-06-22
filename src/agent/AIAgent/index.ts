@@ -15,7 +15,7 @@ import { z } from 'zod';
 import type { AgentMessage, AgentOpt } from '../../@types/AgentOpt';
 import { EventEmitterSuper } from 'eventemitter-super';
 import { AgentEvent } from '../../@types/AgentEvent';
-import { streamOutput, logError, log, logSuccess, logInfo } from '@/utils/print';
+import { streamOutput, logError, log, logInfo } from '@/utils/print';
 import { createAgentEventMiddleware } from './middleware/eventEmitMiddleware';
 import Thinking from './utils/Thinking';
 import { subSystemPrompt, systemPrompt } from './system-prompt';
@@ -139,7 +139,7 @@ export default class AIAgent extends EventEmitterSuper {
     }
     const newTask = this.taskQueue.getTask();
     if (newTask) {
-      log(`[任务队列] 发现新任务，即将执行: ${newTask.taskStr}`, '#7fded1');
+      log(`[Task Queue] New task found, executing: ${newTask.taskStr}`, '#7fded1');
       await this.execute(newTask.taskStr);
     }
   }
@@ -155,7 +155,6 @@ export default class AIAgent extends EventEmitterSuper {
       if (this.isPrintThinking) {
         thinking.stop();
       }
-      streamOutput('\n');
     });
     this.on(AgentEvent.MODEL_ERROR, (error) => {
       if (this.isPrintThinking) {
@@ -180,11 +179,11 @@ export default class AIAgent extends EventEmitterSuper {
     this.on(AgentEvent.COMPRESS_MESSAGES_AFTER, (_currentLength) => {});
     this.on(AgentEvent.NEW_MESSAGE, (_msg) => {});
     this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, funcName, _funcArgs) => {
-      log(`[调用工具] ${funcName}`, '#c2a654');
+      log(`[Tool Call] ${funcName}`, '#c2a654');
     });
-    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, funcName, toolContent) => {});
-    this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, funcName, error) => {});
-    this.on(AgentEvent.USE_TOOL_AFTER, (_toolId, funcName, _funcArgs) => {});
+    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent) => {});
+    this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {});
+    this.on(AgentEvent.USE_TOOL_AFTER, (_toolId, _funcName, _funcArgs) => {});
   }
 
   destory() {

@@ -1,5 +1,3 @@
-import path from 'path';
-import fs from 'fs';
 import { logError } from "./print";
 import { exec, spawn } from 'child_process';
 

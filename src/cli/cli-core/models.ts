@@ -168,13 +168,13 @@ export async function handleModelUse(nameOrIndex: string) {
   }
 
   if (targetIndex === -1) {
-    logError(`未找到 AI config: ${nameOrIndex}`);
+    logError(`AI config not found: ${nameOrIndex}`);
     return;
   }
 
   config.currentModel = aiList[targetIndex].name;
   writeConfig(config);
-  logSuccess(`已切换到 AI config: ${aiList[targetIndex].name}`);
+  logSuccess(`Switched to AI config: ${aiList[targetIndex].name}`);
 }
 
 export async function handleModelDel(nameOrIndex: string) {
@@ -195,7 +195,7 @@ export async function handleModelDel(nameOrIndex: string) {
   }
 
   if (targetIndex === -1) {
-    logError(`未找到 AI config: ${nameOrIndex}`);
+    logError(`AI config not found: ${nameOrIndex}`);
     return;
   }
 
@@ -208,5 +208,5 @@ export async function handleModelDel(nameOrIndex: string) {
   }
 
   writeConfig(config);
-  logSuccess(`已删除 AI config: ${deletedName}`);
+  logSuccess(`Deleted AI config: ${deletedName}`);
 }

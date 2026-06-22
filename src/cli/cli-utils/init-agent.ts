@@ -68,7 +68,7 @@ export function connectAgentRoom(agent: AIAgent): Promise<ConnectAgentRoomResult
       id,
       reconnectInterval: 0, // Disable auto-reconnect during Promise phase
       onReady: () => {
-        logSuccess(`[agent-room] agent online: ${id}`);
+        // logSuccess(`[agent-room] agent online: ${id}`);
         done({ ok: true, client });
       },
       onError: (_c, code) => {
@@ -109,7 +109,6 @@ export async function testServer(): Promise<boolean> {
     const res = await fetch(url, { method: 'GET' });
     const text = await res.text();
     if (text === 'pong') {
-      logSuccess(`Service already running: http://localhost:${port}`);
       return true;
     }
     // Port is occupied but the response is not from our service

@@ -98,7 +98,7 @@ export function handleSkillsDel(index: string) {
     register = register.filter((item) => item.skillPath !== skill.skillPath);
     fs.writeJSONSync(registerPath, register, { spaces: 2 });
   }
-  logSuccess(`Skill 删除: ${skill.name}`);
+  logSuccess(`Skill deleted: ${skill.name}`);
 }
 
 export function handleSkillsInstall(url: string) {

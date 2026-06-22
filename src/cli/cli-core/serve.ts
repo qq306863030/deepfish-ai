@@ -45,15 +45,6 @@ function pm2Start(config: any): Promise<void> {
   });
 }
 
-function pm2Stop(name: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    pm2.stop(name, (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
-}
-
 function pm2Delete(name: string): Promise<void> {
   return new Promise((resolve, reject) => {
     pm2.delete(name, (err) => {

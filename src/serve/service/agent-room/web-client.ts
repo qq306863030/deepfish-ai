@@ -6,7 +6,7 @@
  * const web = new AgentRoomWebClient({
  *   url: 'ws://localhost:8866/agent-room',
  *   onReady: (client) => client.send('task', { cmd: 'scan' }, 'agent-001'),
- *   onMessage: (client, msg) => console.log('agent 回复:', msg),
+ *   onMessage: (client, msg) => console.log('agent reply:', msg),
  * });
  * ```
  *

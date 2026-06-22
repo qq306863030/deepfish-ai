@@ -1,5 +1,5 @@
 ﻿import type { Command } from 'commander';
-import { handleServeStart, handleServeStop, handleServeRestart, isServerRunning } from './cli-core/serve';
+import { handleServeStart, handleServeStop, handleServeRestart } from './cli-core/serve';
 import { logInfo, logError, logWarning, logSuccess } from '../utils/print';
 import { getServePort } from './cli-utils/getGlobalData';
 import { openDirectory } from '../utils/normal';
@@ -27,7 +27,7 @@ export function registerServeCommands(program: Command) {
           return;
         }
         // 返回了非 pong，说明Port被其他服务占用
-        logError(`Port ${port} is occupied but did not respond with expected content（收到: ${text}）`);
+        logError(`Port ${port} is occupied but did not respond with expected content (received: ${text})`);
       } catch (err) {
         // fetch 抛错 → 连接失败，服务未running
         logWarning('Service not started, please run `ai serve start`');

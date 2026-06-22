@@ -39,7 +39,7 @@ export function handleTaskAdd(taskStr: string) {
   if (!queue) return;
 
   queue.pushTask(taskStr.trim());
-  logSuccess(`任务已 added: ${taskStr.trim()}`);
+  logSuccess(`Task added: ${taskStr.trim()}`);
 }
 
 export function handleTaskDel(indexStr: string) {

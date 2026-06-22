@@ -24,7 +24,7 @@ const STATUS_PILL_TEXT: Record<'connecting' | 'connected' | 'disconnected' | 'er
   error: 'ERROR',
 };
 
-/** 把 ISO 时间格式化为本地字符串（兼容 invalid）。 */
+/** Format an ISO timestamp as a local string, while tolerating invalid values. */
 function formatTime(value: string | undefined | null): string {
   if (!value) return '-';
   const d = new Date(value);
@@ -40,6 +40,7 @@ export default function App() {
   const [confirmingId, setConfirmingId] = createSignal<string>('');
   const [showConfirm, setShowConfirm] = createSignal(false);
   const [confirmMessage, setConfirmMessage] = createSignal('');
+  const [visibleId, setVisibleId] = createSignal<string>('');
 
   let client: AgentRoomWebClient | null = null;
 
@@ -72,8 +73,8 @@ export default function App() {
   });
 
   /**
-   * 删除 session：发送 delete-session 消息到 server，server 会调用 removeSessionById
-   * 并通过 sessions-push 自动刷新表格。
+   * Delete a session by sending a delete-session message to the server.
+   * The table refreshes automatically through sessions-push.
    */
   const handleDelete = (id: string) => {
     // Show custom confirmation modal; client will send delete request after confirmation
@@ -96,6 +97,14 @@ export default function App() {
   const cancelDelete = () => {
     setConfirmingId('');
     setShowConfirm(false);
+  };
+
+  const showSessionId = (id: string) => {
+    setVisibleId(id);
+  };
+
+  const closeSessionIdDialog = () => {
+    setVisibleId('');
   };
 
   onCleanup(() => client?.disconnect());
@@ -140,7 +149,6 @@ export default function App() {
             <table class="sessions">
               <thead>
                 <tr>
-                  <th>ID</th>
                   <th>Name</th>
                   <th>Workspace</th>
                   <th>Status</th>
@@ -153,7 +161,6 @@ export default function App() {
                 <For each={sessions()}>
                   {(s) => (
                     <tr>
-                      <td class="cell-mono">{s.id}</td>
                       <td class="cell-name">{s.name}</td>
                       <td class="cell-mono">{s.workspace}</td>
                       <td>
@@ -170,7 +177,14 @@ export default function App() {
                       <td class="cell-actions">
                         <button
                           type="button"
-                          class="btn-delete"
+                          class="btn btn-id"
+                          onClick={() => showSessionId(s.id)}
+                        >
+                          Show ID
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-delete"
                           disabled={deletingId() === s.id}
                           onClick={() => handleDelete(s.id)}
                         >
@@ -188,13 +202,25 @@ export default function App() {
 
         <Show when={showConfirm()}>
           <div class="modal-backdrop">
-            <div class="modal" role="dialog" aria-modal="true" aria-label="确认删除">
+            <div class="modal" role="dialog" aria-modal="true" aria-label="Confirm deletion">
               <div class="modal-body">{confirmMessage()}</div>
               <div class="modal-actions">
-                <button type="button" class="btn btn-cancel" onClick={cancelDelete}>取消</button>
+                <button type="button" class="btn btn-cancel" onClick={cancelDelete}>Cancel</button>
                 <button type="button" class="btn btn-confirm" onClick={confirmDelete} disabled={deletingId() === confirmingId()}>
-                  {deletingId() === confirmingId() ? 'Deleting...' : '确认删除'}
+                  {deletingId() === confirmingId() ? 'Deleting...' : 'Confirm Delete'}
                 </button>
+              </div>
+            </div>
+          </div>
+        </Show>
+
+        <Show when={visibleId()}>
+          <div class="modal-backdrop">
+            <div class="modal" role="dialog" aria-modal="true" aria-label="Session ID">
+              <h3 class="modal-title">Session ID</h3>
+              <div class="modal-id">{visibleId()}</div>
+              <div class="modal-actions">
+                <button type="button" class="btn btn-confirm" onClick={closeSessionIdDialog}>Close</button>
               </div>
             </div>
           </div>

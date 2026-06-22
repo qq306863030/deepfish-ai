@@ -8,7 +8,7 @@
  * const agent = new AgentRoomClient({
  *   url: 'ws://localhost:8866/agent-room',
  *   id: 'agent-001',
- *   onReady: (client) => log('注册成功', client.id),
+ *   onReady: (client) => log('Registered successfully', client.id),
  *   onMessage: (client, msg) => {
  *     if (msg.fromType === 'web') {
  *       client.reply(msg, { ok: true, result: 'done' });
