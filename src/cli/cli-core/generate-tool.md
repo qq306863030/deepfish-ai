@@ -85,4 +85,4 @@ module.exports = { functions, descriptions };
 1. 理解用户要生成的工具功能
 2. 在当前工作目录下创建 `deepfish-tool-{功能名}/` 目录
 3. 编写 `index.js`，导出 `functions` 和 `descriptions`
-4. 确保代码语法正确、可以直接 `require` 使用
+4. 确保代码语法正确、可以直接使用 `require` 

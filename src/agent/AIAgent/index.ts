@@ -63,7 +63,7 @@ export default class AIAgent extends EventEmitterSuper {
 
   async init() {
     this.tools = await getTools();
-    this.skills = [...getSkills(), ...(this.opt.skills || [])]; // todo
+    this.skills = [...getSkills(), ...(this.opt.skills || [])];
     const model = getModel(this.opt.modelOpt);
     const checkpointer = new FileSystemSaver({
       rootFolder: this.sessionDirPath,
@@ -190,8 +190,12 @@ export default class AIAgent extends EventEmitterSuper {
     this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, funcName, _funcArgs) => {
       log(`[Tool Call] ${funcName}`, '#c2a654');
     });
-    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent) => {});
-    this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {});
+    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent) => {
+      logInfo(`[Tool Return] ${_funcName} returned: ${_toolContent}`);
+    });
+    this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {
+      logError(`Error in tool ${_funcName}: ${_error instanceof Error ? _error.message : String(_error)}`);
+    });
     this.on(AgentEvent.USE_TOOL_AFTER, (_toolId, _funcName, _funcArgs) => {});
   }
 

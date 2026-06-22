@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import { randomUUID } from 'crypto';
 import type { Description, ErrorResult, SuccsessResult } from '@/@types/Tools';
+import { logWarning } from '@/utils/print';
 import { truncateOutput } from './fileTools';
 
 export type ToolResult = SuccsessResult | ErrorResult;
@@ -68,6 +69,8 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
   // 包装函数，提取 args 中的参数传递给原函数，并处理返回值
   const wrappedFunc = async (args: any, runtime: any) => {
     try {
+      console.log(runtime)
+
       func.bind({
         createSubAgent: (prompt: string) => {
           const subAgent = runtime.mainAgent.createSubAgent();
@@ -105,7 +108,7 @@ function scanUserTools() {
           // 扫描目录中的js文件，如果包含index.js则只扫描index.js，否则扫描所有js文件
           const subDirPath = path.resolve(toolsDir, file);
           const subFiles = fs.readdirSync(subDirPath);
-          const indexFile = subFiles.find((f) => f === 'index' || f === 'index.cjs');
+          const indexFile = subFiles.find((f) => f === 'index.js' || f === 'index.cjs');
           if (indexFile) {
             const filePath = _scanDeepFishJsFile(path.resolve(subDirPath, indexFile), indexFile);
             if (filePath) {
@@ -143,15 +146,34 @@ function _scanDeepFishJsFile(filePath: string, fileName: string) {
 
 // 读取文件中的functions和descriptions并转换为LangChain工具
 function _loadToolsFromFile(filePath: string, tools: DynamicStructuredTool[]) {
-  const toolModule = require(filePath);
-  const { functions, descriptions } = toolModule;
-  descriptions.forEach((desc: Description) => {
-    const func = functions[desc.function.name];
-    if (func) {
+  try {
+    const toolModule = require(filePath);
+    const { functions, descriptions } = toolModule;
+    if (!functions || typeof functions !== 'object' || !Array.isArray(descriptions)) {
+      logWarning(`Skip invalid tool file: ${filePath}`);
+      return;
+    }
+
+    descriptions.forEach((desc: Description) => {
+      if (!desc.type) {
+        desc = {
+          type: 'function',
+          function: desc as any,
+        }
+      }
+      const func = functions[desc.function.name];
+      if (typeof func !== 'function') {
+        logWarning(`Skip tool "${desc.function.name}": implementation not found in ${filePath}`);
+        return;
+      }
+
       const langChainTool = toLangChainTool(func, desc);
       tools.push(langChainTool);
-    }
-  });
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logWarning(`Failed to load tool file: ${filePath}. ${message}`);
+  }
 }
 
 export { scanUserTools };

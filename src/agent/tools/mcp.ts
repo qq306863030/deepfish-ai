@@ -38,13 +38,17 @@ function wrapMcpTool(mcpTool: DynamicStructuredTool): DynamicStructuredTool {
 
 async function loadMcpToolsFromConfigPath(mcpFilePath: string): Promise<DynamicStructuredTool[]> {
   const jsonContent = fs.readJSONSync(mcpFilePath);
-  const { mcpServers } = jsonContent;
+  let mcpServers = jsonContent.mcpServers;
   if (!mcpServers || Object.keys(mcpServers).length === 0) {
     return [];
   }
   try {
     for (const key of Object.keys(mcpServers)) {
       const server = mcpServers[key];
+      if (server.disabled) {
+        delete mcpServers[key];
+        continue;
+      }
       if (!server.transport) {
         if (server.url) {
           if (server.url.startsWith('ws://') || server.url.startsWith('wss://')) {
@@ -60,6 +64,9 @@ async function loadMcpToolsFromConfigPath(mcpFilePath: string): Promise<DynamicS
         logWarning(`Unable to determine transport for MCP server ${key}, skipping...`);
         delete mcpServers[key];
       }
+    }
+    if (Object.keys(mcpServers).length === 0) {
+      return [];
     }
     logInfo(`Loading MCP tools from config path: ${mcpFilePath}`);
     const client = new MultiServerMCPClient(jsonContent.mcpServers);
