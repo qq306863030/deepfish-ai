@@ -9,7 +9,6 @@ import {
   todoListMiddleware,
 } from 'langchain';
 import { createPatchToolCallsMiddleware, createSubAgentMiddleware } from 'deepagents';
-import { FileSystemSaver } from './utils/langgraph-checkpoint-filesystem';
 import { getModel } from '../models';
 import { z } from 'zod';
 import type { AgentMessage, AgentOpt } from '../../@types/AgentOpt';
@@ -21,12 +20,10 @@ import Thinking from './utils/Thinking';
 import { subSystemPrompt, systemPrompt } from './system-prompt';
 import { getTools } from '../tools';
 import { getSkills } from '../skills';
-import type { AgentRoomClient } from '@/serve/service/agent-room/agent-client';
-import TaskQueue from '@/cli/cli-utils/TaskQueue';
 import os from 'os';
-import SubAIAgent from './SubAIAgent';
+import { randomUUID } from 'crypto';
 
-export default class AIAgent extends EventEmitterSuper {
+export default class SubAIAgent extends EventEmitterSuper {
   id: string = '';
   opt: AgentOpt = {} as AgentOpt;
 
@@ -34,7 +31,7 @@ export default class AIAgent extends EventEmitterSuper {
   dynamicTools: string[] = [];
   skills: string[] = [];
   mcp: string[] = [];
-  subLevel: number = 0;
+  subLevel: number = 1;
   agent: ReactAgent<any> = {} as ReactAgent<any>;
   messages: BaseMessage[] = [];
 
@@ -44,13 +41,11 @@ export default class AIAgent extends EventEmitterSuper {
   sessionDirPath: string = '';
   userStorePath: string = '';
   agentRulesPath: string = '';
-  roomClient: AgentRoomClient | null = null;
-  taskQueue: TaskQueue = {} as TaskQueue;
   isPrintThinking: boolean = true;
 
   constructor(opt: AgentOpt) {
     super();
-    this.id = opt.id || `agent-${Date.now()}`;
+    this.id = opt.id || `agent-${randomUUID()}`;
     this.basespace = opt.basespace;
     this.workspace = opt.workspace;
     this.memoryFilePath = opt.memoryFilePath; // todo
@@ -65,9 +60,6 @@ export default class AIAgent extends EventEmitterSuper {
     this.tools = await getTools();
     this.skills = [...getSkills(), ...(this.opt.skills || [])]; // todo
     const model = getModel(this.opt.modelOpt);
-    const checkpointer = new FileSystemSaver({
-      rootFolder: this.sessionDirPath,
-    });
     const contextSchema = z.object({
       agent_name: z.string(),
       encoding: z.string(),
@@ -78,7 +70,6 @@ export default class AIAgent extends EventEmitterSuper {
     });
     const agent = createAgent({
       model: model,
-      checkpointer,
       tools: this.tools,
       contextSchema,
       middleware: [
@@ -115,7 +106,6 @@ export default class AIAgent extends EventEmitterSuper {
       systemPrompt: systemPrompt(this.workspace, os.platform(), this.skills, this.memoryFilePath, this.agentRulesPath),
     });
     this.agent = agent;
-    this.taskQueue = new TaskQueue(this.id);
     this.initEvents();
   }
 
@@ -140,17 +130,17 @@ export default class AIAgent extends EventEmitterSuper {
       },
     );
 
-    for await (const [_namespace, mode, data] of stream) {
-      if (mode === 'messages') {
-        const message = (data[0] as unknown as AgentMessage).additional_kwargs.reasoning_content;
-        this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, message);
+    return new Promise<void>(async (resolve) => {
+      this.once(AgentEvent.TASK_AFTER, (msg) => {
+        resolve(msg);
+      });
+      for await (const [_namespace, mode, data] of stream) {
+        if (mode === 'messages') {
+          const message = (data[0] as unknown as AgentMessage).additional_kwargs.reasoning_content;
+          this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, message);
+        }
       }
-    }
-    const newTask = this.taskQueue.getTask();
-    if (newTask) {
-      log(`[Task Queue] New task found, executing: ${newTask.taskStr}`, '#7fded1');
-      await this.execute(newTask.taskStr);
-    }
+    });
   }
 
   initEvents() {
@@ -193,10 +183,6 @@ export default class AIAgent extends EventEmitterSuper {
     this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent) => {});
     this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {});
     this.on(AgentEvent.USE_TOOL_AFTER, (_toolId, _funcName, _funcArgs) => {});
-  }
-
-  createSubAgent(): SubAIAgent {
-    return new SubAIAgent(this.opt);
   }
 
   destory() {

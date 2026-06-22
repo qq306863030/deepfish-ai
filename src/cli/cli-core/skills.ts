@@ -33,7 +33,7 @@ export async function handleSkillsAdd(name: string) {
   // 询问用户将Skill添加在locally还是globally
   const { scope } = await inquirer.prompt([
     {
-      type: 'list',
+      type: 'select',
       name: 'scope',
       message: 'Select skill scope:',
       choices: [

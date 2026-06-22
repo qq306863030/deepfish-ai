@@ -66,8 +66,14 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
   const schema = z.object(zodProperties);
 
   // 包装函数，提取 args 中的参数传递给原函数，并处理返回值
-  const wrappedFunc = async (args: any) => {
+  const wrappedFunc = async (args: any, runtime: any) => {
     try {
+      func.bind({
+        createSubAgent: (prompt: string) => {
+          const subAgent = runtime.mainAgent.createSubAgent();
+          return subAgent.execute(prompt)
+        }
+      })
       const result = await func(...Object.values(args));
       if (typeof result === 'object' && result !== null && 'success' in result) {
         return serializeToolResult(result as ToolResult);

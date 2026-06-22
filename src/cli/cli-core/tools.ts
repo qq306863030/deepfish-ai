@@ -24,7 +24,7 @@ export async function handleToolsAdd(name: string) {
 
   const { scope } = await inquirer.prompt([
     {
-      type: 'list',
+      type: 'select',
       name: 'scope',
       message: 'Select tool scope:',
       choices: [
