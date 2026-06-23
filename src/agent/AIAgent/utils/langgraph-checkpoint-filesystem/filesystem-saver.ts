@@ -13,17 +13,8 @@ import {
   type SerializerProtocol,
 } from '@langchain/langgraph-checkpoint';
 import { StorePathResolver } from './store-path-resolver';
-import {
-  checkFileExists,
-  checkOrCreateFolder,
-  listDirs,
-  listFiles,
-  readBinary,
-  readJSON,
-  safeDeleteFile,
-  writeBinary,
-  writeJSON,
-} from './utils';
+import { checkFileExists, checkOrCreateFolder, listDirs, listFiles, readBinary, readJSON, safeDeleteFile, writeBinary, writeJSON } from './utils';
+import type { ReactAgent } from 'langchain';
 
 export class FileSystemSaver extends BaseCheckpointSaver {
   public pathResolver: StorePathResolver;
@@ -34,89 +25,103 @@ export class FileSystemSaver extends BaseCheckpointSaver {
     this.pathResolver = new StorePathResolver(rootFolder, splitter);
   }
 
-  async *list(config: RunnableConfig, options?: CheckpointListOptions) {
-    const { before, limit, filter } = options ?? {};
-
-    const threadIds = config.configurable?.["thread_id"]
-      ? [config.configurable["thread_id"]]
-      : await listDirs(this.pathResolver.rootFolder); // list all folder names of threads if there is no thread_id
-
-    const configCheckpointNamespace = config.configurable?.["checkpoint_ns"];
-    const configCheckpointId = config.configurable?.["checkpoint_id"];
-
-    for (const threadId of threadIds) {
-      const checkpointNsPaths = await listDirs(this.pathResolver.getThreadPath(threadId)); // list all folder names of checkpoint namespaces
-
-      for (const checkpointNsPath of checkpointNsPaths) {
-        if (
-          configCheckpointNamespace !== undefined &&
-          // ! Notice here, the default value of param `checkpoint_ns` is actually `""`, but we use `__DEFAULT_NS__` folder name to represent it
-          checkpointNsPath !== (configCheckpointNamespace || this.pathResolver.defaultCheckpointNs)
-        ) {
-          continue;
-        }
-
-        const checkpointIds = await listDirs(this.pathResolver.getCheckpointNsPath(threadId, checkpointNsPath));
-
-        const sortedCheckpointIds = checkpointIds.sort((a, b) => b.localeCompare(a)); // sort checkpoint ids by descending order
-
-        // Filter by checkpoint ID from config
-        let filteredCheckpointIds = sortedCheckpointIds.filter((checkpointId) => {
-          if (configCheckpointId && checkpointId !== configCheckpointId) {
-            return false;
-          }
-          return true;
-        });
-
-        // Filter by checkpoint ID from before config
-        filteredCheckpointIds = filteredCheckpointIds.filter((checkpointId) => {
-          if (before && before.configurable?.["checkpoint_id"] && checkpointId >= before.configurable["checkpoint_id"]) {
-            return false;
-          }
-          return true;
-        });
-
-        // limit the number of checkpoint tuples
-        const limitedCheckpointTuples = filteredCheckpointIds.slice(0, limit);
-
-        // get all checkpoint tuples
-        const checkpointTuples = await Promise.all(
-          limitedCheckpointTuples.map(async (checkpointId) => {
-            return this.getTuple({
-              configurable: {
-                thread_id: threadId,
-                // ! Notice here, the default value of param `checkpoint_ns` is actually `""`, but we use `__DEFAULT_NS__` folder name to represent it
-                checkpoint_ns: checkpointNsPath === this.pathResolver.defaultCheckpointNs ? '' : checkpointNsPath,
-                checkpoint_id: checkpointId,
-              },
-            });
-          }),
-        );
-
-        // filter the checkpoint tuples by metadata
-        for (const checkpointTuple of checkpointTuples) {
-          if (!checkpointTuple) {
-            continue;
-          }
-
-          if (
-            filter &&
-            !Object.entries(filter).every(
-              ([key, value]) => (checkpointTuple?.metadata as unknown as Record<string, unknown>)[key] === value,
-            )
-          ) {
-            continue;
-          }
-
-          yield checkpointTuple;
+  // 还原到最后一次会话结束时的检查点
+  async init(agentId: string, agent: ReactAgent<any>) {
+    const { lastCheckPointId, allCheckPointId } = await this.getLastCheckPointId(agentId, agent);
+    if (lastCheckPointId && allCheckPointId.includes(lastCheckPointId)) {
+      for (const checkpointId of allCheckPointId) {
+        if (checkpointId !== lastCheckPointId) {
+          // 删除
+          const checkpointPath = this.pathResolver.getCheckpointFolderPath(agentId, this.pathResolver.defaultCheckpointNs, checkpointId);
+          await safeDeleteFile(checkpointPath);
+        } else {
+          break
         }
       }
     }
   }
 
+  async getLastCheckPointId(agentId: string, agent: ReactAgent<any>) {
+    const threadConfig = { configurable: { thread_id: agentId } };
+    const history = [];
+    // 关键：agent.graph 才是原生编译后的 LangGraph 实例
+    const compiledGraph = agent.graph;
+    const checkPointIds = []
+    // 遍历历史快照
+    for await (const state of compiledGraph.getStateHistory(threadConfig)) {
+      history.push(state);
+      checkPointIds.push(state.config.configurable?.['checkpoint_id']);
+    }
+    // 找走完END(next为空)的快照
+    const finishSnap = history.find((s) => s.next.length === 0);
+    return {
+      lastCheckPointId: finishSnap?.config.configurable?.['checkpoint_id'],
+      allCheckPointId: checkPointIds,
+    }
+  }
+
+  async *list(config: RunnableConfig, options?: CheckpointListOptions) {
+    const { before, limit, filter } = options ?? {};
+    const threadIds = config.configurable?.['thread_id'] ? [config.configurable['thread_id']] : await listDirs(this.pathResolver.rootFolder); // list all folder names of threads if there is no thread_id
+    const configCheckpointId = config.configurable?.['checkpoint_id'];
+    for (const threadId of threadIds) {
+      const checkpointNsPath = this.pathResolver.getCheckpointNsPath(threadId, this.pathResolver.defaultCheckpointNs);
+      const checkpointIds = await listDirs(this.pathResolver.getThreadPath(threadId)); // list all folder names of checkpoint namespaces
+      const sortedCheckpointIds = checkpointIds.sort((a, b) => b.localeCompare(a)); // sort checkpoint ids by descending order
+      // Filter by checkpoint ID from config
+      let filteredCheckpointIds = sortedCheckpointIds.filter((checkpointId) => {
+        if (configCheckpointId && checkpointId !== configCheckpointId) {
+          return false;
+        }
+        return true;
+      });
+
+      // Filter by checkpoint ID from before config
+      filteredCheckpointIds = filteredCheckpointIds.filter((checkpointId) => {
+        if (before && before.configurable?.['checkpoint_id'] && checkpointId >= before.configurable['checkpoint_id']) {
+          return false;
+        }
+        return true;
+      });
+
+      // limit the number of checkpoint tuples
+      const limitedCheckpointTuples = filteredCheckpointIds.slice(0, limit);
+
+      // get all checkpoint tuples
+      const checkpointTuples = await Promise.all(
+        limitedCheckpointTuples.map(async (checkpointId) => {
+          return this.getTuple({
+            configurable: {
+              thread_id: threadId,
+              // ! Notice here, the default value of param `checkpoint_ns` is actually `""`, but we use `__DEFAULT_NS__` folder name to represent it
+              checkpoint_ns: checkpointNsPath === this.pathResolver.defaultCheckpointNs ? '' : checkpointNsPath,
+              checkpoint_id: checkpointId,
+            },
+          });
+        }),
+      );
+
+      // filter the checkpoint tuples by metadata
+      for (const checkpointTuple of checkpointTuples) {
+        if (!checkpointTuple) {
+          continue;
+        }
+
+        if (
+          filter &&
+          !Object.entries(filter).every(([key, value]) => (checkpointTuple?.metadata as unknown as Record<string, unknown>)[key] === value)
+        ) {
+          continue;
+        }
+
+        yield checkpointTuple;
+      }
+    }
+  }
+
   async getTuple(config: RunnableConfig): Promise<CheckpointTuple | undefined> {
-    const threadId = config.configurable?.["thread_id"];
-    const checkpointNs = config.configurable?.["checkpoint_ns"];
+    const threadId = config.configurable?.['thread_id'];
+    const checkpointNs = config.configurable?.['checkpoint_ns'];
 
     const checkpointId = getCheckpointId(config);
 
@@ -129,11 +134,7 @@ export class FileSystemSaver extends BaseCheckpointSaver {
         const metadataPath = join(checkpointsPath, 'metadata');
         const checkpointPath = join(checkpointsPath, 'checkpoint');
 
-        const [extraJson, metadata, checkpoint] = await Promise.all([
-          readJSON(extraPath),
-          readBinary(metadataPath),
-          readBinary(checkpointPath),
-        ]);
+        const [extraJson, metadata, checkpoint] = await Promise.all([readJSON(extraPath), readBinary(metadataPath), readBinary(checkpointPath)]);
 
         const [deserializedMetadata, deserializedCheckpoint] = await Promise.all([
           this.serde.loadsTyped('json', metadata),
@@ -192,11 +193,7 @@ export class FileSystemSaver extends BaseCheckpointSaver {
         const metadataPath = join(checkpointsPath, 'metadata');
         const checkpointPath = join(checkpointsPath, 'checkpoint');
 
-        const [extraJson, metadata, checkpoint] = await Promise.all([
-          readJSON(extraPath),
-          readBinary(metadataPath),
-          readBinary(checkpointPath),
-        ]);
+        const [extraJson, metadata, checkpoint] = await Promise.all([readJSON(extraPath), readBinary(metadataPath), readBinary(checkpointPath)]);
 
         const [deserializedMetadata, deserializedCheckpoint] = await Promise.all([
           this.serde.loadsTyped('json', metadata),
@@ -248,15 +245,13 @@ export class FileSystemSaver extends BaseCheckpointSaver {
 
   async put(config: RunnableConfig, checkpoint: Checkpoint, metadata: CheckpointMetadata) {
     const preparedCheckpoint: Partial<Checkpoint> = copyCheckpoint(checkpoint);
-    const threadId = config.configurable?.["thread_id"];
-    const checkpointNs = config.configurable?.["checkpoint_ns"];
-    const parentCheckpointId = config.configurable?.["checkpoint_id"]; // parent checkpoint id
+    const threadId = config.configurable?.['thread_id'];
+    const checkpointNs = config.configurable?.['checkpoint_ns'];
+    const parentCheckpointId = config.configurable?.['checkpoint_id']; // parent checkpoint id
     const checkpointId = checkpoint.id;
 
     if (threadId === undefined) {
-      throw new Error(
-        `Failed to put checkpoint. The passed RunnableConfig is missing a required "thread_id" field in its "configurable" property.`,
-      );
+      throw new Error(`Failed to put checkpoint. The passed RunnableConfig is missing a required "thread_id" field in its "configurable" property.`);
     }
 
     const checkpointsPath = this.pathResolver.getCheckpointsPath(threadId, checkpointNs, checkpointId);
@@ -284,20 +279,16 @@ export class FileSystemSaver extends BaseCheckpointSaver {
   }
 
   async putWrites(config: RunnableConfig, writes: PendingWrite[], taskId: string) {
-    const threadId = config.configurable?.["thread_id"];
-    const checkpointId = config.configurable?.["checkpoint_id"];
-    const checkpointNs = config.configurable?.["checkpoint_ns"];
+    const threadId = config.configurable?.['thread_id'];
+    const checkpointId = config.configurable?.['checkpoint_id'];
+    const checkpointNs = config.configurable?.['checkpoint_ns'];
 
     if (threadId === undefined) {
-      throw new Error(
-        `Failed to put writes. The passed RunnableConfig is missing a required "thread_id" field in its "configurable" property`,
-      );
+      throw new Error(`Failed to put writes. The passed RunnableConfig is missing a required "thread_id" field in its "configurable" property`);
     }
 
     if (checkpointId === undefined) {
-      throw new Error(
-        `Failed to put writes. The passed RunnableConfig is missing a required "checkpoint_id" field in its "configurable" property.`,
-      );
+      throw new Error(`Failed to put writes. The passed RunnableConfig is missing a required "checkpoint_id" field in its "configurable" property.`);
     }
 
     const writesPath = this.pathResolver.getWritesPath(threadId, checkpointNs, checkpointId);

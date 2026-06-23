@@ -25,6 +25,7 @@ import type { AgentRoomClient } from '@/serve/service/agent-room/agent-client';
 import TaskQueue from '@/cli/cli-utils/TaskQueue';
 import os from 'os';
 import SubAIAgent from './SubAIAgent';
+import { getLastCheckPointId } from './utils/getLastCheckPointId';
 
 export default class AIAgent extends EventEmitterSuper {
   id: string = '';
@@ -114,6 +115,7 @@ export default class AIAgent extends EventEmitterSuper {
       ],
       systemPrompt: systemPrompt(this.workspace, os.platform(), this.skills, this.memoryFilePath, this.agentRulesPath),
     });
+    await checkpointer.init(this.id, agent);
     this.agent = agent;
     this.taskQueue = new TaskQueue(this.id);
     this.initEvents();
@@ -122,6 +124,7 @@ export default class AIAgent extends EventEmitterSuper {
   async execute(input: string) {
     const humanMessage = new HumanMessage(input);
     this.messages.push(humanMessage);
+    // const lastCheckPointId = await getLastCheckPointId(this.id, this.agent);
     const stream = await this.agent.stream(
       { messages: this.messages },
       {
