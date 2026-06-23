@@ -36,6 +36,7 @@ export default class AIAgent extends EventEmitterSuper {
   skills: string[] = [];
   mcp: string[] = [];
   subLevel: number = 0;
+  maxSubAgentCount: number = 2;
   agent: ReactAgent<any> = {} as ReactAgent<any>;
   messages: BaseMessage[] = [];
 
@@ -70,6 +71,7 @@ export default class AIAgent extends EventEmitterSuper {
     this.excludeMCP = opt.excludeMCP || [];
     this.systemPrompt = opt.systemPrompt || '';
     this.subLevel = 0;
+    this.maxSubAgentCount = opt.maxSubAgentCount || 2;
   }
 
   async init() {
@@ -85,7 +87,7 @@ export default class AIAgent extends EventEmitterSuper {
       skills: z.array(z.string()).optional(),
       memoryFilePath: z.string().optional(),
       agentId: z.string().optional(),
-      mainAgent: z.object().optional(),
+      curAgent: z.object().optional(),
     });
     const agent = createAgent({
       model: model,
@@ -109,19 +111,6 @@ export default class AIAgent extends EventEmitterSuper {
         }),
         todoListMiddleware(),
         createPatchToolCallsMiddleware(),
-        createSubAgentMiddleware({
-          defaultModel: model,
-          subagents: [
-            {
-              name: 'subagent',
-              description: 'This subagent can execute sub tasks.',
-              systemPrompt: subSystemPrompt(this.workspace, os.platform(), this.skills, this.excludeSkills),
-              tools: this.tools,
-              model: model,
-              middleware: [],
-            },
-          ],
-        }),
       ],
       systemPrompt: getSystemPrompt({
         systemPrompt: this.systemPrompt,
@@ -155,7 +144,7 @@ export default class AIAgent extends EventEmitterSuper {
           skills: this.skills,
           memoryFilePath: this.memoryFilePath,
           agentId: this.id,
-          mainAgent: this,
+          curAgent: this,
         },
       },
     );

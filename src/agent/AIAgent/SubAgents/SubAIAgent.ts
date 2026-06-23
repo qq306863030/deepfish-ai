@@ -8,7 +8,7 @@ import {
   summarizationMiddleware,
   todoListMiddleware,
 } from 'langchain';
-import { createPatchToolCallsMiddleware, createSubAgentMiddleware } from 'deepagents';
+import { createPatchToolCallsMiddleware } from 'deepagents';
 import { getModel } from '../../models';
 import { z } from 'zod';
 import type { AgentMessage, AgentOpt } from '../../../@types/AgentOpt';
@@ -44,6 +44,7 @@ export default class SubAIAgent extends EventEmitterSuper {
   userStorePath: string = '';
   agentRulesPath: string = '';
   isPrintThinking: boolean = true;
+  maxSubAgentCount: number = 2;
 
   excludeTools: string[] = [];
   excludeSkills: string[] = []
@@ -66,9 +67,13 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.excludeMCP = opt.excludeMCP || [];
     this.systemPrompt = opt.systemPrompt || '';
     this.subLevel = opt.subLevel || 1;
+    this.maxSubAgentCount = opt.maxSubAgentCount || 2;
   }
 
   async init() {
+    if (this.subLevel > 2) {
+      this.excludeTools.push('subAgent_exec')
+    }
     this.tools = await getTools(this.excludeTools, this.excludeMCP);
     this.skills = [...getSkills(), ...(this.opt.skills || [])]; // todo
     const model = getModel(this.opt.modelOpt);
@@ -78,8 +83,17 @@ export default class SubAIAgent extends EventEmitterSuper {
       skills: z.array(z.string()).optional(),
       memoryFilePath: z.string().optional(),
       agentId: z.string().optional(),
-      mainAgent: z.object().optional(),
+      curAgent: z.object().optional(),
     });
+    const systemPrompt = this.subLevel > 2 ? getSystemPrompt({
+        systemPrompt: this.systemPrompt,
+        workspace: this.workspace,
+        osType: os.platform(),
+        skills: this.skills,
+        memoryFilePath: this.memoryFilePath,
+        agentRulesPath: this.agentRulesPath,
+        excludeSkills: this.excludeSkills,
+      }) : subSystemPrompt(this.workspace, os.platform(), this.skills, this.excludeSkills);
     const agent = createAgent({
       model: model,
       tools: this.tools,
@@ -101,29 +115,8 @@ export default class SubAIAgent extends EventEmitterSuper {
         }),
         todoListMiddleware(),
         createPatchToolCallsMiddleware(),
-        createSubAgentMiddleware({
-          defaultModel: model,
-          subagents: [
-            {
-              name: 'subagent',
-              description: 'This subagent can execute sub tasks.',
-              systemPrompt: subSystemPrompt(this.workspace, os.platform(), this.skills, this.excludeSkills),
-              tools: this.tools,
-              model: model,
-              middleware: [],
-            },
-          ],
-        }),
       ],
-      systemPrompt: getSystemPrompt({
-        systemPrompt: this.systemPrompt,
-        workspace: this.workspace,
-        osType: os.platform(),
-        skills: this.skills,
-        memoryFilePath: this.memoryFilePath,
-        agentRulesPath: this.agentRulesPath,
-        excludeSkills: this.excludeSkills,
-      }),
+      systemPrompt,
     });
     this.agent = agent;
     this.initEvents();
@@ -145,7 +138,7 @@ export default class SubAIAgent extends EventEmitterSuper {
           skills: this.skills,
           memoryFilePath: this.memoryFilePath,
           agentId: this.id,
-          mainAgent: this,
+          curAgent: this,
         },
       },
     );

@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import { executeCommand } from './executeCommand';
 import { safeTool } from './utils';
+import { subAgentExec } from './subAgent';
 
 declare const require: any;
 // CJS 模式下 require 直接可用
@@ -16,7 +17,7 @@ declare const require: any;
  * @param {string} code - 要执行的代码
  * @returns {Promise<any>} 执行结果
  */
-export async function executeJSCode(code: string) {
+export async function executeJSCode(code: string, runtime: any) {
   logInfo('Executing JavaScript code: ');
   logInfo(code);
   try {
@@ -26,7 +27,7 @@ export async function executeJSCode(code: string) {
         const result = await __main()
         return result || "Code executed successfully, but __main() did not return anything."
     })()`;
-    const fn = new Function('require', wrapped);
+    const fn = new Function('require', 'agentExec', wrapped);
     const _require: any = require;
     const newRequire = (modulePath:string) => {
       if (modulePath.startsWith('./')) {
@@ -35,7 +36,10 @@ export async function executeJSCode(code: string) {
       }
       return _require(modulePath)
     }
-    const result = await fn(newRequire);
+    const agentExec = async (prompt: string) => {
+      return subAgentExec(prompt, runtime)
+    }
+    const result = await fn(newRequire, agentExec);
     return result;
   } catch (error: any) {
     logError(`Error executing code: ${error.stack}`);
@@ -94,12 +98,16 @@ const installPackageTool = tool(
   },
 );
 
-const executeJSCodeTool = tool(async ({ code }) => safeTool(() => executeJSCode(code)), {
+const executeJSCodeTool = tool(async ({ code }, runtime) => safeTool(() => executeJSCode(code, runtime)), {
   name: 'execute_js_code',
-  description: `执行一段Node.js代码并返回执行结果。注意：代码必须包含一个__main()函数作为执行入口，__main()函数内必须是一个使用async前缀的函数。示例代码：
+  description: `执行一段Node.js代码并返回执行结果。注意：代码必须包含一个__main()函数作为执行入口，__main()函数内必须是一个使用async前缀的函数。
+        可用内置函数：
+        - agentExec(prompt: string): Promise<string>，创建一个通用子 agent 执行指定任务并返回结果，适合将复杂任务拆分给子 agent 完成。
+        示例代码：
         async function __main() {
           const data = await fs.readFile("data.txt", "utf-8")
-          return data
+          const analysis = await agentExec("请分析这段文件内容并总结重点：" + data)
+          return analysis
         }
         `,
   schema: z.object({
