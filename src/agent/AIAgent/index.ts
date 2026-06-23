@@ -25,7 +25,6 @@ import type { AgentRoomClient } from '@/serve/service/agent-room/agent-client';
 import TaskQueue from '@/cli/cli-utils/TaskQueue';
 import os from 'os';
 import SubAIAgent from './SubAIAgent';
-import { getLastCheckPointId } from './utils/getLastCheckPointId';
 
 export default class AIAgent extends EventEmitterSuper {
   id: string = '';
@@ -145,10 +144,10 @@ export default class AIAgent extends EventEmitterSuper {
 
     for await (const [_namespace, mode, data] of stream) {
       if (mode === 'messages') {
-        const message = data[0] as unknown as AgentMessage;
-        const content = message.content;
-        const reasoning_content = message.additional_kwargs?.reasoning_content;
-        const toolcall_content = message.tool_call_chunks[0]?.args;
+        const message = data?.[0] as unknown as AgentMessage | undefined;
+        const content = message?.content;
+        const reasoning_content = message?.additional_kwargs?.reasoning_content;
+        const toolcall_content = message?.tool_call_chunks?.[0]?.args;
         this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, content || reasoning_content || toolcall_content || '');
       }
     }
@@ -162,7 +161,7 @@ export default class AIAgent extends EventEmitterSuper {
   initEvents() {
     const thinking = new Thinking();
     this.on(AgentEvent.TASK_BEFORE, () => {});
-    this.on(AgentEvent.TASK_AFTER, (msg) => {
+    this.on(AgentEvent.TASK_AFTER, (_msg) => {
       // logInfo(msg);
     });
     this.on(AgentEvent.MODEL_BEFORE, () => {});
@@ -197,8 +196,8 @@ export default class AIAgent extends EventEmitterSuper {
     this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, funcName, _funcArgs) => {
       log(`[Tool Call] ${funcName}`, '#c2a654');
     });
-    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent) => {
-      logInfo(`[Tool Return] ${_funcName} returned: ${_toolContent}`);
+    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent='') => {
+      logInfo(`[Tool Return] ${_funcName} returned: ${_toolContent.length > 50 ? _toolContent.slice(0, 50) + '...' : _toolContent}`);
     });
     this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {
       logError(`Error in tool ${_funcName}: ${_error instanceof Error ? _error.message : String(_error)}`);

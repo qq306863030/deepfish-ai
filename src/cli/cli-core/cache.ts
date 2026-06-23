@@ -37,6 +37,7 @@ export function handleCacheList() {
     const desc = item.description.length > 20
       ? item.description.slice(0, 20) + '...'
       : item.description;
+    logInfo(`${index}. ${item.id} - ${desc}`);
   });
 }
 

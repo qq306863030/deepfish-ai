@@ -52,7 +52,7 @@ export class StorePathResolver {
     return str.split(this.splitter).map(decodeFilename);
   }
 
-  public getThreadPath(threadId: string) {
+  public getThreadPath(_threadId: string) {
     return join(this.rootFolder);
   }
 
