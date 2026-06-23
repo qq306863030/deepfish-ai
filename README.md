@@ -231,6 +231,7 @@ DeepFish 支持通过 Tool 和 Skill 扩展 AI 的能力。扩展文件可以放
 
 - **Tool 扩展**：用于定义 AI 可直接调用的自定义函数工具，适合封装 API 调用、数据库操作、文件处理等能力。可以使用 `ai tools generate xxx` 命令让 AI 根据描述生成 Tool。
   - 在 Tool 函数中，可以通过调用 `this.createSubAgent(prompt: string)` 创建子 Agent，并将任务说明作为 `prompt` 传入。
+  - 在 Tool 函数中，可以通过 `this.curAgent` 获取当前正在执行该 Tool 的 Agent 实例；当 Tool 运行在子 Agent 中时，`this.curAgent` 指向该子 Agent，而不是主 Agent。可用于访问当前 Agent 的上下文能力，例如 `this.curAgent.createSubAgent()` 继续创建下级子 Agent。
 - **Skill 扩展**：用于定义 AI 的工作流知识包，适合沉淀某类任务的执行步骤、规范和最佳实践。可以使用 `ai skills generate xxx` 命令让 AI 根据描述生成 Skill。
 
 ### 当前目录扩展

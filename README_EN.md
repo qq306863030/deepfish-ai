@@ -236,6 +236,7 @@ DeepFish supports Tool and Skill extensions to expand AI capabilities. Extension
 
 - **Tool Extension**: Defines custom function tools that AI can call directly. It is suitable for wrapping API calls, database operations, file processing, and other capabilities. You can use `ai tools generate xxx` to ask AI to generate a Tool from your description.
   - In a Tool function, you can call `this.createSubAgent(prompt: string)` to create a sub-agent and pass the task description as `prompt`.
+  - In a Tool function, you can use `this.curAgent` to access the Agent instance currently executing the Tool. When the Tool runs inside a sub-agent, `this.curAgent` points to that sub-agent instead of the main Agent. This is useful for accessing current Agent context capabilities, such as calling `this.curAgent.createSubAgent()` to create a lower-level sub-agent.
 - **Skill Extension**: Defines AI workflow knowledge packages. It is suitable for storing task procedures, rules, and best practices for specific scenarios. You can use `ai skills generate xxx` to ask AI to generate a Skill from your description.
 
 ### Current Directory Extensions

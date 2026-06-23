@@ -73,7 +73,8 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
         createSubAgent: async (prompt: string) => {
           const subAgent = await runtime.context.curAgent.createSubAgent();
           return subAgent.execute(prompt)
-        }
+        },
+        curAgent: runtime.context.curAgent,
       })
       const result = await boundFunc(...Object.values(args));
       if (typeof result === 'object' && result !== null && 'success' in result) {
