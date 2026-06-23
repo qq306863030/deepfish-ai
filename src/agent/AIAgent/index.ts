@@ -149,8 +149,6 @@ export default class AIAgent extends EventEmitterSuper {
         },
       },
     );
-
-
     for await (const [_namespace, mode, data] of stream) {
       if (mode === 'messages') {
         const message = data?.[0] as unknown as AgentMessage | undefined;

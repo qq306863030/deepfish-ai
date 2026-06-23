@@ -9,6 +9,7 @@ import {
   todoListMiddleware,
 } from 'langchain';
 import { createPatchToolCallsMiddleware } from 'deepagents';
+import { FileSystemSaver } from '../utils/langgraph-checkpoint-filesystem';
 import { getModel } from '../../models';
 import { z } from 'zod';
 import type { AgentMessage, AgentOpt } from '../../../@types/AgentOpt';
@@ -77,6 +78,9 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.tools = await getTools(this.excludeTools, this.excludeMCP);
     this.skills = [...getSkills(), ...(this.opt.skills || [])]; // todo
     const model = getModel(this.opt.modelOpt);
+    const checkpointer = new FileSystemSaver({
+      rootFolder: this.sessionDirPath,
+    });
     const contextSchema = z.object({
       agent_name: z.string(),
       encoding: z.string(),
@@ -96,6 +100,7 @@ export default class SubAIAgent extends EventEmitterSuper {
       }) : subSystemPrompt(this.workspace, os.platform(), this.skills, this.excludeSkills);
     const agent = createAgent({
       model: model,
+      checkpointer,
       tools: this.tools,
       contextSchema,
       middleware: [
@@ -118,6 +123,7 @@ export default class SubAIAgent extends EventEmitterSuper {
       ],
       systemPrompt,
     });
+    await checkpointer.init(this.id, agent);
     this.agent = agent;
     this.initEvents();
   }
