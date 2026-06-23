@@ -15,7 +15,7 @@ import { z } from 'zod';
 import type { AgentMessage, AgentOpt } from '../../@types/AgentOpt';
 import { EventEmitterSuper } from 'eventemitter-super';
 import { AgentEvent } from '../../@types/AgentEvent';
-import { streamOutput, logError, log, logInfo } from '@/utils/print';
+import { streamOutput, logError, log, logInfo, logSuccess } from '@/utils/print';
 import { createAgentEventMiddleware } from './middleware/eventEmitMiddleware';
 import Thinking from './utils/Thinking';
 import { subSystemPrompt, systemPrompt } from './system-prompt';
@@ -145,10 +145,10 @@ export default class AIAgent extends EventEmitterSuper {
     for await (const [_namespace, mode, data] of stream) {
       if (mode === 'messages') {
         const message = data?.[0] as unknown as AgentMessage | undefined;
-        const content = message?.content;
+        // const content = message?.content;
         const reasoning_content = message?.additional_kwargs?.reasoning_content;
         const toolcall_content = message?.tool_call_chunks?.[0]?.args;
-        this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, content || reasoning_content || toolcall_content || '');
+        this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, reasoning_content || toolcall_content || '');
       }
     }
     const newTask = this.taskQueue.getTask();
@@ -162,7 +162,7 @@ export default class AIAgent extends EventEmitterSuper {
     const thinking = new Thinking();
     this.on(AgentEvent.TASK_BEFORE, () => {});
     this.on(AgentEvent.TASK_AFTER, (_msg) => {
-      // logInfo(msg);
+      logSuccess(_msg);
     });
     this.on(AgentEvent.MODEL_BEFORE, () => {});
     this.on(AgentEvent.MODEL_AFTER, () => {
