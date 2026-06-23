@@ -8,7 +8,7 @@ import {
   summarizationMiddleware,
   todoListMiddleware,
 } from 'langchain';
-import { createPatchToolCallsMiddleware, createSubAgentMiddleware } from 'deepagents';
+import { createPatchToolCallsMiddleware } from 'deepagents';
 import { FileSystemSaver } from './utils/langgraph-checkpoint-filesystem';
 import { getModel } from '../models';
 import { z } from 'zod';
@@ -18,7 +18,7 @@ import { AgentEvent } from '../../@types/AgentEvent';
 import { streamOutput, logError, log, logInfo, logSuccess } from '@/utils/print';
 import { createAgentEventMiddleware } from './middleware/eventEmitMiddleware';
 import Thinking from './utils/Thinking';
-import { getSystemPrompt, subSystemPrompt } from './system-prompt';
+import { getSystemPrompt } from './system-prompt';
 import { getTools } from '../tools';
 import { getSkills } from '../skills';
 import type { AgentRoomClient } from '@/serve/service/agent-room/agent-client';
