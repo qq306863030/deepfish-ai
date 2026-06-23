@@ -53,11 +53,11 @@ export class StorePathResolver {
   }
 
   public getThreadPath(_threadId: string) {
-    return join(this.rootFolder);
+    return join(this.rootFolder, _threadId);
   }
 
   public getCheckpointNsPath(_threadId: string, _checkpointNs: string) {
-    return join(this.rootFolder);
+    return join(this.rootFolder, _threadId, _checkpointNs || this.defaultCheckpointNs);
   }
 
   public getCheckpointFolderPath(threadId: string, checkpointNs: string, checkpointId: string) {

@@ -29,6 +29,7 @@ import { cloneDeep } from 'lodash';
 
 export default class AIAgent extends EventEmitterSuper {
   id: string = '';
+  threadId: string = 'main_session_records';
   opt: AgentOpt = {} as AgentOpt;
 
   tools: DynamicStructuredTool[] = [];
@@ -122,7 +123,7 @@ export default class AIAgent extends EventEmitterSuper {
         excludeSkills: this.excludeSkills,
       }),
     });
-    await checkpointer.init(this.id, agent);
+    await checkpointer.init(this.threadId, agent);
     this.agent = agent;
     this.taskQueue = new TaskQueue(this.id);
     this.initEvents();
@@ -137,7 +138,7 @@ export default class AIAgent extends EventEmitterSuper {
         streamMode: ['messages'],
         recursionLimit: 2000,
         subgraphs: true,
-        configurable: { thread_id: this.id },
+        configurable: { thread_id: this.threadId },
         context: {
           agent_name: 'deepfish',
           encoding: this.opt.encoding,

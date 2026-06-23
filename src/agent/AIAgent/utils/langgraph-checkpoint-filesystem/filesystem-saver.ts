@@ -60,61 +60,79 @@ export class FileSystemSaver extends BaseCheckpointSaver {
     }
   }
 
-  async *list(config: RunnableConfig, options?: CheckpointListOptions) {
+   async *list(config: RunnableConfig, options?: CheckpointListOptions) {
     const { before, limit, filter } = options ?? {};
-    const threadIds = config.configurable?.['thread_id'] ? [config.configurable['thread_id']] : await listDirs(this.pathResolver.rootFolder); // list all folder names of threads if there is no thread_id
-    const configCheckpointId = config.configurable?.['checkpoint_id'];
+    const threadIds = config.configurable?.["thread_id"]
+      ? [config.configurable["thread_id"]]
+      : await listDirs(this.pathResolver.rootFolder); // list all folder names of threads if there is no thread_id
+
+    const configCheckpointNamespace = config.configurable?.["checkpoint_ns"];
+    const configCheckpointId = config.configurable?.["checkpoint_id"];
     for (const threadId of threadIds) {
-      const checkpointNsPath = this.pathResolver.getCheckpointNsPath(threadId, this.pathResolver.defaultCheckpointNs);
-      const checkpointIds = await listDirs(this.pathResolver.getThreadPath(threadId)); // list all folder names of checkpoint namespaces
-      const sortedCheckpointIds = checkpointIds.sort((a, b) => b.localeCompare(a)); // sort checkpoint ids by descending order
-      // Filter by checkpoint ID from config
-      let filteredCheckpointIds = sortedCheckpointIds.filter((checkpointId) => {
-        if (configCheckpointId && checkpointId !== configCheckpointId) {
-          return false;
-        }
-        return true;
-      });
-
-      // Filter by checkpoint ID from before config
-      filteredCheckpointIds = filteredCheckpointIds.filter((checkpointId) => {
-        if (before && before.configurable?.['checkpoint_id'] && checkpointId >= before.configurable['checkpoint_id']) {
-          return false;
-        }
-        return true;
-      });
-
-      // limit the number of checkpoint tuples
-      const limitedCheckpointTuples = filteredCheckpointIds.slice(0, limit);
-
-      // get all checkpoint tuples
-      const checkpointTuples = await Promise.all(
-        limitedCheckpointTuples.map(async (checkpointId) => {
-          return this.getTuple({
-            configurable: {
-              thread_id: threadId,
-              // ! Notice here, the default value of param `checkpoint_ns` is actually `""`, but we use `__DEFAULT_NS__` folder name to represent it
-              checkpoint_ns: checkpointNsPath === this.pathResolver.defaultCheckpointNs ? '' : checkpointNsPath,
-              checkpoint_id: checkpointId,
-            },
-          });
-        }),
-      );
-
-      // filter the checkpoint tuples by metadata
-      for (const checkpointTuple of checkpointTuples) {
-        if (!checkpointTuple) {
-          continue;
-        }
-
+      const checkpointNsPaths = await listDirs(this.pathResolver.getThreadPath(threadId)); // list all folder names of checkpoint namespaces
+      for (const checkpointNsPath of checkpointNsPaths) {
         if (
-          filter &&
-          !Object.entries(filter).every(([key, value]) => (checkpointTuple?.metadata as unknown as Record<string, unknown>)[key] === value)
+          configCheckpointNamespace !== undefined &&
+          // ! Notice here, the default value of param `checkpoint_ns` is actually `""`, but we use `__DEFAULT_NS__` folder name to represent it
+          checkpointNsPath !== (configCheckpointNamespace || this.pathResolver.defaultCheckpointNs)
         ) {
           continue;
         }
 
-        yield checkpointTuple;
+        const checkpointIds = await listDirs(this.pathResolver.getCheckpointNsPath(threadId, checkpointNsPath));
+
+        const sortedCheckpointIds = checkpointIds.sort((a, b) => b.localeCompare(a)); // sort checkpoint ids by descending order
+
+        // Filter by checkpoint ID from config
+        let filteredCheckpointIds = sortedCheckpointIds.filter((checkpointId) => {
+          if (configCheckpointId && checkpointId !== configCheckpointId) {
+            return false;
+          }
+          return true;
+        });
+
+        // Filter by checkpoint ID from before config
+        filteredCheckpointIds = filteredCheckpointIds.filter((checkpointId) => {
+          if (before && before.configurable?.["checkpoint_id"] && checkpointId >= before.configurable["checkpoint_id"]) {
+            return false;
+          }
+          return true;
+        });
+
+        // limit the number of checkpoint tuples
+        const limitedCheckpointTuples = filteredCheckpointIds.slice(0, limit);
+
+        // get all checkpoint tuples
+        const checkpointTuples = await Promise.all(
+          limitedCheckpointTuples.map(async (checkpointId) => {
+            return this.getTuple({
+              configurable: {
+                thread_id: threadId,
+                // ! Notice here, the default value of param `checkpoint_ns` is actually `""`, but we use `__DEFAULT_NS__` folder name to represent it
+                checkpoint_ns: checkpointNsPath === this.pathResolver.defaultCheckpointNs ? '' : checkpointNsPath,
+                checkpoint_id: checkpointId,
+              },
+            });
+          }),
+        );
+
+        // filter the checkpoint tuples by metadata
+        for (const checkpointTuple of checkpointTuples) {
+          if (!checkpointTuple) {
+            continue;
+          }
+
+          if (
+            filter &&
+            !Object.entries(filter).every(
+              ([key, value]) => (checkpointTuple?.metadata as unknown as Record<string, unknown>)[key] === value,
+            )
+          ) {
+            continue;
+          }
+
+          yield checkpointTuple;
+        }
       }
     }
   }
