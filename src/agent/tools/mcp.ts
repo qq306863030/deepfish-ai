@@ -36,7 +36,7 @@ function wrapMcpTool(mcpTool: DynamicStructuredTool): DynamicStructuredTool {
   return wrapped as unknown as DynamicStructuredTool;
 }
 
-async function loadMcpToolsFromConfigPath(mcpFilePath: string): Promise<DynamicStructuredTool[]> {
+async function loadMcpToolsFromConfigPath(mcpFilePath: string, excludeMCP: string[]): Promise<DynamicStructuredTool[]> {
   const jsonContent = fs.readJSONSync(mcpFilePath);
   let mcpServers = jsonContent.mcpServers;
   if (!mcpServers || Object.keys(mcpServers).length === 0) {
@@ -45,7 +45,7 @@ async function loadMcpToolsFromConfigPath(mcpFilePath: string): Promise<DynamicS
   try {
     for (const key of Object.keys(mcpServers)) {
       const server = mcpServers[key];
-      if (server.disabled) {
+      if (server.disabled || excludeMCP.includes(key)) {
         delete mcpServers[key];
         continue;
       }
@@ -79,13 +79,13 @@ async function loadMcpToolsFromConfigPath(mcpFilePath: string): Promise<DynamicS
   }
 }
 
-export async function scanUserMcp() {
+export async function scanUserMcp(excludeMCP: string[]) {
   const tools: DynamicStructuredTool[] = [];
   const scanPaths = getScanDirPaths();
   for (const scanPath of scanPaths) {
     const mcpFilePath = path.join(scanPath, 'mcp.json');
     if (fs.existsSync(mcpFilePath)) {
-      const mcpTools = await loadMcpToolsFromConfigPath(mcpFilePath);
+      const mcpTools = await loadMcpToolsFromConfigPath(mcpFilePath, excludeMCP);
       tools.push(...mcpTools);
     }
   }

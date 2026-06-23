@@ -28,8 +28,8 @@ const builtinTools = [
   ...learnTools,
 ];
 
-async function getTools() {
-  return [...builtinTools, ...(await scanUserTools()), ...(await scanUserMcp())];
+async function getTools(excludeTools: string[], excludeMCP: string[]) {
+  return [...builtinTools, ...(await scanUserTools(excludeTools)), ...(await scanUserMcp(excludeMCP))];
 }
 
 export { getTools };

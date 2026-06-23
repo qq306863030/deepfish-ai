@@ -9,20 +9,22 @@ import {
   todoListMiddleware,
 } from 'langchain';
 import { createPatchToolCallsMiddleware, createSubAgentMiddleware } from 'deepagents';
-import { getModel } from '../models';
+import { getModel } from '../../models';
 import { z } from 'zod';
-import type { AgentMessage, AgentOpt } from '../../@types/AgentOpt';
+import type { AgentMessage, AgentOpt } from '../../../@types/AgentOpt';
 import { EventEmitterSuper } from 'eventemitter-super';
-import { AgentEvent } from '../../@types/AgentEvent';
+import { AgentEvent } from '../../../@types/AgentEvent';
 import { streamOutput, logError, log, logInfo } from '@/utils/print';
-import { createAgentEventMiddleware } from './middleware/eventEmitMiddleware';
-import Thinking from './utils/Thinking';
-import { subSystemPrompt, systemPrompt } from './system-prompt';
-import { getTools } from '../tools';
-import { getSkills } from '../skills';
+import { createAgentEventMiddleware } from '../middleware/eventEmitMiddleware';
+import Thinking from '../utils/Thinking';
+import { subSystemPrompt, getSystemPrompt } from '../system-prompt';
+import { getTools } from '../../tools';
+import { getSkills } from '../../skills';
 import os from 'os';
 import { randomUUID } from 'crypto';
+import { cloneDeep } from 'lodash';
 
+// 通用子agent
 export default class SubAIAgent extends EventEmitterSuper {
   id: string = '';
   opt: AgentOpt = {} as AgentOpt;
@@ -43,8 +45,14 @@ export default class SubAIAgent extends EventEmitterSuper {
   agentRulesPath: string = '';
   isPrintThinking: boolean = true;
 
+  excludeTools: string[] = [];
+  excludeSkills: string[] = []
+  excludeMCP: string[] = [];
+  systemPrompt: string = '';
+
   constructor(opt: AgentOpt) {
     super();
+    this.opt = cloneDeep(opt);
     this.id = opt.id || `agent-${randomUUID()}`;
     this.basespace = opt.basespace;
     this.workspace = opt.workspace;
@@ -53,11 +61,15 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.userStorePath = opt.userStorePath;
     this.agentRulesPath = opt.agentRulesPath;
     this.isPrintThinking = opt.isPrintThinking;
-    this.opt = opt;
+    this.excludeTools = opt.excludeTools || [];
+    this.excludeSkills = opt.excludeSkills || [];
+    this.excludeMCP = opt.excludeMCP || [];
+    this.systemPrompt = opt.systemPrompt || '';
+    this.subLevel = opt.subLevel || 1;
   }
 
   async init() {
-    this.tools = await getTools();
+    this.tools = await getTools(this.excludeTools, this.excludeMCP);
     this.skills = [...getSkills(), ...(this.opt.skills || [])]; // todo
     const model = getModel(this.opt.modelOpt);
     const contextSchema = z.object({
@@ -95,7 +107,7 @@ export default class SubAIAgent extends EventEmitterSuper {
             {
               name: 'subagent',
               description: 'This subagent can execute sub tasks.',
-              systemPrompt: subSystemPrompt(this.workspace, os.platform(), this.skills),
+              systemPrompt: subSystemPrompt(this.workspace, os.platform(), this.skills, this.excludeSkills),
               tools: this.tools,
               model: model,
               middleware: [],
@@ -103,7 +115,15 @@ export default class SubAIAgent extends EventEmitterSuper {
           ],
         }),
       ],
-      systemPrompt: systemPrompt(this.workspace, os.platform(), this.skills, this.memoryFilePath, this.agentRulesPath),
+      systemPrompt: getSystemPrompt({
+        systemPrompt: this.systemPrompt,
+        workspace: this.workspace,
+        osType: os.platform(),
+        skills: this.skills,
+        memoryFilePath: this.memoryFilePath,
+        agentRulesPath: this.agentRulesPath,
+        excludeSkills: this.excludeSkills,
+      }),
     });
     this.agent = agent;
     this.initEvents();
@@ -187,6 +207,13 @@ export default class SubAIAgent extends EventEmitterSuper {
       logError(`Error in tool ${_funcName}: ${_error instanceof Error ? _error.message : String(_error)}`);
     });
     this.on(AgentEvent.USE_TOOL_AFTER, (_toolId, _funcName, _funcArgs) => {});
+  }
+
+  async createSubAgent(): Promise<SubAIAgent> {
+    const subAgent = new SubAIAgent(this.opt);
+    subAgent.subLevel = this.subLevel + 1;
+    await subAgent.init();
+    return subAgent;
   }
 
   destory() {

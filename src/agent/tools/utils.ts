@@ -70,8 +70,8 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
   const wrappedFunc = async (args: any, runtime: any) => {
     try {
       const boundFunc = func.bind({
-        createSubAgent: (prompt: string) => {
-          const subAgent = runtime.context.mainAgent.createSubAgent();
+        createSubAgent: async (prompt: string) => {
+          const subAgent = await runtime.context.mainAgent.createSubAgent();
           return subAgent.execute(prompt)
         }
       })
@@ -93,7 +93,7 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
 }
 
 // 文件扫描 todo
-function scanUserTools() {
+function scanUserTools(excludeTools: string[]) {
   const tools: DynamicStructuredTool[] = [];
   const scanPaths = getScanDirPaths();
   scanPaths.forEach((scanPath) => {
@@ -110,20 +110,20 @@ function scanUserTools() {
           if (indexFile) {
             const filePath = _scanDeepFishJsFile(path.resolve(subDirPath, indexFile), indexFile);
             if (filePath) {
-              _loadToolsFromFile(filePath, tools);
+              _loadToolsFromFile(filePath, tools, excludeTools);
             }
           } else {
             subFiles.forEach((subFile) => {
               const filePath = _scanDeepFishJsFile(path.resolve(subDirPath, subFile), subFile);
               if (filePath) {
-                _loadToolsFromFile(filePath, tools);
+                _loadToolsFromFile(filePath, tools, excludeTools);
               }
             });
           }
         } else {
           const filePath = _scanDeepFishJsFile(toolsDir, file);
           if (filePath) {
-            _loadToolsFromFile(filePath, tools);
+            _loadToolsFromFile(filePath, tools, excludeTools);
           }
         }
       });
@@ -143,7 +143,7 @@ function _scanDeepFishJsFile(filePath: string, fileName: string) {
 }
 
 // 读取文件中的functions和descriptions并转换为LangChain工具
-function _loadToolsFromFile(filePath: string, tools: DynamicStructuredTool[]) {
+function _loadToolsFromFile(filePath: string, tools: DynamicStructuredTool[], excludeTools: string[]) {
   try {
     const toolModule = require(filePath);
     const { functions, descriptions } = toolModule;
@@ -159,6 +159,11 @@ function _loadToolsFromFile(filePath: string, tools: DynamicStructuredTool[]) {
           function: desc as any,
         }
       }
+
+      if (excludeTools.includes(desc.function.name)) {
+        return;
+      }
+
       const func = functions[desc.function.name];
       if (typeof func !== 'function') {
         logWarning(`Skip tool "${desc.function.name}": implementation not found in ${filePath}`);

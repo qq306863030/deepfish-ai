@@ -18,13 +18,14 @@ import { AgentEvent } from '../../@types/AgentEvent';
 import { streamOutput, logError, log, logInfo, logSuccess } from '@/utils/print';
 import { createAgentEventMiddleware } from './middleware/eventEmitMiddleware';
 import Thinking from './utils/Thinking';
-import { subSystemPrompt, systemPrompt } from './system-prompt';
+import { getSystemPrompt, subSystemPrompt } from './system-prompt';
 import { getTools } from '../tools';
 import { getSkills } from '../skills';
 import type { AgentRoomClient } from '@/serve/service/agent-room/agent-client';
 import TaskQueue from '@/cli/cli-utils/TaskQueue';
 import os from 'os';
-import SubAIAgent from './SubAIAgent';
+import SubAIAgent from './SubAgents/SubAIAgent';
+import { cloneDeep } from 'lodash';
 
 export default class AIAgent extends EventEmitterSuper {
   id: string = '';
@@ -48,8 +49,14 @@ export default class AIAgent extends EventEmitterSuper {
   taskQueue: TaskQueue = {} as TaskQueue;
   isPrintThinking: boolean = true;
 
+  excludeTools: string[] = [];
+  excludeSkills: string[] = []
+  excludeMCP: string[] = [];
+  systemPrompt: string = '';
+
   constructor(opt: AgentOpt) {
     super();
+    this.opt = cloneDeep(opt);
     this.id = opt.id || `agent-${Date.now()}`;
     this.basespace = opt.basespace;
     this.workspace = opt.workspace;
@@ -58,11 +65,15 @@ export default class AIAgent extends EventEmitterSuper {
     this.userStorePath = opt.userStorePath;
     this.agentRulesPath = opt.agentRulesPath;
     this.isPrintThinking = opt.isPrintThinking;
-    this.opt = opt;
+    this.excludeTools = opt.excludeTools || [];
+    this.excludeSkills = opt.excludeSkills || [];
+    this.excludeMCP = opt.excludeMCP || [];
+    this.systemPrompt = opt.systemPrompt || '';
+    this.subLevel = 0;
   }
 
   async init() {
-    this.tools = await getTools();
+    this.tools = await getTools(this.excludeTools, this.excludeMCP);
     this.skills = [...getSkills(), ...(this.opt.skills || [])];
     const model = getModel(this.opt.modelOpt);
     const checkpointer = new FileSystemSaver({
@@ -104,7 +115,7 @@ export default class AIAgent extends EventEmitterSuper {
             {
               name: 'subagent',
               description: 'This subagent can execute sub tasks.',
-              systemPrompt: subSystemPrompt(this.workspace, os.platform(), this.skills),
+              systemPrompt: subSystemPrompt(this.workspace, os.platform(), this.skills, this.excludeSkills),
               tools: this.tools,
               model: model,
               middleware: [],
@@ -112,7 +123,15 @@ export default class AIAgent extends EventEmitterSuper {
           ],
         }),
       ],
-      systemPrompt: systemPrompt(this.workspace, os.platform(), this.skills, this.memoryFilePath, this.agentRulesPath),
+      systemPrompt: getSystemPrompt({
+        systemPrompt: this.systemPrompt,
+        workspace: this.workspace,
+        osType: os.platform(),
+        skills: this.skills,
+        memoryFilePath: this.memoryFilePath,
+        agentRulesPath: this.agentRulesPath,
+        excludeSkills: this.excludeSkills,
+      }),
     });
     await checkpointer.init(this.id, agent);
     this.agent = agent;
@@ -205,8 +224,10 @@ export default class AIAgent extends EventEmitterSuper {
     this.on(AgentEvent.USE_TOOL_AFTER, (_toolId, _funcName, _funcArgs) => {});
   }
 
-  createSubAgent(): SubAIAgent {
-    return new SubAIAgent(this.opt);
+  async createSubAgent(): Promise<SubAIAgent> {
+    const subAgent = new SubAIAgent(this.opt);
+    await subAgent.init();
+    return subAgent;
   }
 
   destory() {

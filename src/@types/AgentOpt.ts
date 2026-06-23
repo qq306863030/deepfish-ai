@@ -14,6 +14,11 @@ export type AgentOpt = {
   maxSubAgentCount: number; // "最大子agent并行执行数量", -1 表示无限制
   isPrintThinking: boolean; // 是否打印 AI 思考过程中的中间信息，默认为 true
   skills?: string[]; // 预设技能列表，技能ID数组
+  excludeTools?: string[]; // 排除的工具列表，工具ID数组
+  excludeSkills?: string[]; // 排除的技能列表，技能ID数组
+  excludeMCP?: string[]; // 排除的多轮对话技能列表，技能ID数组
+  systemPrompt?: string; // 系统提示词，覆盖默认系统提示词
+  subLevel?: number; // 子智能体层级，默认为 0，表示主智能体；1 表示子智能体；2 表示孙智能体，以此类推
 };
 
 export type AgentMessage = {
