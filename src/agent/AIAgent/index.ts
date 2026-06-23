@@ -124,7 +124,6 @@ export default class AIAgent extends EventEmitterSuper {
   async execute(input: string) {
     const humanMessage = new HumanMessage(input);
     this.messages.push(humanMessage);
-    // const lastCheckPointId = await getLastCheckPointId(this.id, this.agent);
     const stream = await this.agent.stream(
       { messages: this.messages },
       {
@@ -143,10 +142,14 @@ export default class AIAgent extends EventEmitterSuper {
       },
     );
 
+
     for await (const [_namespace, mode, data] of stream) {
       if (mode === 'messages') {
-        const message = (data[0] as unknown as AgentMessage).additional_kwargs.reasoning_content;
-        this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, message);
+        const message = data[0] as unknown as AgentMessage;
+        const content = message.content;
+        const reasoning_content = message.additional_kwargs?.reasoning_content;
+        const toolcall_content = message.tool_call_chunks[0]?.args;
+        this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, content || reasoning_content || toolcall_content || '');
       }
     }
     const newTask = this.taskQueue.getTask();
@@ -160,13 +163,14 @@ export default class AIAgent extends EventEmitterSuper {
     const thinking = new Thinking();
     this.on(AgentEvent.TASK_BEFORE, () => {});
     this.on(AgentEvent.TASK_AFTER, (msg) => {
-      logInfo(msg);
+      // logInfo(msg);
     });
     this.on(AgentEvent.MODEL_BEFORE, () => {});
     this.on(AgentEvent.MODEL_AFTER, () => {
       if (this.isPrintThinking) {
         thinking.stop();
       }
+      streamOutput('\n');
     });
     this.on(AgentEvent.MODEL_ERROR, (error) => {
       if (this.isPrintThinking) {
