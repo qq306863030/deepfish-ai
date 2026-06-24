@@ -105,7 +105,6 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
         },
         curAgent: runtime.context.curAgent,
       })
-      console.log('****', args)
       const result = await boundFunc(...Object.values(args));
       if (typeof result === 'object' && result !== null && 'success' in result) {
         return serializeToolResult(result as ToolResult);
