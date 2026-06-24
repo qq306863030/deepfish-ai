@@ -32,6 +32,56 @@ export async function safeTool<T>(handler: () => T | Promise<T>): Promise<string
   }
 }
 
+// 将 JSON Schema 节点递归转换为 zod schema
+function jsonSchemaToZod(node: any): z.ZodTypeAny {
+  if (!node || typeof node !== 'object') {
+    return z.any();
+  }
+
+  const { type, description: desc, properties, items, required, enum: enumValues } = node;
+
+  const withDesc = (schema: z.ZodTypeAny) => (desc ? schema.describe(desc) : schema);
+
+  // 支持 enum
+  if (Array.isArray(enumValues) && enumValues.length > 0) {
+    const allStrings = enumValues.every((v) => typeof v === 'string');
+    if (allStrings) {
+      return withDesc(z.enum(enumValues as [string, ...string[]]));
+    }
+  }
+
+  switch (type) {
+    case 'string':
+      return withDesc(z.string());
+    case 'number':
+    case 'integer':
+      return withDesc(z.number());
+    case 'boolean':
+      return withDesc(z.boolean());
+    case 'array': {
+      const itemSchema = items ? jsonSchemaToZod(items) : z.any();
+      return withDesc(z.array(itemSchema));
+    }
+    case 'object': {
+      const shape: Record<string, z.ZodTypeAny> = {};
+      if (properties && typeof properties === 'object') {
+        const requiredFields: string[] = Array.isArray(required) ? required : [];
+        for (const [key, value] of Object.entries(properties)) {
+          let childSchema = jsonSchemaToZod(value);
+          if (!requiredFields.includes(key)) {
+            childSchema = childSchema.optional();
+          }
+          shape[key] = childSchema;
+        }
+      }
+      // 使用 passthrough 防止意外字段被 strip，保证嵌套 object 参数不会丢失
+      return withDesc(z.object(shape).passthrough());
+    }
+    default:
+      return withDesc(z.any());
+  }
+}
+
 // 将一个普通函数转换为 LangChain 的工具函数
 function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult | string, description: Description): DynamicStructuredTool {
   const { name, description: desc, parameters } = description.function;
@@ -40,28 +90,7 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
   // 将 description 中的 parameters 转换为 zod schema
   const zodProperties: Record<string, z.ZodTypeAny> = {};
   for (const [key, value] of Object.entries(properties)) {
-    const { type, description: desc } = value as { type: string; description?: string };
-    let zodType: z.ZodTypeAny;
-    switch (type) {
-      case 'string':
-        zodType = desc ? z.string().describe(desc) : z.string();
-        break;
-      case 'number':
-        zodType = desc ? z.number().describe(desc) : z.number();
-        break;
-      case 'boolean':
-        zodType = desc ? z.boolean().describe(desc) : z.boolean();
-        break;
-      case 'object':
-        zodType = desc ? z.object({}).describe(desc) : z.object({});
-        break;
-      case 'array':
-        zodType = desc ? z.array(z.string()).describe(desc) : z.array(z.string());
-        break;
-      default:
-        zodType = z.any();
-    }
-    zodProperties[key] = zodType;
+    zodProperties[key] = jsonSchemaToZod(value);
   }
 
   const schema = z.object(zodProperties);
