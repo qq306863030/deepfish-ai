@@ -48,7 +48,7 @@ const descriptions = [
   {
     type: 'function',
     function: {
-      name: 'my_function',
+      name: 'myFunction',
       description: '工具的功能描述，说明何时使用、做什么、返回什么',
       parameters: {
         type: 'object',
@@ -74,7 +74,7 @@ module.exports = { functions, descriptions };
 ## 规范
 
 1. **返回值**：必须是 `{ success: true, data: any }` 或 `{ success: false, error: string }`
-2. **命名**：函数名用 camelCase，工具名用 snake_case
+2. **命名**：函数名用 camelCase，描述的function中的name必须和函数名称一致
 3. **描述**：每个工具和参数都要有清晰的中文描述
 4. **错误处理**：函数内部必须 try-catch，出错返回 `{ success: false, error: '...' }`
 5. **一个文件一个工具**：每个 index.js 只导出一个工具函数
@@ -85,4 +85,5 @@ module.exports = { functions, descriptions };
 1. 理解用户要生成的工具功能
 2. 在当前工作目录下创建 `deepfish-tool-{功能名}/` 目录
 3. 编写 `index.js`，导出 `functions` 和 `descriptions`
-4. 确保代码语法正确、可以直接使用 `require` 
+4. 对于需要Agent参与的复杂任务，可以直接使用 `this.createSubAgent(prompt: string)` 创建子 Agent 执行任务，并将任务说明作为 `prompt` 传入
+5. 需要引入第三方模块时，需要将该tool创建成NodeJs项目，在tool中引入模块
