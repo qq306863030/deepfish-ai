@@ -201,10 +201,10 @@ export default class AIAgent extends EventEmitterSuper {
     this.on(AgentEvent.COMPRESS_MESSAGES_AFTER, (_currentLength) => {});
     this.on(AgentEvent.NEW_MESSAGE, (_msg) => {});
     this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, funcName, _funcArgs) => {
-      log(`[Tool Call] ${funcName}`, '#c2a654');
+      log(`[Tool Call] ${funcName} ${JSON.stringify(_funcArgs)}`, '#c2a654');
     });
     this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent='') => {
-      logInfo(`[Tool Return] ${_funcName} returned: ${_toolContent.length > 50 ? _toolContent.slice(0, 50) + '...' : _toolContent}`);
+      logInfo(`[Tool Return] ${_funcName} returned: ${_toolContent}`);
     });
     this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {
       logError(`Error in tool ${_funcName}: ${_error instanceof Error ? _error.message : String(_error)}`);
