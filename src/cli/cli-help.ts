@@ -1,4 +1,5 @@
-﻿import { Command } from 'commander';
+﻿import { logInfo } from '@/utils/print';
+import { Command } from 'commander';
 
 export function helpInformation(): string {
   return `Usage: ai [options] [command]
@@ -63,7 +64,7 @@ export function registerHelpCommand(program: Command) {
     .command('help')
     .description('Displaying help information')
     .action(() => {
-      console.log(helpInformation());
+      logInfo(helpInformation());
     });
 }
 
