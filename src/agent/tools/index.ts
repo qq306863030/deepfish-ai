@@ -13,6 +13,7 @@ import { subAgentTool } from './subAgent';
 import { taskTool } from './task';
 import { webFetchTool } from './webfetch';
 import { writeFileTool } from './write';
+import { fishInfoTools } from './getFishInfo';
 
 const builtinTools = [
   taskTool,
@@ -28,6 +29,7 @@ const builtinTools = [
   ...packageTools,
   ...semanticMemoryTools,
   ...learnTools,
+  ...fishInfoTools,
 ];
 
 async function getTools(excludeTools: string[], excludeMCP: string[]) {

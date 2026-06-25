@@ -44,29 +44,24 @@ export async function grepFiles(
 export const grepTool = tool(
   async ({ query, pattern, cwd, includePattern, isRegexp, maxResults, includeHidden }) =>
     safeTool(() => {
-      const searchQuery = query || pattern;
+      const searchQuery = (query ?? pattern ?? '').trim();
       if (!searchQuery) {
-        throw new Error('query 或 pattern 至少需要提供一个');
+        return '请提供 query 或 pattern 之一；例如 query: "foo" 或 pattern: "foo"';
       }
       return grepFiles(searchQuery, cwd, includePattern, isRegexp, maxResults, includeHidden);
     }),
   {
     name: 'grep_files',
     description:
-      '在文本文件中搜索内容，支持普通字符串或正则表达式，可用 includePattern 限定文件范围。query 为搜索内容；兼容 pattern 作为 query 的别名。',
-    schema: z
-      .object({
-        query: z.string().optional().describe('要搜索的字符串或正则表达式'),
-        pattern: z.string().optional().describe('query 的兼容别名，要搜索的字符串或正则表达式'),
-        cwd: z.string().optional().describe('搜索根目录，默认当前工作目录'),
-        includePattern: z.string().default('**/*').describe('限定搜索文件的 glob 模式，例如 src/**/*.ts'),
-        isRegexp: z.boolean().default(false).describe('query/pattern 是否为正则表达式'),
-        maxResults: z.number().default(100).describe('最大返回匹配数量'),
-        includeHidden: z.boolean().default(false).describe('是否包含隐藏文件或隐藏目录'),
-      })
-      .refine((input) => input.query || input.pattern, {
-        message: 'query 或 pattern 至少需要提供一个',
-        path: ['query'],
-      }),
+      '在文本文件中搜索内容，支持普通字符串或正则表达式，可用 includePattern 限定文件范围。query 为搜索内容；兼容 pattern 作为 query 的别名；如果未提供搜索词，会返回提示。',
+    schema: z.object({
+      query: z.string().optional().describe('要搜索的字符串或正则表达式'),
+      pattern: z.string().optional().describe('query 的兼容别名，要搜索的字符串或正则表达式'),
+      cwd: z.string().optional().describe('搜索根目录，默认当前工作目录'),
+      includePattern: z.string().default('**/*').describe('限定搜索文件的 glob 模式，例如 src/**/*.ts'),
+      isRegexp: z.boolean().default(false).describe('query/pattern 是否为正则表达式'),
+      maxResults: z.number().default(100).describe('最大返回匹配数量'),
+      includeHidden: z.boolean().default(false).describe('是否包含隐藏文件或隐藏目录'),
+    }),
   },
 );

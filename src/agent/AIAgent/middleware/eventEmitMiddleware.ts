@@ -1,5 +1,6 @@
 import { createMiddleware, ToolMessage } from 'langchain';
 import { AgentEvent } from '@/@types/AgentEvent';
+import { AIMessage } from '@langchain/core/messages';
 
 type EventEmitter = {
   emit(event: AgentEvent, ...args: any[]): void;
@@ -42,9 +43,9 @@ export function createAgentEventMiddleware(emitter: EventEmitter) {
       try {
         // Call the model
         return await handler(request);
-      } catch (error) {
+      } catch (error: any) {
         emitter.emit(AgentEvent.MODEL_ERROR, error);
-        throw error;
+        return new AIMessage(error.message);
       }
     },
 
@@ -60,7 +61,7 @@ export function createAgentEventMiddleware(emitter: EventEmitter) {
       } catch (err: any) {
         emitter.emit(AgentEvent.USE_TOOL_ERROR, toolCall.id, toolCall.name, err);
         emitter.emit(AgentEvent.USE_TOOL_AFTER, toolCall.id, toolCall.name, toolCall.args);
-        throw err;
+        return new ToolMessage(err.message);
       }
     },
   });
