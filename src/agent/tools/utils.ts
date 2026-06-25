@@ -10,6 +10,17 @@ import { truncateOutput } from './fileTools';
 
 export type ToolResult = SuccsessResult | ErrorResult;
 
+type ToolFile = {
+  dir: string|null,
+  filePath: string
+}
+
+type ToolOpt = {
+  name: string,
+  path: string,
+  dir: string|null
+}
+
 export function successResult(data: any): SuccsessResult {
   return { success: true, data };
 }
@@ -126,17 +137,17 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
 function scanUserTools(excludeTools: string[]) {
   const files = _scanUserToolsFile();
   const tools: DynamicStructuredTool[] = [];
-  files.forEach((filePath) => {
-    _loadToolsFromFile(filePath, tools, excludeTools);
+  files.forEach((toolFile) => {
+    _loadToolsFromFile(toolFile.filePath, tools, excludeTools);
   });
   return tools;
 }
 
 function getUserToolList() {
   const files = _scanUserToolsFile();
-  const toolNames:string[] = []
-  files.forEach(filePath => {
-    const toolModule = require(filePath);
+  const toolOpts:ToolOpt[] = []
+  files.forEach(toolFile => {
+    const toolModule = require(toolFile.filePath);
     const { functions, descriptions } = toolModule;
     descriptions.forEach((desc: Description) => {
       if (!desc.type) {
@@ -149,14 +160,20 @@ function getUserToolList() {
       if (typeof func !== 'function') {
         return;
       }
-      toolNames.push(desc.function.name)
+      toolOpts.push({
+        name: desc.function.name,
+        path: toolFile.filePath,
+        dir: toolFile.dir
+      })
     });
   })
-  return toolNames
+  return toolOpts
 }
 
+
+
 function _scanUserToolsFile() {
-  const toolFiles:string[] = []
+  const toolFiles:ToolFile[] = []
   const scanPaths = getScanDirPaths();
   scanPaths.forEach((scanPath) => {
     const toolsDir = path.resolve(scanPath, 'tools');
@@ -172,20 +189,29 @@ function _scanUserToolsFile() {
           if (indexFile) {
             const filePath = _scanDeepFishJsFile(path.resolve(subDirPath, indexFile), indexFile);
             if (filePath) {
-              toolFiles.push(filePath)
+              toolFiles.push({
+                filePath,
+                dir: subDirPath
+              })
             }
           } else {
             subFiles.forEach((subFile) => {
               const filePath = _scanDeepFishJsFile(path.resolve(subDirPath, subFile), subFile);
               if (filePath) {
-                toolFiles.push(filePath)
+                toolFiles.push({
+                  filePath,
+                  dir: subDirPath
+                })
               }
             });
           }
         } else {
           const filePath = _scanDeepFishJsFile(toolsDir, file);
           if (filePath) {
-            toolFiles.push(filePath)
+            toolFiles.push({
+              filePath,
+              dir: null
+            })
           }
         }
       });

@@ -169,6 +169,7 @@ On the second question, AI answers based on the same session context in the curr
 | `ai tools ls`           | List all tools                                                               |
 | `ai tools dir`          | View the global tool directory                                               |
 | `ai tools add <name>`   | Add a local tool directory from the current workspace as local or global use |
+| `ai tools del <index>`  | Delete a tool by index                                                       |
 | `ai tools generate xxx` | Generate a tool via AI                                                       |
 
 ### Session Management

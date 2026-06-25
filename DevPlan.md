@@ -69,6 +69,7 @@ ai skills generate xxx
 ai tools ls
 ai tools dir # Open the skill directory
 ai tools add <name>
+ai tools del <index>
 ai tools generate xxx
 
 # Session commands

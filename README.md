@@ -164,6 +164,7 @@ ai "我刚问了一个什么问题"
 | `ai tools ls`           | 列出所有工具                                       |
 | `ai tools dir`          | 查看全局工具目录                                   |
 | `ai tools add <name>`   | 添加当前目录下的本地工具目录，可选择本地或全局生效 |
+| `ai tools del <index>`  | 按索引删除工具                                     |
 | `ai tools generate xxx` | 通过 AI 生成工具                                   |
 
 ### 会话管理

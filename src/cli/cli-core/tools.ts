@@ -9,7 +9,9 @@ import fs from 'fs-extra';
 import path from 'path';
 
 export function handleToolsLs() {
-  const toolNames = getUserToolList();
+  const toolNames = getUserToolList().map(tool => {
+    return tool.name
+  });
   logInfo('='.repeat(50));
   if (toolNames.length === 0) {
     logInfo('No tools registered yet');
@@ -19,6 +21,23 @@ export function handleToolsLs() {
     });
   }
   logInfo('='.repeat(50));
+}
+
+export function handleToolsDel(index: string) {
+  const toolList = getUserToolList();
+  const toolIndex = parseInt(index, 10);
+  if (isNaN(toolIndex) || toolIndex < 0 || toolIndex >= toolList.length) {
+    logError('Invalid tool index');
+    return;
+  }
+  const tool = toolList[toolIndex];
+  if (tool.dir) {
+    fs.removeSync(tool.dir);
+    logSuccess(`Tool directory deleted: ${tool.dir}`);
+  } else {
+    fs.removeSync(tool.path);
+    logSuccess(`Tool file deleted: ${tool.path}`);
+  }
 }
 
 export function handleToolsDir() {
