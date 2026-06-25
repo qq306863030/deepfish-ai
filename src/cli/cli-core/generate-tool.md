@@ -87,3 +87,123 @@ module.exports = { functions, descriptions };
 3. 编写 `index.js`，导出 `functions` 和 `descriptions`
 4. 对于需要Agent参与的复杂任务，可以直接使用 `this.createSubAgent(prompt: string)` 创建子 Agent 执行任务，并将任务说明作为 `prompt` 传入
 5. 需要引入第三方模块时，需要将该tool创建成NodeJs项目，在tool中引入模块
+
+## 生成说明文档
+
+工具创建完成后，必须在 `deepfish-tool-{功能名}/` 目录下同时创建一个 `README.md` 说明文档，内容需包含以下三部分：
+
+### 功能介绍
+
+用清晰的语言描述该工具的用途、适用场景和核心能力。
+
+### 工具清单
+
+列出该工具提供的所有函数，格式如下：
+
+```markdown
+| 函数名 | 描述 |
+|--------|------|
+| `functionName` | 函数功能说明 |
+```
+
+### 快速开始
+
+包含以下三个小节：
+
+#### 安装 Deepfish
+
+```bash
+npm install -g deepfish-ai
+```
+
+#### 添加工具
+
+```bash
+ai tools add ./deepfish-tool-{功能名}
+```
+
+#### 使用示例
+
+提供至少一个使用Deepfish CLI工具调用Tools的示例。
+
+### README.md 模板
+
+```markdown
+# {工具名称}
+
+## 功能介绍
+
+{工具的功能描述、适用场景和核心能力}
+
+## 工具清单
+
+| 函数名 | 描述 |
+|--------|------|
+| `functionName` | 函数功能说明 |
+
+## 快速开始
+
+### 安装 Deepfish
+
+```bash
+npm install -g deepfish-ai
+```
+
+### 添加工具
+
+```bash
+ai tools add deepfish-tool-{功能名}
+```
+
+### 使用示例
+
+```bash
+ai {使用该功能的描述}
+```
+
+### README.md 示例（查询天气工具）
+
+以下是一个完整的 README.md 示例，假设创建了一个查询天气的工具 `deepfish-tool-weather`：
+
+```markdown
+# 天气查询工具
+
+## 功能介绍
+
+查询指定城市的实时天气信息，包括温度、湿度、风速、天气状况等。支持通过城市名称或经纬度查询，适用于日常天气查询、出行规划等场景。
+
+## 工具清单
+
+| 函数名 | 描述 |
+|--------|------|
+| `getWeather` | 根据城市名称查询实时天气 |
+| `getWeatherByCoords` | 根据经纬度查询实时天气 |
+
+## 快速开始
+
+### 安装 Deepfish
+
+```bash
+npm install -g deepfish-ai
+```
+
+### 添加工具
+
+```bash
+ai tools add deepfish-tool-weather
+```
+
+### 使用示例
+
+添加完成后，在 Deepfish 对话中直接使用自然语言调用：
+
+```bash
+ai "北京今天天气怎么样"
+ai "查询东京的天气"
+ai "纬度39.9、经度116.4的天气如何"
+```
+
+AI 会自动识别你的意图并调用对应的工具函数返回天气信息。
+```
+
+
