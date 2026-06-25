@@ -119,7 +119,7 @@ npm install -g deepfish-ai
 #### 添加工具
 
 ```bash
-ai tools add ./deepfish-tool-{功能名}
+ai tools add deepfish-tool-{功能名}
 ```
 
 #### 使用示例
