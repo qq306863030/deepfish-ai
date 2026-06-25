@@ -166,6 +166,7 @@ On the second question, AI answers based on the same session context in the curr
 
 | Command                 | Description                                                                  |
 | ----------------------- | ---------------------------------------------------------------------------- |
+| `ai tools ls`           | List all tools                                                               |
 | `ai tools dir`          | View the global tool directory                                               |
 | `ai tools add <name>`   | Add a local tool directory from the current workspace as local or global use |
 | `ai tools generate xxx` | Generate a tool via AI                                                       |
@@ -181,10 +182,10 @@ On the second question, AI answers based on the same session context in the curr
 
 | Command               | Description           |
 | --------------------- | --------------------- |
-| `ai task ls`          | List all tasks        |
-| `ai task add <task>`  | Add a task            |
-| `ai task del <index>` | Delete specified task |
-| `ai task clear`       | Clear all tasks       |
+| `ai tasks ls`          | List all tasks        |
+| `ai tasks add <task>`  | Add a task            |
+| `ai tasks del <index>` | Delete specified task |
+| `ai tasks clear`       | Clear all tasks       |
 
 ### MCP Management
 

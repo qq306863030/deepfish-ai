@@ -122,9 +122,41 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
   });
 }
 
-// 文件扫描 todo
+// 文件扫描
 function scanUserTools(excludeTools: string[]) {
+  const files = _scanUserToolsFile();
   const tools: DynamicStructuredTool[] = [];
+  files.forEach((filePath) => {
+    _loadToolsFromFile(filePath, tools, excludeTools);
+  });
+  return tools;
+}
+
+function getUserToolList() {
+  const files = _scanUserToolsFile();
+  const toolNames:string[] = []
+  files.forEach(filePath => {
+    const toolModule = require(filePath);
+    const { functions, descriptions } = toolModule;
+    descriptions.forEach((desc: Description) => {
+      if (!desc.type) {
+        desc = {
+          type: 'function',
+          function: desc as any,
+        }
+      }
+      const func = functions[desc.function.name];
+      if (typeof func !== 'function') {
+        return;
+      }
+      toolNames.push(desc.function.name)
+    });
+  })
+  return toolNames
+}
+
+function _scanUserToolsFile() {
+  const toolFiles:string[] = []
   const scanPaths = getScanDirPaths();
   scanPaths.forEach((scanPath) => {
     const toolsDir = path.resolve(scanPath, 'tools');
@@ -140,27 +172,29 @@ function scanUserTools(excludeTools: string[]) {
           if (indexFile) {
             const filePath = _scanDeepFishJsFile(path.resolve(subDirPath, indexFile), indexFile);
             if (filePath) {
-              _loadToolsFromFile(filePath, tools, excludeTools);
+              toolFiles.push(filePath)
             }
           } else {
             subFiles.forEach((subFile) => {
               const filePath = _scanDeepFishJsFile(path.resolve(subDirPath, subFile), subFile);
               if (filePath) {
-                _loadToolsFromFile(filePath, tools, excludeTools);
+                toolFiles.push(filePath)
               }
             });
           }
         } else {
           const filePath = _scanDeepFishJsFile(toolsDir, file);
           if (filePath) {
-            _loadToolsFromFile(filePath, tools, excludeTools);
+            toolFiles.push(filePath)
           }
         }
       });
     }
   });
-  return tools;
+  return toolFiles;
 }
+
+
 
 function _scanDeepFishJsFile(filePath: string, fileName: string) {
   if (fileName.endsWith('.js') || fileName.endsWith('.cjs')) {
@@ -209,4 +243,4 @@ function _loadToolsFromFile(filePath: string, tools: DynamicStructuredTool[], ex
   }
 }
 
-export { scanUserTools };
+export { scanUserTools, getUserToolList };

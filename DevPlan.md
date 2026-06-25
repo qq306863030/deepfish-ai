@@ -11,7 +11,7 @@ module.exports = {
       type: 'openai', // AI 类型：openai/deepseek/minimax/qwen/ollama/copilot
       baseUrl: 'http://10.1.111.154:3001/v1', // API 地址
       model: 'MiniMax-M2.7', // 模型名称
-      apiKey: 'sk-xCj0q3BeXI2mg46m87076a1eDc7b41AaB02cAa8329Cc7eAf', // API 密钥
+      apiKey: '', // API 密钥
       temperature: 0.7, // 温度参数
       maxContextLength: 128, // 单位KB，最大上下文长度
     },
@@ -20,7 +20,7 @@ module.exports = {
       type: 'deepseek',
       baseUrl: 'https://api.deepseek.com',
       model: 'deepseek-v4-pro',
-      apiKey: 'sk-2d8113ed65cb473fac9828b683c18798',
+      apiKey: '',
       temperature: 0.7,
       maxContextLength: 64, // 单位KB
     },
@@ -66,6 +66,7 @@ ai skills dir # Open the skill directory
 ai skills generate xxx
 
 # Tools commands
+ai tools ls
 ai tools dir # Open the skill directory
 ai tools add <name>
 ai tools generate xxx
@@ -74,10 +75,10 @@ ai tools generate xxx
 ai session clear # Clear the history messages for the current directory
 ai session dir # Open the memory directory
 
-ai task ls
-ai task add <task>
-ai task del <index>
-ai task clear
+ai tasks ls
+ai tasks add <task>
+ai tasks del <index>
+ai tasks clear
 
 ai mcp edit
 

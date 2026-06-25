@@ -4,8 +4,22 @@ import { openDirectory } from '../../utils/normal';
 import { getHomePath, getToolsPath, getWorkspacePath } from '../cli-utils/getGlobalPath';
 import { getConfig } from '../cli-utils/init-config';
 import { initAgent, testServer } from '../cli-utils/init-agent';
+import { getUserToolList } from '../../agent/tools/utils';
 import fs from 'fs-extra';
 import path from 'path';
+
+export function handleToolsLs() {
+  const toolNames = getUserToolList();
+  logInfo('='.repeat(50));
+  if (toolNames.length === 0) {
+    logInfo('No tools registered yet');
+  } else {
+    toolNames.forEach((name, index) => {
+      logInfo(`[${index}] ${name}`);
+    });
+  }
+  logInfo('='.repeat(50));
+}
 
 export function handleToolsDir() {
   const toolsPath = getToolsPath();

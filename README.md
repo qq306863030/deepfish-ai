@@ -161,6 +161,7 @@ ai "我刚问了一个什么问题"
 
 | 命令                    | 说明                                               |
 | ----------------------- | -------------------------------------------------- |
+| `ai tools ls`           | 列出所有工具                                       |
 | `ai tools dir`          | 查看全局工具目录                                   |
 | `ai tools add <name>`   | 添加当前目录下的本地工具目录，可选择本地或全局生效 |
 | `ai tools generate xxx` | 通过 AI 生成工具                                   |
@@ -176,10 +177,10 @@ ai "我刚问了一个什么问题"
 
 | 命令                  | 说明         |
 | --------------------- | ------------ |
-| `ai task ls`          | 列出所有任务 |
-| `ai task add <task>`  | 添加任务     |
-| `ai task del <index>` | 删除指定任务 |
-| `ai task clear`       | 清除所有任务 |
+| `ai tasks ls`          | 列出所有任务 |
+| `ai tasks add <task>`  | 添加任务     |
+| `ai tasks del <index>` | 删除指定任务 |
+| `ai tasks clear`       | 清除所有任务 |
 
 ### MCP 管理
 
