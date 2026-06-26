@@ -92,7 +92,7 @@ export function handleSkillsDel(index: string) {
   fs.removeSync(skill.skillPath);
   // 更新注册文件
   const skillDir = skill.skillDir;
-  const registerPath = path.join(skillDir!, 'skills', 'register.json');
+  const registerPath = _getRegisterPath(skillDir!);
   if (fs.existsSync(registerPath)) {
     let register: SkillRegisterItem[] = fs.readJSONSync(registerPath);
     register = register.filter((item) => item.skillPath !== skill.skillPath);
@@ -115,7 +115,7 @@ export function handleSkillsEnable(index: string) {
   const skill = skills[skillIndex];
   skill.isEnabled = true;
   const skillDir = skill.skillDir;
-  const registerPath = path.join(skillDir!, 'skills', 'register.json');
+  const registerPath = _getRegisterPath(skillDir!);
   fs.writeJSONSync(
     registerPath,
     skills.filter((item) => item.skillDir === skillDir),
@@ -134,7 +134,7 @@ export function handleSkillsDisable(index: string) {
   const skill = skills[skillIndex];
   skill.isEnabled = false;
   const skillDir = skill.skillDir;
-  const registerPath = path.join(skillDir!, 'skills', 'register.json');
+  const registerPath = _getRegisterPath(skillDir!);
   fs.writeJSONSync(
     registerPath,
     skills.filter((item) => item.skillDir === skillDir),
@@ -224,7 +224,7 @@ type SkillRegisterItem = {
 
 function _updateRegister(skillsDir: string) {
   // 更新Skill注册文件
-  const registerPath = path.resolve(skillsDir, 'register.json');
+  const registerPath = _getRegisterPath(skillsDir);
   if (fs.existsSync(skillsDir) && !fs.existsSync(registerPath)) {
     // 如果Skill目录存在但注册文件不存在，则创建一个空的注册文件
     fs.writeJSONSync(registerPath, [], { spaces: 2 });
@@ -259,7 +259,7 @@ export function getRegisteredSkills(): string[] {
   const skills: string[] = [];
   scanPaths.forEach((scanPath) => {
     _updateRegister(scanPath);
-    const registerPath = path.join(scanPath, 'skills', 'register.json');
+    const registerPath = _getRegisterPath(scanPath);
     if (fs.existsSync(registerPath)) {
       const register = fs.readJSONSync(registerPath);
       register.forEach((item: SkillRegisterItem) => {
@@ -274,7 +274,7 @@ export function getRegisteredSkills(): string[] {
 
 function _getSkillList(skillsDir: string): SkillRegisterItem[] {
   let allSkills: SkillRegisterItem[] = [];
-  const registerPath = path.join(skillsDir, 'skills', 'register.json');
+  const registerPath = _getRegisterPath(skillsDir);
   if (fs.existsSync(registerPath)) {
     _updateRegister(skillsDir);
     const register = fs.readJSONSync(registerPath);
@@ -295,4 +295,11 @@ function _getAllSkills(): SkillRegisterItem[] {
     allSkills = allSkills.concat(skills);
   });
   return allSkills;
+}
+
+function _getRegisterPath(skillsDir: string) {
+  if (skillsDir.endsWith('@deepfish-ai')) {
+    return path.join(skillsDir, 'register.json');
+  }
+  return path.join(skillsDir, 'skills', 'register.json');
 }
