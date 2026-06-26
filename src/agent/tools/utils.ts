@@ -180,7 +180,6 @@ function _scanUserToolsFile() {
     if (!scanPath.endsWith('@deepfish-ai')) {
       toolsDir = path.resolve(scanPath, 'tools');
     }
-    console.log(scanPath)
     // 扫描里面的目录和第一层级的js文件
     if (fs.pathExistsSync(toolsDir)) {
       const files = fs.readdirSync(toolsDir);

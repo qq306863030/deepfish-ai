@@ -4,6 +4,7 @@ import { getConfigPath, getHomePath } from '../cli-utils/getGlobalPath';
 import { DEFAULT_CONFIG_JSON5 } from '../cli-utils/SystemConfig';
 import { editFile, openDirectory } from '../../utils/normal';
 import { logInfo, logSuccess, logWarning } from '../../utils/print';
+import type { ConfigFile } from '@/@types/ConfigFile';
 
 export function handleConfigEdit() {
   const configPath = getConfigPath();
@@ -17,9 +18,12 @@ export function handleConfigView() {
     return;
   }
   const content = fs.readFileSync(configPath, 'utf-8');
-  const data = JSON5.parse(content);
+  const data = JSON5.parse(content) as ConfigFile;
+  data.aiList?.forEach(item => {
+    item.apiKey = '******'
+  })
   logInfo('Current config:');
-  console.log(JSON.stringify(data, null, 2));
+  logInfo(JSON.stringify(data, null, 2));
 }
 
 export function handleConfigReset() {
