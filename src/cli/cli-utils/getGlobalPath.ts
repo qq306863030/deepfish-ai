@@ -1,6 +1,7 @@
 import { HOME_DIR, WORKSPACE_DIR } from './SystemConfig';
 import path from 'path';
 import fs from 'fs-extra';
+import getGlobalNodeModulesPath from './node-root';
 
 // CJS 模式下 __dirname 直接可用
 const getDirname = () => __dirname;
@@ -82,6 +83,10 @@ export function getScanDirPaths(): string[] {
   const paths = new Set<string>();
   paths.add(path.join(workspacePath, '.deepfish-ai'));
   paths.add(path.join(homePath));
+  // 获取nodejs的根目录
+  paths.add(path.join(getGlobalNodeModulesPath(), '@deepfish-ai'))
+
+
   return Array.from(paths);
 }
 
