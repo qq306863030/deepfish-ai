@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import JSON5 from 'json5';
 import { HOME_DIR, DEFAULT_CONFIG_JSON5 } from './SystemConfig';
-import { getConfigPath, getMCPFilePath, getSessionsPath, getSkillsPath, getUserPath } from './getGlobalPath';
+import { getConfigPath, getMCPFilePath, getSessionsPath, getSkillsPath, getToolsPath, getUserPath } from './getGlobalPath';
 import type { ConfigFile } from '@/@types/ConfigFile';
 
 // 初始化项目配置
@@ -33,6 +33,10 @@ export function initConfig() {
   if (!fs.pathExistsSync(skillsRegisterPath)) {
     fs.writeFileSync(skillsRegisterPath, '[]', 'utf-8');
   }
+
+  // 创建 tools 目录
+  const toolsDir = getToolsPath();
+  fs.ensureDirSync(toolsDir);
 
   // 创建 sessions 目录
   const sessionsDir = getSessionsPath();
