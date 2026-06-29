@@ -2,7 +2,6 @@ import {
   BaseMessage,
   createAgent,
   DynamicStructuredTool,
-  humanInTheLoopMiddleware,
   HumanMessage,
   ReactAgent,
   summarizationMiddleware,
@@ -48,7 +47,7 @@ export default class SubAIAgent extends EventEmitterSuper {
   maxSubAgentCount: number = 2;
 
   excludeTools: string[] = [];
-  excludeSkills: string[] = [];
+  excludeSkills: string[] = []
   excludeMCP: string[] = [];
   systemPrompt: string = '';
 
@@ -73,7 +72,7 @@ export default class SubAIAgent extends EventEmitterSuper {
 
   async init() {
     if (this.subLevel > 2) {
-      this.excludeTools.push('subAgent_exec');
+      this.excludeTools.push('subAgent_exec')
     }
     this.tools = await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
     this.skills = [...getSkills(), ...(this.opt.externalSkills || [])]; // todo
@@ -89,24 +88,21 @@ export default class SubAIAgent extends EventEmitterSuper {
       agentId: z.string().optional(),
       curAgent: z.object().optional(),
     });
-    const systemPrompt =
-      this.subLevel > 2
-        ? getSystemPrompt({
-            systemPrompt: this.systemPrompt,
-            workspace: this.workspace,
-            osType: os.platform(),
-            skills: this.skills,
-            memoryFilePath: this.memoryFilePath,
-            agentRulesPath: this.agentRulesPath,
-            excludeSkills: this.excludeSkills,
-          })
-        : subSystemPrompt({
-            systemPrompt: this.systemPrompt,
-            workspace: this.workspace,
-            osType: os.platform(),
-            skills: this.skills,
-            excludeSkills: this.excludeSkills,
-          });
+    const systemPrompt = this.subLevel > 2 ? getSystemPrompt({
+        systemPrompt: this.systemPrompt,
+        workspace: this.workspace,
+        osType: os.platform(),
+        skills: this.skills,
+        memoryFilePath: this.memoryFilePath,
+        agentRulesPath: this.agentRulesPath,
+        excludeSkills: this.excludeSkills,
+      }) : subSystemPrompt({
+        systemPrompt: this.systemPrompt,
+        workspace: this.workspace,
+        osType: os.platform(),
+        skills: this.skills,
+        excludeSkills: this.excludeSkills,
+      });
     const agent = createAgent({
       model: model,
       checkpointer,
@@ -118,14 +114,6 @@ export default class SubAIAgent extends EventEmitterSuper {
           model: model,
           trigger: { tokens: this.opt.modelOpt.maxContextLength || 100000 },
           keep: { messages: 50 },
-        }),
-        humanInTheLoopMiddleware({
-          interruptOn: {
-            install_package: {
-              allowedDecisions: ['approve', 'reject'],
-            },
-            readEmailTool: false,
-          },
         }),
         todoListMiddleware(),
         createPatchToolCallsMiddleware(),
@@ -163,12 +151,13 @@ export default class SubAIAgent extends EventEmitterSuper {
         resolve(msg);
       });
       for await (const [_namespace, mode, data] of stream) {
+        // 跳过子图的流事件（下级子 Agent 自己会处理输出），避免重复输出
+        if (Array.isArray(_namespace) && _namespace.length > 0) {
+          continue;
+        }
         if (mode === 'messages') {
-          const message = data?.[0] as unknown as AgentMessage | undefined;
-          // const content = message?.content;
-          const reasoning_content = message?.additional_kwargs?.reasoning_content;
-          const toolcall_content = message?.tool_call_chunks?.[0]?.args;
-          this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, reasoning_content || toolcall_content || '');
+          const message = (data[0] as unknown as AgentMessage).additional_kwargs.reasoning_content;
+          this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, message);
         }
       }
     });
@@ -211,7 +200,7 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, funcName, _funcArgs) => {
       log(`[Tool Call] ${funcName}`, '#c2a654');
     });
-    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent = '') => {
+    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent='') => {
       logInfo(`[Tool Return] ${_funcName} returned: ${_toolContent.length > 50 ? _toolContent.slice(0, 50) + '...' : _toolContent}`);
     });
     this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {
@@ -220,17 +209,11 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.on(AgentEvent.USE_TOOL_AFTER, (_toolId, _funcName, _funcArgs) => {});
   }
 
-  async createSubAgent(systemPrompt?: string): Promise<SubAIAgent> {
+  async createSubAgent(): Promise<SubAIAgent> {
     const subAgent = new SubAIAgent(this.opt);
-    systemPrompt && (subAgent.systemPrompt = systemPrompt);
     subAgent.subLevel = this.subLevel + 1;
     await subAgent.init();
     return subAgent;
-  }
-
-  async subExecute(systemPrompt: string, prompt: string) {
-    const subAgent = await this.createSubAgent(systemPrompt);
-    return subAgent.execute(prompt);
   }
 
   destory() {

@@ -141,6 +141,10 @@ export default class AIAgent extends EventEmitterSuper {
       },
     );
     for await (const [_namespace, mode, data] of stream) {
+      // 跳过子图的流事件（子 Agent 自己会处理输出），避免重复输出
+      if (Array.isArray(_namespace) && _namespace.length > 0) {
+        continue;
+      }
       if (mode === 'messages') {
         const message = data?.[0] as unknown as AgentMessage | undefined;
         // const content = message?.content;
