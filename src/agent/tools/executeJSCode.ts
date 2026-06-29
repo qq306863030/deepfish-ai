@@ -100,7 +100,7 @@ const installPackageTool = tool(
 
 const executeJSCodeTool = tool(async ({ code }, runtime) => safeTool(() => executeJSCode(code, runtime)), {
   name: 'execute_js_code',
-  description: `执行一段Node.js代码并返回执行结果。注意：代码必须包含一个__main()函数作为执行入口，__main()函数内必须是一个使用async前缀的函数。
+  description: `执行一段Node.js代码并返回执行结果。注意：1.如果使用第三方依赖需要先使用check_package_installed工具检查包是否安装，如果未安装需要执行install_package工具安装指定的npm包;2.代码必须包含一个__main()函数作为执行入口，__main()函数内必须是一个使用async前缀的函数。
         可用内置函数：
         - agentExec(prompt: string): Promise<string>，创建一个通用子 agent 执行指定任务并返回结果，适合将复杂任务拆分给子 agent 完成。
         示例代码：
