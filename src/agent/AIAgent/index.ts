@@ -2,7 +2,6 @@ import {
   BaseMessage,
   createAgent,
   DynamicStructuredTool,
-  humanInTheLoopMiddleware,
   HumanMessage,
   ReactAgent,
   summarizationMiddleware,
