@@ -3,7 +3,7 @@ import inquirer from 'inquirer';
 import { logError, logInfo, logSuccess, logWarning, logErrorMsg } from '../../utils/print';
 import fs from 'fs-extra';
 import path from 'path';
-import { getCodePath, getHomePath, getScanDirPaths, getWorkspacePath } from '../cli-utils/getGlobalPath';
+import { getHomePath, getScanDirPaths, getWorkspacePath } from '../cli-utils/getGlobalPath';
 import { openDirectory } from '@/utils/normal';
 import { getConfig } from '../cli-utils/init-config';
 import { initAgent, testServer } from '../cli-utils/init-agent';
@@ -15,7 +15,11 @@ export function handleSkillsLs() {
     logInfo('No skills registered yet');
   } else {
     skills.forEach((skill, index) => {
-      logInfo(`[${index}] ${skill.name} (${skill.isEnabled ? 'enabled' : 'disabled'})`);
+      if (skill.isEnabled) {
+        logSuccess(`[${index}] ${skill.name} [√]`);
+      } else {
+        logInfo(`[${index}] ${skill.name} [×]`);
+      }
     });
   }
   logInfo('='.repeat(50));
@@ -176,7 +180,7 @@ export async function handleSkillsGenerate(target: string) {
     }
 
     // 创建 agent，注入 generate-skill skill
-    const generateSkillPath = path.join(__dirname, '../../agent/skills/generate-skill.md');
+    const generateSkillPath = path.join(__dirname, './skills/generate-skill.md');
     const agent = await initAgent(config, [generateSkillPath]);
 
     const prompt = `请根据以下需求生成一个Skill模块：${target}

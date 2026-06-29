@@ -190,9 +190,12 @@ On the second question, AI answers based on the same session context in the curr
 
 ### MCP Management
 
-| Command       | Description            |
-| ------------- | ---------------------- |
-| `ai mcp edit` | Edit MCP configuration |
+| Command                           | Description               |
+| --------------------------------- | ------------------------- |
+| `ai mcp ls`                       | List all MCP servers      |
+| `ai mcp edit`                     | Edit MCP configuration    |
+| `ai mcp enable <name\|index>`     | Enable an MCP server      |
+| `ai mcp disable <name\|index>`    | Disable an MCP server     |
 
 ### Serve Management
 

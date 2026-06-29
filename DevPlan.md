@@ -82,6 +82,9 @@ ai tasks del <index>
 ai tasks clear
 
 ai mcp edit
+ai mcp ls
+ai mcp enable <index|name>
+ai mcp disable <index|name>
 
 ai serve # 启动服务，并打开页面
 ai serve start # 启动服务

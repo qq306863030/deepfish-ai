@@ -3,23 +3,6 @@ import path from 'path';
 import { defineConfig, type Plugin } from 'vite';
 import solid from 'vite-plugin-solid';
 
-async function copyMarkdownFiles(currentDir: string, distDir: string): Promise<void> {
-  const entries = await fs.readdir(currentDir, { withFileTypes: true });
-
-  await Promise.all(
-    entries.map(async (entry) => {
-      const fullPath = path.join(currentDir, entry.name);
-      if (entry.isDirectory()) {
-        await copyMarkdownFiles(fullPath, distDir);
-        return;
-      }
-      if (entry.isFile() && entry.name.endsWith('.md')) {
-        await fs.copy(fullPath, path.join(distDir, entry.name));
-      }
-    }),
-  );
-}
-
 function copySrcMarkdownFiles(): Plugin {
   return {
     name: 'copy-src-markdown-files',
@@ -27,7 +10,19 @@ function copySrcMarkdownFiles(): Plugin {
     async closeBundle() {
       const srcDir = path.resolve(process.cwd(), 'src');
       const distDir = path.resolve(process.cwd(), 'dist');
-      await copyMarkdownFiles(srcDir, distDir);
+      const skillsDir = path.join(srcDir, 'agent/skills');
+      const targetSkillsDir = path.join(distDir, 'skills');
+
+      // 复制 agent/skills 到 dist/skills
+      if (await fs.pathExists(skillsDir)) {
+        const files = await fs.readdir(skillsDir);
+        await fs.ensureDir(targetSkillsDir);
+        for (const file of files) {
+          if (file.endsWith('.md')) {
+            await fs.copy(path.join(skillsDir, file), path.join(targetSkillsDir, file));
+          }
+        }
+      }
     },
   };
 }
