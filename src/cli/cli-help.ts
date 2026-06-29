@@ -29,7 +29,10 @@ Commands:
   ai skills generate xxx            根据描述生成一个新的技能模板
 
   # Tools commands
+  ai tools ls                       查看已安装或已配置的工具列表
   ai tools dir                      打开或输出用户自定义工具目录
+  ai tools add <name>               添加指定名称的工具
+  ai tools del <index>              删除指定序号的自定义工具
   ai tools generate xxx             根据描述生成一个新的工具模板
 
   # Session commands
@@ -41,9 +44,15 @@ Commands:
   ai task add <task>                向任务队列添加一个后续任务
   ai task del <index>               删除指定序号的任务
   ai task clear                     清空当前任务队列
+
+  # Plan commands
+  ai plan-do <任务描述>              将复杂任务拆解为子任务并逐步执行完成
   
   # MCP commands
   ai mcp edit                       打开 MCP 配置文件进行编辑
+  ai mcp ls                         查看已配置的 MCP 服务器列表
+  ai mcp enable <name|index>        启用指定名称或序号的 MCP 服务器
+  ai mcp disable <name|index>       禁用指定名称或序号的 MCP 服务器
   
   # Serve commands
   ai serve                          启动服务或进入服务管理入口
