@@ -102,14 +102,6 @@ export default class AIAgent extends EventEmitterSuper {
           trigger: { tokens: this.opt.modelOpt.maxContextLength || 100000 },
           keep: { messages: 50 },
         }),
-        humanInTheLoopMiddleware({
-          interruptOn: {
-            install_package: {
-              allowedDecisions: ['approve', 'reject'],
-            },
-            readEmailTool: false,
-          },
-        }),
         todoListMiddleware(),
         createPatchToolCallsMiddleware(),
       ],
