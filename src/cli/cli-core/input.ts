@@ -6,7 +6,7 @@ import { logError, logErrorMsg, logWarning } from '../../utils/print';
 import TaskQueue from '../cli-utils/TaskQueue';
 import * as readline from 'readline';
 
-export async function handleInput(args: string[]) {
+export async function handleInput(args: string[], skills?: string[]) {
   const input = args.join(' ');
   if (!input.trim()) {
     logError('Please enter content');
@@ -32,7 +32,7 @@ export async function handleInput(args: string[]) {
       logError('Failed to start service, please check config or port availability');
       return;
     }
-    const agent = await initAgent(config!);
+    const agent = await initAgent(config!, skills);
     // 连接agent socket服务器，并发送注册消息agentID
     const connResult = await connectAgentRoom(agent);
     if (!connResult.ok) {

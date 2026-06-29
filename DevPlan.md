@@ -81,6 +81,8 @@ ai tasks add <task>
 ai tasks del <index>
 ai tasks clear
 
+ai plan-do xxx
+
 ai mcp edit
 ai mcp ls
 ai mcp enable <index|name>

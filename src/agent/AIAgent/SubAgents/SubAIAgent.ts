@@ -97,7 +97,13 @@ export default class SubAIAgent extends EventEmitterSuper {
         memoryFilePath: this.memoryFilePath,
         agentRulesPath: this.agentRulesPath,
         excludeSkills: this.excludeSkills,
-      }) : subSystemPrompt(this.workspace, os.platform(), this.skills, this.excludeSkills);
+      }) : subSystemPrompt({
+        systemPrompt: this.systemPrompt,
+        workspace: this.workspace,
+        osType: os.platform(),
+        skills: this.skills,
+        excludeSkills: this.excludeSkills,
+      });
     const agent = createAgent({
       model: model,
       checkpointer,
@@ -208,11 +214,17 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.on(AgentEvent.USE_TOOL_AFTER, (_toolId, _funcName, _funcArgs) => {});
   }
 
-  async createSubAgent(): Promise<SubAIAgent> {
+  async createSubAgent(systemPrompt?: string): Promise<SubAIAgent> {
     const subAgent = new SubAIAgent(this.opt);
+    systemPrompt && (subAgent.systemPrompt = systemPrompt)
     subAgent.subLevel = this.subLevel + 1;
     await subAgent.init();
     return subAgent;
+  }
+
+  async subExecute(systemPrompt:string, prompt:string) {
+    const subAgent = await this.createSubAgent(systemPrompt)
+    return subAgent.execute(prompt)
   }
 
   destory() {

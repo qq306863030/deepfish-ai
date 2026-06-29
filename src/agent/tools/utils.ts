@@ -110,9 +110,8 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
   const wrappedFunc = async (args: any, runtime: any) => {
     try {
       const boundFunc = func.bind({
-        createSubAgent: async (prompt: string) => {
-          const subAgent = await runtime.context.curAgent.createSubAgent();
-          return subAgent.execute(prompt);
+        createSubAgent: async (systemPrompt: string, prompt: string) => {
+          return runtime.context.curAgent.subExecute(systemPrompt, prompt)
         },
         curAgent: runtime.context.curAgent,
       });

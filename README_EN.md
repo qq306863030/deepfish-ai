@@ -45,6 +45,7 @@
   - [Tool Management](#tool-management)
   - [Session Management](#session-management)
   - [Task Management](#task-management)
+  - [Long Task Planning](#long-task-planning)
   - [MCP Management](#mcp-management)
   - [Serve Management](#serve-management)
   - [Cache Management (AI Self-Learning Cache)](#cache-management-ai-self-learning-cache)
@@ -187,6 +188,12 @@ On the second question, AI answers based on the same session context in the curr
 | `ai tasks add <task>`  | Add a task            |
 | `ai tasks del <index>` | Delete specified task |
 | `ai tasks clear`       | Clear all tasks       |
+
+### Long Task Planning
+
+| Command                       | Description                                          |
+| ----------------------------- | ---------------------------------------------------- |
+| `ai plan-do <task description>` | Break down a complex task into subtasks and execute |
 
 ### MCP Management
 

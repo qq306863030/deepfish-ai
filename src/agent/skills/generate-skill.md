@@ -18,7 +18,7 @@ homepage: ''
 
 1. **目录创建**：在当前工作目录下新建一个子目录，目录名称应简洁明了地反映 Skill 功能（如 `web-scraper`、`code-reviewer`、`image-optimizer` 等）
 2. **核心文件**：目录中必须包含 `SKILL.md` 文件（文件名大小写敏感，必须为 `SKILL.md`）
-3. **辅助文件**：如果 Skill 涉及复杂逻辑，可在目录中创建辅助脚本文件（如 `.js`、`.sh`、`.py` 等），并在 `SKILL.md` 中说明其用途和调用方式；如果是 js 文件，可以在函数中通过 `this.Tools` 调用内置函数，如直接使用 `this.Tools.createSubAgent(workGoal)`
+3. **辅助文件**：如果 Skill 涉及复杂逻辑，可在目录中创建辅助脚本文件（如 `.js`、`.sh`、`.py` 等），并在 `SKILL.md` 中说明其用途和调用方式；如果是 js 文件，可以在函数中通过 `this.Tools` 调用内置函数，如直接使用 `this.Tools.createSubAgent(systemPrompt:string, workGoal:string)`
 
 #### 标准目录结构
 

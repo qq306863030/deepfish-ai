@@ -33,7 +33,7 @@ export async function initAgent(config: ConfigFile, skills?: string[]): Promise<
     maxBlockFileSize: config.maxBlockFileSize, // Max chunk file size in KB; files exceeding this size need to be processed in chunks
     encoding: config.encoding, // CLI encoding format, can be set to utf-8, gbk, etc., or left empty for auto-detection
     maxSubAgentCount: config.maxSubAgentCount, // Maximum parallel sub-agent execution count, -1 means unlimited
-    skills,
+    externalSkills: skills,
     isPrintThinking: config.isPrintThinking, // Whether to print intermediate information during AI thinking, default is true
   });
   await agent.init();

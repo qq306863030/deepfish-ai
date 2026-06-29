@@ -85,7 +85,7 @@ module.exports = { functions, descriptions };
 1. 理解用户要生成的工具功能
 2. 在当前工作目录下创建 `deepfish-tool-{功能名}/` 目录
 3. 编写 `index.js`，导出 `functions` 和 `descriptions`
-4. 对于需要Agent参与的复杂任务，可以直接使用 `this.createSubAgent(prompt: string)` 创建子 Agent 执行任务，并将任务说明作为 `prompt` 传入
+4. 对于需要Agent参与的复杂任务，可以直接使用 `this.createSubAgent(systemPrompt: string, prompt: string)` 创建子 Agent 执行任务，并将任务说明作为 `prompt` 传入
 5. 需要引入第三方模块时，需要将该tool创建成NodeJs项目，在tool中引入模块
 
 ## 生成说明文档

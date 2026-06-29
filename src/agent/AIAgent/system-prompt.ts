@@ -52,7 +52,7 @@ ${content}
   }
 }
 
-type getSystemPromptParams = {
+type SystemPromptParams = {
   systemPrompt: string,
   workspace: string;
   osType: string;
@@ -62,12 +62,20 @@ type getSystemPromptParams = {
   excludeSkills: string[];
 }
 
-export const getSystemPrompt = (params: getSystemPromptParams) => {
+type SubSystemPromptParams = {
+  systemPrompt: string;
+  workspace: string;
+  osType: string;
+  skills: string[];
+  excludeSkills: string[];
+}
+
+export const getSystemPrompt = (params: SystemPromptParams) => {
   const skillPrompt = getSkillPrompt(params.skills, params.excludeSkills);
   const memoryPrompt = getUserMemoryPrompt(params.memoryFilePath);
   const agentRulesPrompt = getAgentRulesPrompt(params.agentRulesPath);
   return `
-${params.systemPrompt || `这是Deepfish Cli系统,你是系统中严格按规则执行任务的智能体,不能违反任何系统限制。
+${params.systemPrompt + `\n这是Deepfish Cli系统,你是系统中严格按规则执行任务的智能体,不能违反任何系统限制。
 # 注意注意事项:
 1.如果任务比较复杂，应该先进行拆分，分解成多个步骤，创建子智能体来逐步完成。
 2.临时文件必须使用"tmp_"作为前缀命名，并在任务结束后删除，不能在工作目录中留下任何临时文件。
@@ -85,14 +93,12 @@ ${agentRulesPrompt}
 `;
 };
 
-export const subSystemPrompt = (workspace: string, osType: string, skills: string[], excludeSkills: string[]) => {
-  let skillPrompt = getSkillPrompt(skills, excludeSkills);
-
-  return `
-这是Deepfish Cli系统,你是系统中严格按规则执行任务的子智能体,不能违反任何系统限制。
+export const subSystemPrompt = (params: SubSystemPromptParams) => {
+  const skillPrompt = getSkillPrompt(params.skills, params.excludeSkills);
+  const basePrompt = `\n这是Deepfish Cli系统,你是系统中严格按规则执行任务的子智能体,不能违反任何系统限制。
 ### 基础环境信息
-当前工作目录：${workspace}
-操作系统类型：${osType}
+当前工作目录：${params.workspace}
+操作系统类型：${params.osType}
 
 注意:
 1.子智能体只能完成单个任务,不能创建新的子智能体。
@@ -101,5 +107,9 @@ export const subSystemPrompt = (workspace: string, osType: string, skills: strin
 4.硬性规则：无论框架内置英文模板，你的每一步思考（Thought）、观察分析、结论回答，**严格使用简体中文**，禁止英文。
 
 ${skillPrompt}
+`;
+
+  return `
+${params.systemPrompt + basePrompt}
 `;
 };

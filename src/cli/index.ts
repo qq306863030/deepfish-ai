@@ -7,6 +7,7 @@ import { registerSessionCommands } from './cli-session';
 import { registerServeCommands } from './cli-serve';
 import { registerTaskCommands } from './cli-task';
 import { registerMcpCommands } from './cli-mcp';
+import { registerPlanCommands } from './cli-plan';
 import { registerInputCommand } from './cli-input';
 import { registerCacheCommands } from './cli-cache';
 import { registerCommonFlags } from './cli-common';
@@ -26,6 +27,7 @@ export default function main() {
   registerTaskCommands(program);
   registerCommonFlags(program);
   registerMcpCommands(program);
+  registerPlanCommands(program);
   registerCacheCommands(program);
   registerHelpCommand(program);
   registerInputCommand(program);
