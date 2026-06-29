@@ -37,7 +37,6 @@ function writeLine(msg1: string, msg2 = '', color = 'blue') {
 }
 
 function streamOutput(text: string, color = '#9bed7f') {
-  console.log('***',text)
   process.stdout.write(chalk.hex(color)(text));
 }
 
