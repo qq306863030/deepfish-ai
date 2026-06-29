@@ -3,7 +3,7 @@ import inquirer from 'inquirer';
 import { logError, logInfo, logSuccess, logWarning, logErrorMsg } from '../../utils/print';
 import fs from 'fs-extra';
 import path from 'path';
-import { getHomePath, getScanDirPaths, getWorkspacePath } from '../cli-utils/getGlobalPath';
+import { getCodePath, getHomePath, getScanDirPaths, getWorkspacePath } from '../cli-utils/getGlobalPath';
 import { openDirectory } from '@/utils/normal';
 import { getConfig } from '../cli-utils/init-config';
 import { initAgent, testServer } from '../cli-utils/init-agent';
@@ -176,7 +176,7 @@ export async function handleSkillsGenerate(target: string) {
     }
 
     // 创建 agent，注入 generate-skill skill
-    const generateSkillPath = path.join(__dirname, './generate-skill.md');
+    const generateSkillPath = path.join(__dirname, '../../agent/skills/generate-skill.md');
     const agent = await initAgent(config, [generateSkillPath]);
 
     const prompt = `请根据以下需求生成一个Skill模块：${target}
@@ -225,11 +225,14 @@ type SkillRegisterItem = {
 function _updateRegister(skillsDir: string) {
   // 更新Skill注册文件
   const registerPath = _getRegisterPath(skillsDir);
-  if (fs.existsSync(skillsDir) && !fs.existsSync(registerPath)) {
-    // 如果Skill目录存在但注册文件不存在，则创建一个空的注册文件
-    fs.writeJSONSync(registerPath, [], { spaces: 2 });
-  } else if (!fs.existsSync(skillsDir)) {
+  if (!fs.existsSync(skillsDir)) {
     return;
+  }
+
+  if (!fs.existsSync(registerPath)) {
+    // 如果Skill目录存在但注册文件不存在，则确保目录存在并创建一个空的注册文件
+    fs.ensureDirSync(path.dirname(registerPath));
+    fs.writeJSONSync(registerPath, [], { spaces: 2 });
   }
   const skills = _scanSkills(skillsDir);
   // 读取已注册的Skill
@@ -298,8 +301,10 @@ function _getAllSkills(): SkillRegisterItem[] {
 }
 
 function _getRegisterPath(skillsDir: string) {
-  if (skillsDir.endsWith('@deepfish-ai')) {
-    return path.join(skillsDir, 'register.json');
+  const normalizedDir = path.normalize(skillsDir);
+  const baseName = path.basename(normalizedDir).toLowerCase();
+  if (baseName === '@deepfish-ai' || baseName === 'skills') {
+    return path.join(normalizedDir, 'register.json');
   }
-  return path.join(skillsDir, 'skills', 'register.json');
+  return path.join(normalizedDir, 'skills', 'register.json');
 }

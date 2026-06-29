@@ -121,7 +121,7 @@ export async function handleToolsGenerate(target: string) {
     }
 
     // Create agent and inject generate-tool skill
-    const generateSkillPath = path.join(__dirname, './generate-tool.md');
+    const generateSkillPath = path.join(__dirname, '../../agent/skills/generate-tool.md');
     const agent = await initAgent(config, [generateSkillPath]);
 
     const prompt = `Please use the "generate-tool" SKILL to generate a tool module according to the following requirements: ${target}
