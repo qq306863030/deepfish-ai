@@ -75,8 +75,8 @@ export default class SubAIAgent extends EventEmitterSuper {
     if (this.subLevel > 2) {
       this.excludeTools.push('subAgent_exec')
     }
-    this.tools = await getTools(this.excludeTools, this.excludeMCP);
-    this.skills = [...getSkills(), ...(this.opt.skills || [])]; // todo
+    this.tools = await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
+    this.skills = [...getSkills(), ...(this.opt.externalSkills || [])]; // todo
     const model = getModel(this.opt.modelOpt);
     const checkpointer = new FileSystemSaver({
       rootFolder: this.sessionDirPath,

@@ -32,8 +32,8 @@ const builtinTools = [
   ...fishInfoTools,
 ];
 
-async function getTools(excludeTools: string[], excludeMCP: string[]) {
-  return [...builtinTools, ...(await scanUserTools(excludeTools)), ...(await scanUserMcp(excludeMCP))];
+async function getTools(excludeTools: string[], excludeMCP: string[], externalTools: string[] = []) {
+  return [...builtinTools, ...(await scanUserTools(excludeTools, externalTools)), ...(await scanUserMcp(excludeMCP))];
 }
 
 export { getTools };

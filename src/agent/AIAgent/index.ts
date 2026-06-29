@@ -76,8 +76,8 @@ export default class AIAgent extends EventEmitterSuper {
   }
 
   async init() {
-    this.tools = await getTools(this.excludeTools, this.excludeMCP);
-    this.skills = [...getSkills(), ...(this.opt.skills || [])];
+    this.tools = await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
+    this.skills = [...getSkills(), ...(this.opt.externalSkills || [])];
     const model = getModel(this.opt.modelOpt);
     const checkpointer = new FileSystemSaver({
       rootFolder: this.sessionDirPath,

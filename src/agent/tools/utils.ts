@@ -11,15 +11,15 @@ import { truncateOutput } from './fileTools';
 export type ToolResult = SuccsessResult | ErrorResult;
 
 type ToolFile = {
-  dir: string|null,
-  filePath: string
-}
+  dir: string | null;
+  filePath: string;
+};
 
 type ToolOpt = {
-  name: string,
-  path: string,
-  dir: string|null
-}
+  name: string;
+  path: string;
+  dir: string | null;
+};
 
 export function successResult(data: any): SuccsessResult {
   return { success: true, data };
@@ -112,10 +112,10 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
       const boundFunc = func.bind({
         createSubAgent: async (prompt: string) => {
           const subAgent = await runtime.context.curAgent.createSubAgent();
-          return subAgent.execute(prompt)
+          return subAgent.execute(prompt);
         },
         curAgent: runtime.context.curAgent,
-      })
+      });
       const result = await boundFunc(...Object.values(args));
       if (typeof result === 'object' && result !== null && 'success' in result) {
         return serializeToolResult(result as ToolResult);
@@ -134,19 +134,21 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
 }
 
 // 文件扫描
-function scanUserTools(excludeTools: string[]) {
-  const files = _scanUserToolsFile();
+function scanUserTools(excludeTools: string[], externalTools: string[]) {
+  const files1 = _scanUserToolsFile();
+  const files2 = _scanExternalToolsFile(externalTools)
   const tools: DynamicStructuredTool[] = [];
-  files.forEach((toolFile) => {
+  [...files1, ...files2].forEach((toolFile) => {
     _loadToolsFromFile(toolFile.filePath, tools, excludeTools);
   });
+  
   return tools;
 }
 
 function getUserToolList() {
   const files = _scanUserToolsFile();
-  const toolOpts:ToolOpt[] = []
-  files.forEach(toolFile => {
+  const toolOpts: ToolOpt[] = [];
+  files.forEach((toolFile) => {
     const toolModule = require(toolFile.filePath);
     const { functions, descriptions } = toolModule;
     descriptions.forEach((desc: Description) => {
@@ -154,7 +156,7 @@ function getUserToolList() {
         desc = {
           type: 'function',
           function: desc as any,
-        }
+        };
       }
       const func = functions[desc.function.name];
       if (typeof func !== 'function') {
@@ -163,20 +165,67 @@ function getUserToolList() {
       toolOpts.push({
         name: desc.function.name,
         path: toolFile.filePath,
-        dir: toolFile.dir
-      })
+        dir: toolFile.dir,
+      });
     });
-  })
-  return toolOpts
+  });
+  return toolOpts;
 }
 
+function _scanToolsFile(filePath: string) {
+  let toolFile: ToolFile | null = null;
+  if (fs.statSync(filePath).isDirectory()) {
+    // 扫描目录中的js文件，如果包含index.js则只扫描index.js，否则扫描所有js文件
+    const subDirPath = path.resolve(filePath);
+    const subFiles = fs.readdirSync(subDirPath);
+    const indexFile = subFiles.find((f) => f === 'index.js' || f === 'index.cjs');
+    if (indexFile) {
+      const filePath = _scanDeepFishJsFile(path.resolve(subDirPath, indexFile));
+      if (filePath) {
+        toolFile = {
+          filePath,
+          dir: subDirPath,
+        };
+      }
+    } else {
+      subFiles.forEach((subFile) => {
+        const filePath = _scanDeepFishJsFile(path.resolve(subDirPath, subFile));
+        if (filePath) {
+          toolFile = {
+            filePath,
+            dir: subDirPath,
+          };
+        }
+      });
+    }
+  } else {
+    const toolfilePath = _scanDeepFishJsFile(filePath);
+    if (toolfilePath) {
+      toolFile = {
+        filePath: toolfilePath,
+        dir: null,
+      };
+    }
+  }
+  return toolFile;
+}
 
+function _scanExternalToolsFile(externalTools: string[]) {
+  const toolFiles: ToolFile[] = [];
+  externalTools.forEach((filePath) => {
+    const toolFile = _scanToolsFile(filePath);
+    if (toolFile) {
+      toolFiles.push(toolFile);
+    }
+  });
+  return toolFiles
+}
 
 function _scanUserToolsFile() {
-  const toolFiles:ToolFile[] = []
+  const toolFiles: ToolFile[] = [];
   const scanPaths = getScanDirPaths();
   scanPaths.forEach((scanPath) => {
-    let toolsDir = scanPath
+    let toolsDir = scanPath;
     if (!scanPath.endsWith('@deepfish-ai')) {
       toolsDir = path.resolve(scanPath, 'tools');
     }
@@ -184,38 +233,10 @@ function _scanUserToolsFile() {
     if (fs.pathExistsSync(toolsDir)) {
       const files = fs.readdirSync(toolsDir);
       files.forEach((file) => {
-        if (fs.statSync(path.resolve(toolsDir, file)).isDirectory()) {
-          // 扫描目录中的js文件，如果包含index.js则只扫描index.js，否则扫描所有js文件
-          const subDirPath = path.resolve(toolsDir, file);
-          const subFiles = fs.readdirSync(subDirPath);
-          const indexFile = subFiles.find((f) => f === 'index.js' || f === 'index.cjs');
-          if (indexFile) {
-            const filePath = _scanDeepFishJsFile(path.resolve(subDirPath, indexFile), indexFile);
-            if (filePath) {
-              toolFiles.push({
-                filePath,
-                dir: subDirPath
-              })
-            }
-          } else {
-            subFiles.forEach((subFile) => {
-              const filePath = _scanDeepFishJsFile(path.resolve(subDirPath, subFile), subFile);
-              if (filePath) {
-                toolFiles.push({
-                  filePath,
-                  dir: subDirPath
-                })
-              }
-            });
-          }
-        } else {
-          const filePath = _scanDeepFishJsFile(toolsDir, file);
-          if (filePath) {
-            toolFiles.push({
-              filePath,
-              dir: null
-            })
-          }
+        const filePath = path.resolve(toolsDir, file);
+        const toolFile = _scanToolsFile(filePath);
+        if (toolFile) {
+          toolFiles.push(toolFile);
         }
       });
     }
@@ -223,10 +244,8 @@ function _scanUserToolsFile() {
   return toolFiles;
 }
 
-
-
-function _scanDeepFishJsFile(filePath: string, fileName: string) {
-  if (fileName.endsWith('.js') || fileName.endsWith('.cjs')) {
+function _scanDeepFishJsFile(filePath: string) {
+  if (filePath.endsWith('.js') || filePath.endsWith('.cjs')) {
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     if (fileContent.includes('module.exports') && fileContent.includes('descriptions') && fileContent.includes('functions')) {
       return filePath;
@@ -250,7 +269,7 @@ function _loadToolsFromFile(filePath: string, tools: DynamicStructuredTool[], ex
         desc = {
           type: 'function',
           function: desc as any,
-        }
+        };
       }
 
       if (excludeTools.includes(desc.function.name)) {
