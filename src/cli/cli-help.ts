@@ -47,6 +47,7 @@ Commands:
 
   # Plan commands
   ai plan-do <任务描述>              将复杂任务拆解为子任务并逐步执行完成
+  ai plan-continue                   继续执行被中断的 plan-do 任务
   
   # MCP commands
   ai mcp edit                       打开 MCP 配置文件进行编辑

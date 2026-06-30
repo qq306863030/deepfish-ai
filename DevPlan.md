@@ -82,6 +82,7 @@ ai tasks del <index>
 ai tasks clear
 
 ai plan-do xxx
+ai plan-continue
 
 ai mcp edit
 ai mcp ls

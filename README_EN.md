@@ -194,6 +194,7 @@ On the second question, AI answers based on the same session context in the curr
 | Command                       | Description                                          |
 | ----------------------------- | ---------------------------------------------------- |
 | `ai plan-do <task description>` | Break down a complex task into subtasks and execute |
+| `ai plan-continue`            | Continue an interrupted plan-do task                 |
 
 ### MCP Management
 

@@ -55,31 +55,35 @@ tmp_tasklist.json 格式要求：
 
 ### 阶段二：执行任务列表
 
-创建一个子 Agent，传入以下系统提示词，让子 Agent 负责按顺序执行子任务：
+创建一个子 Agent 作为调度管理器Agent读取任务列表并负责调度。执行每个子任务时，必须为该子任务再创建一个独立的子 Agent，由子 Agent 完成具体执行工作，调度管理器Agent 只负责状态流转、结果记录和继续调度下一个任务。
 
-**子 Agent 系统提示词：**
+**调度管理器子Agent提示词：**
 
 ```
-你负责按顺序执行 tmp_tasklist.json 中的子任务，完成 tmp_task_goal.md 描述的整体目标。
+你负责按顺序调度执行 tmp_tasklist.json 中的子任务，完成 tmp_task_goal.md 描述的整体目标。
 
 执行规则：
 1. 先读取 tmp_task_goal.md 了解整体目标；
 2. 读取 tmp_tasklist.json，仅处理 status 为 "todo" 或 "doing" 的任务；
-3. 每次只执行一个子任务，按列表顺序依次执行；
-4. 执行前将当前任务 status 更新为 "doing" 并写回文件；
-5. 执行成功后更新 status 为 "done"，并记录 finishedAt（ISO 时间）；
-6. 执行失败时保留为 "doing" 或回退为 "todo"，在 note 中记录失败原因；
-7. 每完成一个子任务必须立即写回 tmp_tasklist.json；
-8. 尽量将具体执行工作交给子 agent 完成，主流程只负责调度和状态管理；
-9. 告知子 agent 任务列表的文件名为 tmp_tasklist.json；
+3. 每次通过创建子Agent只调度一个子任务，按列表顺序依次执行；
+4. 调度前将当前任务 status 更新为 "doing" 并写回文件；
+5. 对每个子任务，必须创建一个独立的子 Agent 来执行，不要在主流程中直接完成具体任务；
+6. 创建子 Agent 时，将整体目标、当前子任务 id/name/description、tmp_tasklist.json 文件名和执行要求一并传入；
+7. 子 Agent 执行成功后，将当前任务 status 更新为 "done"，并记录 finishedAt（ISO 时间）；
+8. 子 Agent 执行失败时，将当前任务保留为 "doing" 或回退为 "todo"，并在 note 中记录失败原因；
+9. 每完成或失败一个子任务，都必须立即写回 tmp_tasklist.json；
 10. 全部任务完成后，删除 tmp_tasklist.json 和 tmp_task_goal.md。
 
+子 Agent 执行要求：
+- 只执行当前被分配的一个子任务，不要修改其他任务状态；
+- 执行前阅读 tmp_task_goal.md，理解整体目标；
+- 必要时阅读 tmp_tasklist.json，了解上下文和任务依赖；
+- 完成后向主 Agent 返回执行结果、修改的文件、失败原因或后续建议。
+
 输出要求：
-- 输出当前执行的任务 id、名称、结果状态和下一步计划；
+- 输出当前调度的任务 id、名称、执行结果状态和下一步计划；
 - 不要跳过状态更新和文件写入步骤。
 ```
-
-**子 Agent 的用户提示词：** 用户的原始任务描述。
 
 ## 注意事项
 
