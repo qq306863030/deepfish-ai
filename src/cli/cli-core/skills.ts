@@ -247,11 +247,15 @@ function _updateRegister(skillsDir: string) {
     const skillName = path.basename(skillPath);
     const existItem = register.find((item) => item.skillPath === skillPath);
     if (!existItem) {
+      let skillFilePath = skillPath
+      if (fs.statSync(skillPath).isDirectory()) {
+        skillFilePath = path.join(skillFilePath, 'SKILL.md')
+      }
       newRegister.push({
         id: randomUUID(),
         name: skillName,
         isEnabled: true,
-        skillPath,
+        skillPath: skillFilePath,
       });
     }
   });
