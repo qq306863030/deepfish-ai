@@ -73,6 +73,18 @@ export async function handleToolsAdd(name: string) {
   const targetDir = scope === 'local' ? localToolDir : globalToolDir;
   const targetPath = path.join(targetDir, name);
 
+  const { action } = await inquirer.prompt([
+    {
+      type: 'select',
+      name: 'action',
+      message: 'Select add action:',
+      choices: [
+        { name: 'Move (cut)', value: 'move' },
+        { name: 'Copy', value: 'copy' },
+      ],
+    },
+  ]);
+
   fs.ensureDirSync(targetDir);
 
   if (fs.existsSync(targetPath)) {
@@ -91,8 +103,12 @@ export async function handleToolsAdd(name: string) {
     fs.removeSync(targetPath);
   }
 
-  fs.moveSync(toolDir, targetPath, { overwrite: true });
-  logSuccess(`Tool ${scope === 'local' ? 'locally' : 'globally'} added: ${targetPath}`);
+  if (action === 'move') {
+    fs.moveSync(toolDir, targetPath, { overwrite: true });
+  } else {
+    fs.copySync(toolDir, targetPath, { overwrite: true });
+  }
+  logSuccess(`Tool ${scope === 'local' ? 'locally' : 'globally'} ${action === 'move' ? 'moved' : 'copied'}: ${targetPath}`);
 }
 
 export async function handleToolsGenerate(target: string) {

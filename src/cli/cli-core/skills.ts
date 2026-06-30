@@ -58,6 +58,18 @@ export async function handleSkillsAdd(name: string) {
   const targetDir = scope === 'local' ? localSkillDir : globalSkillDir;
   const targetPath = path.join(targetDir, name);
 
+  const { action } = await inquirer.prompt([
+    {
+      type: 'select',
+      name: 'action',
+      message: 'Select add action:',
+      choices: [
+        { name: 'Move (cut)', value: 'move' },
+        { name: 'Copy', value: 'copy' },
+      ],
+    },
+  ]);
+
   // 检查目标位置是否已存在同名Skill
   if (fs.existsSync(targetPath)) {
     const { overwrite } = await inquirer.prompt([
@@ -75,9 +87,13 @@ export async function handleSkillsAdd(name: string) {
     fs.removeSync(targetPath);
   }
 
-  // 移动Skill目录到目标位置
-  fs.moveSync(skillDir, targetPath, { overwrite: true });
-  logSuccess(`Skill ${scope === 'local' ? 'locally' : 'globally'} added: ${targetPath}`);
+  // 移动或复制Skill目录到目标位置
+  if (action === 'move') {
+    fs.moveSync(skillDir, targetPath, { overwrite: true });
+  } else {
+    fs.copySync(skillDir, targetPath, { overwrite: true });
+  }
+  logSuccess(`Skill ${scope === 'local' ? 'locally' : 'globally'} ${action === 'move' ? 'moved' : 'copied'}: ${targetPath}`);
 
   // 更新注册文件
   _updateRegister(targetDir);
