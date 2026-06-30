@@ -265,8 +265,9 @@ export function getRegisteredSkills(): string[] {
   const scanPaths = getScanDirPaths();
   const skills: string[] = [];
   scanPaths.forEach((scanPath) => {
-    _updateRegister(scanPath);
-    const registerPath = _getRegisterPath(scanPath);
+    const scanDir = path.join(scanPath, 'skills')
+    _updateRegister(scanDir);
+    const registerPath = _getRegisterPath(scanDir);
     if (fs.existsSync(registerPath)) {
       const register = fs.readJSONSync(registerPath);
       register.forEach((item: SkillRegisterItem) => {
@@ -294,7 +295,8 @@ function _getAllSkills(): SkillRegisterItem[] {
   const scanPaths = getScanDirPaths();
   let allSkills: SkillRegisterItem[] = [];
   scanPaths.forEach((scanPath) => {
-    const skills = _getSkillList(scanPath);
+    const scanDir = path.join(scanPath, 'skills')
+    const skills = _getSkillList(scanDir);
     skills.map((item) => {
       item.skillDir = scanPath;
       return item;
