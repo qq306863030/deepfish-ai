@@ -29,8 +29,8 @@ homepage: ''
    - 一次最多问8个问题，避免一次性问太多
    - 持续交互直到需求足够清晰，能够拆解为具体的子任务
 3. 将收敛后的完整需求作为用户的原始任务描述；
-4. 在当前目录创建 tmp_task_goal.md，记录收敛后的完整需求描述；
-5. 创建 tmp_tasklist.json，包含拆解后的子任务列表。
+4. 在当前工作目录创建文件 tmp_task_goal.md，记录收敛后的完整需求描述；
+5. 在当前工作目录创建文件 tmp_tasklist.json，包含拆解后的子任务列表。
 
 tmp_tasklist.json 格式要求：
 - 必须是合法的 JSON 数组
@@ -60,7 +60,7 @@ tmp_tasklist.json 格式要求：
 **调度管理器子Agent提示词：**
 
 ```
-你负责按顺序调度执行 tmp_tasklist.json 中的子任务，完成 tmp_task_goal.md 描述的整体目标。
+你负责按顺序调度执行当前工作目录文件 tmp_tasklist.json 中的子任务，完成当前工作目录文件 tmp_task_goal.md 描述的整体目标。
 
 执行规则：
 1. 先读取 tmp_task_goal.md 了解整体目标；

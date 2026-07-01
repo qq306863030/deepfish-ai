@@ -15,7 +15,7 @@ export async function handlePlan(args: string[]) {
 
 export async function handlePlanContinue() {
     const skillPrompt = `
-目前任务执行了一部分，需要继续执行。你负责按顺序调度执行 tmp_tasklist.json 中的子任务，完成 tmp_task_goal.md 描述的整体目标。
+目前任务执行了一部分，需要继续执行。你负责按顺序调度执行当前工作目录文件 tmp_tasklist.json 中的子任务，完成当前工作目录文件 tmp_task_goal.md 描述的整体目标。
 
 执行规则：
 1. 先读取 tmp_task_goal.md 了解整体目标；
