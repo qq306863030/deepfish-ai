@@ -3,7 +3,7 @@ import inquirer from 'inquirer';
 import { logError, logInfo, logSuccess, logWarning, logErrorMsg } from '../../utils/print';
 import fs from 'fs-extra';
 import path from 'path';
-import { getHomePath, getScanDirPaths, getWorkspacePath } from '../cli-utils/getGlobalPath';
+import { getHomePath, getScanSkillDirPaths, getWorkspacePath } from '../cli-utils/getGlobalPath';
 import { openDirectory } from '@/utils/normal';
 import { getConfig } from '../cli-utils/init-config';
 import { initAgent, testServer } from '../cli-utils/init-agent';
@@ -282,7 +282,7 @@ function _updateRegister(skillsDir: string) {
 
 // 获取已注册的Skill列表
 export function getRegisteredSkills(): string[] {
-  const scanPaths = getScanDirPaths();
+  const scanPaths = getScanSkillDirPaths();
   const skills: string[] = [];
   scanPaths.forEach((scanPath) => {
     const scanDir = path.join(scanPath, 'skills')
@@ -312,7 +312,7 @@ function _getSkillList(skillsDir: string): SkillRegisterItem[] {
 }
 
 function _getAllSkills(): SkillRegisterItem[] {
-  const scanPaths = getScanDirPaths();
+  const scanPaths = getScanSkillDirPaths();
   let allSkills: SkillRegisterItem[] = [];
   scanPaths.forEach((scanPath) => {
     const scanDir = path.join(scanPath, 'skills')
@@ -329,8 +329,15 @@ function _getAllSkills(): SkillRegisterItem[] {
 function _getRegisterPath(skillsDir: string) {
   const normalizedDir = path.normalize(skillsDir);
   const baseName = path.basename(normalizedDir).toLowerCase();
+  let resultPath = '';
   if (baseName === '@deepfish-ai' || baseName === 'skills') {
-    return path.join(normalizedDir, 'register.json');
+    resultPath = path.join(normalizedDir, 'register.json');
+  } else {
+    resultPath = path.join(normalizedDir, 'skills', 'register.json');
   }
-  return path.join(normalizedDir, 'skills', 'register.json');
+  if (fs.existsSync(normalizedDir) && !fs.existsSync(resultPath)) {
+    fs.ensureDirSync(path.dirname(resultPath));
+    fs.writeJSONSync(resultPath, [], { spaces: 2 });
+  }
+  return resultPath;
 }

@@ -2,6 +2,7 @@ import { HOME_DIR, WORKSPACE_DIR } from './SystemConfig';
 import path from 'path';
 import fs from 'fs-extra';
 import getGlobalNodeModulesPath from './node-root';
+import os from 'os'
 
 // CJS 模式下 __dirname 直接可用
 const getDirname = () => __dirname;
@@ -89,6 +90,12 @@ export function getScanDirPaths(): string[] {
     paths.add(nodeRoot)
   }
   return Array.from(paths);
+}
+
+export function getScanSkillDirPaths() {
+  const workspacePath = getWorkspacePath();
+  const paths = getScanDirPaths();
+  return [...paths, path.join(os.homedir(), '.agents'), path.join(workspacePath, '.agents')]
 }
 
 export function getMCPFilePath() {
