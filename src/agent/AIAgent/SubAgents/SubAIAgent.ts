@@ -14,6 +14,7 @@ import { getSkills } from '../../skills';
 import os from 'os';
 import { randomUUID } from 'crypto';
 import { cloneDeep } from 'lodash';
+import { FileSystemSaver } from '../utils/langgraph-checkpoint-filesystem';
 
 // 通用子agent
 export default class SubAIAgent extends EventEmitterSuper {
@@ -68,6 +69,9 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.tools = await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
     this.skills = [...getSkills(), ...(this.opt.externalSkills || [])]; // todo
     const model = getModel(this.opt.modelOpt);
+    const checkpointer = new FileSystemSaver({
+      rootFolder: this.sessionDirPath,
+    });
     const contextSchema = z.object({
       agent_name: z.string(),
       encoding: z.string(),
@@ -96,6 +100,7 @@ export default class SubAIAgent extends EventEmitterSuper {
           });
     const agent = createAgent({
       model: model,
+      checkpointer,
       tools: this.tools,
       contextSchema,
       middleware: [
@@ -110,6 +115,7 @@ export default class SubAIAgent extends EventEmitterSuper {
       ],
       systemPrompt,
     });
+    await checkpointer.init(this.id, agent);
     this.agent = agent;
     this.initEvents();
   }
