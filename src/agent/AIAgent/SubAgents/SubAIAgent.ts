@@ -1,14 +1,5 @@
-import {
-  BaseMessage,
-  createAgent,
-  DynamicStructuredTool,
-  HumanMessage,
-  ReactAgent,
-  summarizationMiddleware,
-  todoListMiddleware,
-} from 'langchain';
+import { BaseMessage, createAgent, DynamicStructuredTool, HumanMessage, ReactAgent, summarizationMiddleware, todoListMiddleware } from 'langchain';
 import { createPatchToolCallsMiddleware } from 'deepagents';
-import { FileSystemSaver } from '../utils/langgraph-checkpoint-filesystem';
 import { getModel } from '../../models';
 import { z } from 'zod';
 import type { AgentMessage, AgentOpt } from '../../../@types/AgentOpt';
@@ -47,14 +38,14 @@ export default class SubAIAgent extends EventEmitterSuper {
   maxSubAgentCount: number = 2;
 
   excludeTools: string[] = [];
-  excludeSkills: string[] = []
+  excludeSkills: string[] = [];
   excludeMCP: string[] = [];
   systemPrompt: string = '';
 
   constructor(opt: AgentOpt) {
     super();
     this.opt = cloneDeep(opt);
-    this.id = opt.id || `agent-${randomUUID()}`;
+    this.id = `child-agent-${randomUUID()}`;
     this.basespace = opt.basespace;
     this.workspace = opt.workspace;
     this.memoryFilePath = opt.memoryFilePath; // todo
@@ -72,40 +63,39 @@ export default class SubAIAgent extends EventEmitterSuper {
 
   async init() {
     if (this.subLevel > 2) {
-      this.excludeTools.push('subAgent_exec')
+      this.excludeTools.push('subAgent_exec');
     }
     this.tools = await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
     this.skills = [...getSkills(), ...(this.opt.externalSkills || [])]; // todo
     const model = getModel(this.opt.modelOpt);
-    const checkpointer = new FileSystemSaver({
-      rootFolder: this.sessionDirPath,
-    });
     const contextSchema = z.object({
       agent_name: z.string(),
       encoding: z.string(),
       skills: z.array(z.string()).optional(),
       memoryFilePath: z.string().optional(),
       agentId: z.string().optional(),
-      curAgent: z.object().optional(),
+      curAgent: z.object({}).optional(),
     });
-    const systemPrompt = this.subLevel > 2 ? getSystemPrompt({
-        systemPrompt: this.systemPrompt,
-        workspace: this.workspace,
-        osType: os.platform(),
-        skills: this.skills,
-        memoryFilePath: this.memoryFilePath,
-        agentRulesPath: this.agentRulesPath,
-        excludeSkills: this.excludeSkills,
-      }) : subSystemPrompt({
-        systemPrompt: this.systemPrompt,
-        workspace: this.workspace,
-        osType: os.platform(),
-        skills: this.skills,
-        excludeSkills: this.excludeSkills,
-      });
+    const systemPrompt =
+      this.subLevel > 2
+        ? getSystemPrompt({
+            systemPrompt: this.systemPrompt,
+            workspace: this.workspace,
+            osType: os.platform(),
+            skills: this.skills,
+            memoryFilePath: this.memoryFilePath,
+            agentRulesPath: this.agentRulesPath,
+            excludeSkills: this.excludeSkills,
+          })
+        : subSystemPrompt({
+            systemPrompt: this.systemPrompt,
+            workspace: this.workspace,
+            osType: os.platform(),
+            skills: this.skills,
+            excludeSkills: this.excludeSkills,
+          });
     const agent = createAgent({
       model: model,
-      checkpointer,
       tools: this.tools,
       contextSchema,
       middleware: [
@@ -120,7 +110,6 @@ export default class SubAIAgent extends EventEmitterSuper {
       ],
       systemPrompt,
     });
-    await checkpointer.init(this.id, agent);
     this.agent = agent;
     this.initEvents();
   }
@@ -128,37 +117,40 @@ export default class SubAIAgent extends EventEmitterSuper {
   async execute(input: string) {
     const humanMessage = new HumanMessage(input);
     this.messages.push(humanMessage);
-    const stream = await this.agent.stream(
-      { messages: this.messages },
-      {
-        streamMode: ['messages'],
-        recursionLimit: 2000,
-        subgraphs: true,
-        configurable: { thread_id: this.id },
-        context: {
-          agent_name: 'deepfish',
-          encoding: this.opt.encoding,
-          skills: this.skills,
-          memoryFilePath: this.memoryFilePath,
-          agentId: this.id,
-          curAgent: this,
-        },
-      },
-    );
-
-    return new Promise<void>(async (resolve) => {
+    return new Promise<void>(async (resolve, reject) => {
       this.once(AgentEvent.TASK_AFTER, (msg) => {
         resolve(msg);
       });
-      for await (const [_namespace, mode, data] of stream) {
-        // 跳过子图的流事件（下级子 Agent 自己会处理输出），避免重复输出
-        if (Array.isArray(_namespace) && _namespace.length > 0) {
-          continue;
+      let stream: any;
+      try {
+        stream = await this.agent.stream(
+          { messages: this.messages },
+          {
+            streamMode: ['messages'],
+            recursionLimit: 2000,
+            subgraphs: true,
+            configurable: { thread_id: this.id },
+            context: {
+              agent_name: 'deepfish',
+              encoding: this.opt.encoding,
+              skills: this.skills,
+              memoryFilePath: this.memoryFilePath,
+              agentId: this.id,
+              curAgent: this,
+            },
+          },
+        );
+        for await (const [_namespace, mode, data] of stream) {
+          if (mode === 'messages') {
+            const message = data?.[0] as unknown as AgentMessage | undefined;
+            const reasoning_content = message?.additional_kwargs?.reasoning_content;
+            const toolcall_content = message?.tool_call_chunks?.[0]?.args;
+            this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, reasoning_content || toolcall_content || '');
+          }
         }
-        if (mode === 'messages') {
-          const message = (data[0] as unknown as AgentMessage).additional_kwargs.reasoning_content;
-          this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, message);
-        }
+      } catch (error) {
+        logError(error instanceof Error ? error.message : String(error));
+        reject(error);
       }
     });
   }
@@ -200,7 +192,7 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, funcName, _funcArgs) => {
       log(`[Tool Call] ${funcName}`, '#c2a654');
     });
-    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent='') => {
+    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent = '') => {
       logInfo(`[Tool Return] ${_funcName} returned: ${_toolContent.length > 50 ? _toolContent.slice(0, 50) + '...' : _toolContent}`);
     });
     this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {

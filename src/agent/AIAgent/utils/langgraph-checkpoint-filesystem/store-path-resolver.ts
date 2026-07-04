@@ -37,6 +37,16 @@ export class StorePathResolver {
     this.splitter = splitter ?? '$$';
   }
 
+  /** Encode a raw path component to be safe for use as a filename on any platform. */
+  public static encodePathComponent(str: string): string {
+    return encodeFilename(str);
+  }
+
+  /** Decode a filename-safe path component back to its original value. */
+  public static decodePathComponent(str: string): string {
+    return decodeFilename(str);
+  }
+
   /**
    * Join args with the splitter, encoding Windows-invalid filename characters
    * so the result can be used as a filename on any platform.
@@ -53,15 +63,15 @@ export class StorePathResolver {
   }
 
   public getThreadPath(_threadId: string) {
-    return join(this.rootFolder, _threadId);
+    return join(this.rootFolder, encodeFilename(_threadId));
   }
 
   public getCheckpointNsPath(_threadId: string, _checkpointNs: string) {
-    return join(this.rootFolder, _threadId, _checkpointNs || this.defaultCheckpointNs);
+    return join(this.rootFolder, encodeFilename(_threadId), encodeFilename(_checkpointNs || this.defaultCheckpointNs));
   }
 
   public getCheckpointFolderPath(threadId: string, checkpointNs: string, checkpointId: string) {
-    return join(this.getCheckpointNsPath(threadId, checkpointNs), checkpointId);
+    return join(this.getCheckpointNsPath(threadId, checkpointNs), encodeFilename(checkpointId));
   }
 
   public getWritesPath(threadId: string, checkpointNs: string, checkpointId: string) {

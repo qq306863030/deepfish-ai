@@ -74,7 +74,8 @@ export class FileSystemSaver extends BaseCheckpointSaver {
         if (
           configCheckpointNamespace !== undefined &&
           // ! Notice here, the default value of param `checkpoint_ns` is actually `""`, but we use `__DEFAULT_NS__` folder name to represent it
-          checkpointNsPath !== (configCheckpointNamespace || this.pathResolver.defaultCheckpointNs)
+          // Encode the config namespace for comparison, since disk names are already encoded
+          checkpointNsPath !== StorePathResolver.encodePathComponent(configCheckpointNamespace || this.pathResolver.defaultCheckpointNs)
         ) {
           continue;
         }

@@ -1,12 +1,4 @@
-import {
-  BaseMessage,
-  createAgent,
-  DynamicStructuredTool,
-  HumanMessage,
-  ReactAgent,
-  summarizationMiddleware,
-  todoListMiddleware,
-} from 'langchain';
+import { BaseMessage, createAgent, DynamicStructuredTool, HumanMessage, ReactAgent, summarizationMiddleware, todoListMiddleware } from 'langchain';
 import { createPatchToolCallsMiddleware } from 'deepagents';
 import { FileSystemSaver } from './utils/langgraph-checkpoint-filesystem';
 import { getModel } from '../models';
@@ -51,7 +43,7 @@ export default class AIAgent extends EventEmitterSuper {
   isPrintThinking: boolean = true;
 
   excludeTools: string[] = [];
-  excludeSkills: string[] = []
+  excludeSkills: string[] = [];
   excludeMCP: string[] = [];
   systemPrompt: string = '';
 
@@ -87,7 +79,7 @@ export default class AIAgent extends EventEmitterSuper {
       skills: z.array(z.string()).optional(),
       memoryFilePath: z.string().optional(),
       agentId: z.string().optional(),
-      curAgent: z.object().optional(),
+      curAgent: z.object({}).optional(),
     });
     const agent = createAgent({
       model: model,
@@ -141,10 +133,6 @@ export default class AIAgent extends EventEmitterSuper {
       },
     );
     for await (const [_namespace, mode, data] of stream) {
-      // 跳过子图的流事件（子 Agent 自己会处理输出），避免重复输出
-      if (Array.isArray(_namespace) && _namespace.length > 0) {
-        continue;
-      }
       if (mode === 'messages') {
         const message = data?.[0] as unknown as AgentMessage | undefined;
         // const content = message?.content;
@@ -198,7 +186,7 @@ export default class AIAgent extends EventEmitterSuper {
     this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, funcName, _funcArgs) => {
       log(`[Tool Call] ${funcName}`, '#c2a654');
     });
-    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent='') => {
+    this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent = '') => {
       logInfo(`[Tool Return] ${_funcName} returned: ${_toolContent}`);
     });
     this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {
@@ -209,14 +197,14 @@ export default class AIAgent extends EventEmitterSuper {
 
   async createSubAgent(systemPrompt?: string): Promise<SubAIAgent> {
     const subAgent = new SubAIAgent(this.opt);
-    systemPrompt && (subAgent.systemPrompt = systemPrompt)
+    systemPrompt && (subAgent.systemPrompt = systemPrompt);
     await subAgent.init();
     return subAgent;
   }
 
-  async subExecute(systemPrompt:string, prompt:string) {
-    const subAgent = await this.createSubAgent(systemPrompt)
-    return subAgent.execute(prompt)
+  async subExecute(systemPrompt: string, prompt: string) {
+    const subAgent = await this.createSubAgent(systemPrompt);
+    return subAgent.execute(prompt);
   }
 
   destory() {

@@ -1,7 +1,6 @@
 import type { ReactAgent } from "langchain";
 
 export async function getLastCheckPointId(agentId: string, agent: ReactAgent<any>) {
-    console.log('getLastCheckPointId agentId:', agentId);
   const threadConfig = { configurable: { thread_id: agentId } };
   const history = [];
   // 关键：agent.graph 才是原生编译后的 LangGraph 实例
