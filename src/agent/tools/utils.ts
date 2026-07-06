@@ -94,7 +94,7 @@ function jsonSchemaToZod(node: any): z.ZodTypeAny {
 }
 
 // 将一个普通函数转换为 LangChain 的工具函数
-function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult | string, description: Description): DynamicStructuredTool {
+function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult | string, description: Description, index: number): DynamicStructuredTool {
   const { name, description: desc, parameters } = description.function;
   const { properties } = parameters;
 
@@ -126,7 +126,7 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
   };
 
   return tool(wrappedFunc, {
-    name: `${name}_${randomUUID().slice(0, 3)}`,
+    name: `${name}_${index}`,
     description: desc,
     schema,
   });
@@ -263,7 +263,7 @@ function _loadToolsFromFile(filePath: string, tools: DynamicStructuredTool[], ex
       return;
     }
 
-    descriptions.forEach((desc: Description) => {
+    descriptions.forEach((desc: Description, index:number) => {
       if (!desc.type) {
         desc = {
           type: 'function',
@@ -281,7 +281,7 @@ function _loadToolsFromFile(filePath: string, tools: DynamicStructuredTool[], ex
         return;
       }
 
-      const langChainTool = toLangChainTool(func, desc);
+      const langChainTool = toLangChainTool(func, desc, index);
       tools.push(langChainTool);
     });
   } catch (error) {
