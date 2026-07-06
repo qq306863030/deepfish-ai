@@ -69,9 +69,7 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.tools = await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
     this.skills = [...getSkills(), ...(this.opt.externalSkills || [])]; // todo
     const model = getModel(this.opt.modelOpt);
-    const checkpointer = new FileSystemSaver({
-      rootFolder: this.sessionDirPath,
-    });
+    const checkpointer = new MemorySaver();
     const contextSchema = z.object({
       agent_name: z.string(),
       encoding: z.string(),
@@ -115,7 +113,6 @@ export default class SubAIAgent extends EventEmitterSuper {
       ],
       systemPrompt,
     });
-    await checkpointer.init(this.id, agent);
     this.agent = agent;
     this.initEvents();
   }
@@ -207,11 +204,16 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.on(AgentEvent.USE_TOOL_AFTER, (_toolId, _funcName, _funcArgs) => {});
   }
 
-  async createSubAgent(): Promise<SubAIAgent> {
+  async createSubAgent(systemPrompt?: string): Promise<SubAIAgent> {
     const subAgent = new SubAIAgent(this.opt);
-    subAgent.subLevel = this.subLevel + 1;
+    systemPrompt && (subAgent.systemPrompt = systemPrompt);
     await subAgent.init();
     return subAgent;
+  }
+
+  async subExecute(systemPrompt: string, prompt: string) {
+    const subAgent = await this.createSubAgent(systemPrompt);
+    return subAgent.execute(prompt);
   }
 
   destory() {
