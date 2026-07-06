@@ -64,7 +64,7 @@ function loading(label = 'Thinking...') {
 
 function log(msg: string, color?: string) {
   if (!color) {
-    logInfo(msg);
+    console.log(chalk.hex('#6dd2ea')(msg));
   } else {
     console.log(chalk.hex(color)(msg));
   }
