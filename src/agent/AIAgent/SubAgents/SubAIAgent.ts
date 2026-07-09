@@ -13,8 +13,9 @@ import { getTools } from '../../tools';
 import { getSkills } from '../../skills';
 import os from 'os';
 import { randomUUID } from 'crypto';
-import { cloneDeep } from 'lodash';
+import { clone, cloneDeep } from 'lodash';
 import { MemorySaver } from '@langchain/langgraph';
+import type AIAgent from '../index';
 
 // 通用子agent
 export default class SubAIAgent extends EventEmitterSuper {
@@ -43,7 +44,9 @@ export default class SubAIAgent extends EventEmitterSuper {
   excludeMCP: string[] = [];
   systemPrompt: string = '';
 
-  constructor(opt: AgentOpt) {
+  parentAgent: AIAgent | SubAIAgent = {} as AIAgent | SubAIAgent;
+
+  constructor(opt: AgentOpt, parentAgent: AIAgent | SubAIAgent) {
     super();
     this.opt = cloneDeep(opt);
     this.id = `child-agent-${randomUUID()}`;
@@ -60,14 +63,17 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.systemPrompt = opt.systemPrompt || '';
     this.subLevel = opt.subLevel || 1;
     this.maxSubAgentCount = opt.maxSubAgentCount || 2;
+    this.parentAgent = parentAgent;
   }
 
   async init() {
+    this.tools = clone(this.parentAgent.tools) || await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
+    this.skills = clone(this.parentAgent.skills) || [...getSkills(), ...(this.opt.externalSkills || [])];
     if (this.subLevel > 2) {
       this.excludeTools.push('subAgent_exec');
     }
-    this.tools = await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
-    this.skills = [...getSkills(), ...(this.opt.externalSkills || [])]; // todo
+    this.tools = this.tools.filter((tool) => !this.excludeTools.some((excludeTool) => tool.name.startsWith(excludeTool)));
+
     const model = getModel(this.opt.modelOpt);
     const checkpointer = new MemorySaver();
     const contextSchema = z.object({
@@ -205,7 +211,7 @@ export default class SubAIAgent extends EventEmitterSuper {
   }
 
   async createSubAgent(systemPrompt?: string): Promise<SubAIAgent> {
-    const subAgent = new SubAIAgent(this.opt);
+    const subAgent = new SubAIAgent(this.opt, this);
     systemPrompt && (subAgent.systemPrompt = systemPrompt);
     await subAgent.init();
     return subAgent;

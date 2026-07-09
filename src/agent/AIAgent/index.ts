@@ -196,7 +196,7 @@ export default class AIAgent extends EventEmitterSuper {
   }
 
   async createSubAgent(systemPrompt?: string): Promise<SubAIAgent> {
-    const subAgent = new SubAIAgent(this.opt);
+    const subAgent = new SubAIAgent(this.opt, this);
     systemPrompt && (subAgent.systemPrompt = systemPrompt);
     await subAgent.init();
     return subAgent;
