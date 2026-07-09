@@ -88,7 +88,7 @@
 ### 通过npm安装
 
 ```bash
-npm install -g deepfish-ai
+npm install -g deepfish-ai --verbose
 ```
 
 ### 从源码安装

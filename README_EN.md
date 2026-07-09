@@ -93,7 +93,7 @@ Suitable for developers, operations personnel, and everyday terminal users. Whet
 ### Install via npm
 
 ```bash
-npm install -g deepfish-ai
+npm install -g deepfish-ai --verbose
 ```
 
 ### Install from source
