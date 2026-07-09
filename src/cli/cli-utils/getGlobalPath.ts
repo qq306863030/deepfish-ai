@@ -85,9 +85,12 @@ export function getScanDirPaths(): string[] {
   paths.add(path.join(workspacePath, '.deepfish-ai'));
   paths.add(path.join(homePath));
   // 获取nodejs的根目录
-  const nodeRoot = path.join(getGlobalNodeModulesPath(), '@deepfish-ai')
-  if (fs.existsSync(nodeRoot)) {
-    paths.add(nodeRoot)
+  const nodeRootBase = getGlobalNodeModulesPath();
+  if (nodeRootBase) {
+    const nodeRoot = path.join(nodeRootBase, '@deepfish-ai')
+    if (fs.existsSync(nodeRoot)) {
+      paths.add(nodeRoot)
+    }
   }
   return Array.from(paths);
 }

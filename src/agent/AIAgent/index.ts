@@ -8,6 +8,7 @@ import { EventEmitterSuper } from 'eventemitter-super';
 import { AgentEvent } from '../../@types/AgentEvent';
 import { streamOutput, logError, log, logInfo, logSuccess } from '@/utils/print';
 import { createAgentEventMiddleware } from './middleware/eventEmitMiddleware';
+import { globalEventBus } from '../eventBus';
 import Thinking from './utils/Thinking';
 import { getSystemPrompt } from './system-prompt';
 import { getTools } from '../tools';
@@ -46,6 +47,12 @@ export default class AIAgent extends EventEmitterSuper {
   excludeSkills: string[] = [];
   excludeMCP: string[] = [];
   systemPrompt: string = '';
+  rootAgent: AIAgent | null = null;
+
+  /** 获取根 Agent 的 id，用于 EventBus 区分客户端 */
+  get rootAgentId(): string {
+    return this.rootAgent?.id || this.id;
+  }
 
   constructor(opt: AgentOpt) {
     super();
@@ -115,32 +122,57 @@ export default class AIAgent extends EventEmitterSuper {
   async execute(input: string) {
     const humanMessage = new HumanMessage(input);
     this.messages.push(humanMessage);
-    const stream = await this.agent.stream(
-      { messages: this.messages },
-      {
-        streamMode: ['messages'],
-        recursionLimit: 2000,
-        subgraphs: true,
-        configurable: { thread_id: this.threadId },
-        context: {
-          agent_name: 'deepfish',
-          encoding: this.opt.encoding,
-          skills: this.skills,
-          memoryFilePath: this.memoryFilePath,
-          agentId: this.id,
-          curAgent: this,
+
+    /** 执行超时保护：5 分钟无响应则终止 */
+    const EXECUTE_TIMEOUT_MS = 5 * 60 * 1000;
+    let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+
+    const executeTask = async () => {
+      const stream = await this.agent.stream(
+        { messages: this.messages },
+        {
+          streamMode: ['messages'],
+          recursionLimit: 2000,
+          subgraphs: true,
+          configurable: { thread_id: this.threadId },
+          context: {
+            agent_name: 'deepfish',
+            encoding: this.opt.encoding,
+            skills: this.skills,
+            memoryFilePath: this.memoryFilePath,
+            agentId: this.id,
+            curAgent: this,
+          },
         },
-      },
-    );
-    for await (const [_namespace, mode, data] of stream) {
-      if (mode === 'messages') {
-        const message = data?.[0] as unknown as AgentMessage | undefined;
-        // const content = message?.content;
-        const reasoning_content = message?.additional_kwargs?.reasoning_content;
-        const toolcall_content = message?.tool_call_chunks?.[0]?.args;
-        this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, reasoning_content || toolcall_content || '');
+      );
+      for await (const [_namespace, mode, data] of stream) {
+        // 每收到一个事件就重置超时
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+        timeoutHandle = setTimeout(() => {}, EXECUTE_TIMEOUT_MS);
+
+        if (mode === 'messages') {
+          const message = data?.[0] as unknown as AgentMessage | undefined;
+          const content = message?.content;
+          const reasoning_content = message?.additional_kwargs?.reasoning_content;
+          const toolcall_content = message?.tool_call_chunks?.[0]?.args;
+          this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, content || reasoning_content || toolcall_content || '');
+        }
       }
+    };
+
+    try {
+      await Promise.race([
+        executeTask(),
+        new Promise<never>((_, reject) => {
+          timeoutHandle = setTimeout(() => {
+            reject(new Error(`Agent execute timeout (${EXECUTE_TIMEOUT_MS / 1000}s)`));
+          }, EXECUTE_TIMEOUT_MS);
+        }),
+      ]);
+    } finally {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
     }
+
     const newTask = this.taskQueue.getTask();
     if (newTask) {
       log(`[Task Queue] New task found, executing: ${newTask.taskStr}`, '#7fded1');
@@ -150,53 +182,72 @@ export default class AIAgent extends EventEmitterSuper {
 
   initEvents() {
     const thinking = new Thinking();
+    const bus = globalEventBus;
+    const rid = () => this.rootAgentId;
+
     this.on(AgentEvent.TASK_BEFORE, () => {});
     this.on(AgentEvent.TASK_AFTER, (_msg) => {
       logSuccess(_msg);
+      bus.emit(AgentEvent.TASK_AFTER, rid(), _msg, '#9bed7f');
     });
     this.on(AgentEvent.MODEL_BEFORE, () => {});
     this.on(AgentEvent.MODEL_AFTER, () => {
       if (this.isPrintThinking) {
         thinking.stop();
+        bus.emit(AgentEvent.THINKING_STOP, rid());
       }
       streamOutput('\n');
+      bus.emit(AgentEvent.MODEL_AFTER, rid());
     });
     this.on(AgentEvent.MODEL_ERROR, (error) => {
       if (this.isPrintThinking) {
         thinking.stop();
+        bus.emit(AgentEvent.THINKING_STOP, rid());
       }
-      logError(error?.message + '\n' + error?.stack);
+      const msg = error?.message + '\n' + error?.stack;
+      logError(msg);
+      bus.emit(AgentEvent.MODEL_ERROR, rid(), msg, '#ed7f7f');
     });
     this.on(AgentEvent.STREAM_CONTENT_OUTPUT, (content) => {
       if (this.isPrintThinking) {
         if (content && typeof content === 'string') {
           streamOutput(content, '#f2c97d');
+          bus.emit(AgentEvent.STREAM_CONTENT_OUTPUT, rid(), content, '#f2c97d');
         }
       } else {
         if (content && typeof content === 'string') {
           thinking.start();
+          bus.emit(AgentEvent.THINKING_START, rid());
         } else {
           thinking.stop();
+          bus.emit(AgentEvent.THINKING_STOP, rid());
         }
       }
     });
     this.on(AgentEvent.COMPRESS_MESSAGES_BEFORE, (_currentLength) => {});
     this.on(AgentEvent.COMPRESS_MESSAGES_AFTER, (_currentLength) => {});
     this.on(AgentEvent.NEW_MESSAGE, (_msg) => {});
-    this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, funcName, _funcArgs) => {
-      log(`[Tool Call] ${funcName}`, '#c2a654');
+    this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, _funcName, _funcArgs) => {
+      const msg = `[Tool Call] ${_funcName}`;
+      log(msg, '#c2a654');
+      bus.emit(AgentEvent.USE_TOOL_BEFORE, rid(), msg, '#c2a654');
     });
     this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent = '') => {
-      logInfo(`[Tool Return] ${_funcName} returned: ${_toolContent.length > 200 ? _toolContent.slice(0, 200) + '...' : _toolContent}`);
+      const msg = `[Tool Return] ${_funcName} returned: ${_toolContent.length > 200 ? _toolContent.slice(0, 200) + '...' : _toolContent}`;
+      logInfo(msg);
+      bus.emit(AgentEvent.USE_TOOL_RETURN, rid(), msg);
     });
     this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {
-      logError(`Error in tool ${_funcName}: ${_error instanceof Error ? _error.message : String(_error)}`);
+      const msg = `Error in tool ${_funcName}: ${_error instanceof Error ? _error.message : String(_error)}`;
+      logError(msg);
+      bus.emit(AgentEvent.USE_TOOL_ERROR, rid(), msg);
     });
     this.on(AgentEvent.USE_TOOL_AFTER, (_toolId, _funcName, _funcArgs) => {});
   }
 
   async createSubAgent(systemPrompt?: string): Promise<SubAIAgent> {
     const subAgent = new SubAIAgent(this.opt, this);
+    subAgent.rootAgent = this
     systemPrompt && (subAgent.systemPrompt = systemPrompt);
     await subAgent.init();
     return subAgent;

@@ -5,10 +5,19 @@ import type { Server as HttpServer } from 'http';
 import type { AgentRoomClient } from './agent-client';
 import type { AgentRoomWebClient } from './web-client';
 import type { Session } from '../../../@types/ConfigFile';
+import type AIAgent from '../../../agent/AIAgent';
 
 // ─── 基础类型 ────────────────────────────────────────
 
 export type ClientType = 'agent' | 'web';
+
+// ─── Agent 实例池 ────────────────────────────────────
+
+export interface AgentInstance {
+  agent: AIAgent;
+  cwd: string;
+  lastActive: number;
+}
 
 // ─── 服务端消息 ──────────────────────────────────────
 
@@ -37,6 +46,12 @@ export type ServerMessage =
   | { type: 'peer-offline'; clientType: ClientType; id: string }
   | { type: 'sessions-push'; payload: Session[] }
   | { type: 'delete-session-result'; payload: { id: string; ok: boolean } }
+  // ─── Agent 执行相关 ─────────────────────────────
+  | { type: 'stream'; payload: string }
+  | { type: 'log'; payload: { level: string; message: string } }
+  | { type: 'execute-done' }
+  | { type: 'execute-error'; payload: string }
+  | { type: 'ask-question'; payload: { questionId: string; question: string; type: string; choices: string[] } }
   | ({ from: string; fromType: ClientType } & RoomMessage);
 
 // ─── 服务端内部 ──────────────────────────────────────

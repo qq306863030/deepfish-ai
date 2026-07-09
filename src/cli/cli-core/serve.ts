@@ -8,14 +8,16 @@ const PM2_APP_NAME = 'deepfish-ai-server';
 
 function getPm2Config() {
   const port = getServePort();
-  const serverScript = path.join(getCodePath(), 'dist/serve/pm2-server');
+  const serverScript = path.join(getCodePath(), 'dist', 'serve', 'pm2-server');
   return {
     name: PM2_APP_NAME,
     script: serverScript,
     cwd: getCodePath(),
+    node_args: '--no-warnings',
     env: {
       NODE_ENV: 'production',
       PORT: String(port),
+      NODE_OPTIONS: '--no-warnings',
     },
     autorestart: true,
     watch: false,
@@ -26,7 +28,6 @@ function getPm2Config() {
   };
 }
 
-// 包装 pm2 操作为 Promise
 function pm2Connect(): Promise<void> {
   return new Promise((resolve, reject) => {
     pm2.connect((err) => {
@@ -80,91 +81,61 @@ export async function handleServeStart() {
   try {
     logInfo('Checking service status...');
     await pm2Connect();
-    
-    // 检查是否已经running
+
     const processList = await pm2Describe(PM2_APP_NAME);
     const isRunning = processList.length > 0 && processList[0].pm2_env?.status === 'online';
-    
+
     if (isRunning) {
       logWarning(`Service already running - http://localhost:${getServePort()}`);
       pm2Disconnect();
       return;
     }
-    
-    // 如果已存在但未running，先删除
+
     if (processList.length > 0) {
       logInfo('Cleaning up old process...');
       await pm2Delete(PM2_APP_NAME);
     }
-    
+
     logInfo('Starting service...');
-    const config = getPm2Config();
-    await pm2Start(config);
+    await pm2Start(getPm2Config());
     pm2Disconnect();
+    logSuccess(`Service started: http://localhost:${getServePort()}`);
   } catch (err) {
-    logError(`Failed to start: ${err instanceof Error ? err.message : String(err)}`);
-    pm2Disconnect();
-    process.exit(1);
+    logError(`Failed to start service: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
 export async function handleServeStop() {
   try {
-    logInfo('Stopping service...');
     await pm2Connect();
-    
-    const processList = await pm2Describe(PM2_APP_NAME);
-    if (processList.length === 0) {
-      logWarning('No running service found');
-      pm2Disconnect();
-      return;
-    }
-    
     await pm2Delete(PM2_APP_NAME);
+    pm2Disconnect();
     logSuccess('Service stopped');
-    
-    pm2Disconnect();
   } catch (err) {
-    logError(`Failed to stop: ${err instanceof Error ? err.message : String(err)}`);
-    pm2Disconnect();
-    process.exit(1);
+    logError(`Failed to stop service: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
 export async function handleServeRestart() {
   try {
-    logInfo('Restarting service...');
     await pm2Connect();
-    
-    const processList = await pm2Describe(PM2_APP_NAME);
-    if (processList.length === 0) {
-      logWarning('No running service found，starting...');
-      const config = getPm2Config();
-      await pm2Start(config);
-    } else {
-      await pm2Restart(PM2_APP_NAME);
-    }
-    
-    logSuccess(`Service restarted - http://localhost:${getServePort()}`);
-    
+    await pm2Restart(PM2_APP_NAME);
     pm2Disconnect();
+    logSuccess('Service restarted');
   } catch (err) {
-    logError(`Failed to restart: ${err instanceof Error ? err.message : String(err)}`);
-    pm2Disconnect();
-    process.exit(1);
+    logError(`Failed to restart service: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
-// 供 testServer 使用的工具函数
-export async function isServerRunning(): Promise<boolean> {
+export async function handleServeOpen() {
+  const port = getServePort();
+  const url = `http://localhost:${port}`;
+  const start = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
   try {
-    await pm2Connect();
-    const processList = await pm2Describe(PM2_APP_NAME);
-    const isRunning = processList.length > 0 && processList[0].pm2_env?.status === 'online';
-    pm2Disconnect();
-    return isRunning;
+    const { execSync } = await import('child_process');
+    execSync(`${start} ${url}`, { stdio: 'ignore' });
+    logSuccess(`Opened ${url}`);
   } catch {
-    pm2Disconnect();
-    return false;
+    logWarning(`Could not auto-open browser, please visit: ${url}`);
   }
 }

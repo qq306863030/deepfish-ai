@@ -4,17 +4,18 @@ import { randomUUID } from 'crypto';
 import { getSessionPath, getSessionsPath, getUserFilePath, getWorkspacePath, getSessionDirPath } from './getGlobalPath';
 import AIAgent from '../../agent/AIAgent/index';
 import type { ConfigFile, Session } from '@/@types/ConfigFile';
-import { getTrueCwd, openDirectory } from '@/utils/normal';
+import { getTrueCwd, openDirectory, sleep } from '@/utils/normal';
 import { logSuccess, logWarning, logInfo, logError } from '@/utils/print';
 import { AgentRoomClient } from '@/serve/service/agent-room/agent-client';
 import { getServePort } from './getGlobalData';
 import { handleServeStart } from '../cli-core/serve';
 
-export async function initAgent(config: ConfigFile, skills?: string[]): Promise<AIAgent> {
+export async function initAgent(config: ConfigFile, skills?: string[], cwd?: string, agentId?: string): Promise<AIAgent> {
   const session = initSession();
   const currentAI = _getCurrentAIConfig(config);
   const userPath = getUserFilePath();
-  const id = session.id;
+  // 优先使用外部传入的 agentId（serve 模式下用于匹配 CLI 注册的 WebSocket ID）
+  const id = agentId || session.id;
   const agent = new AIAgent({
     id,
     modelOpt: {
@@ -25,16 +26,16 @@ export async function initAgent(config: ConfigFile, skills?: string[]): Promise<
       maxContextLength: currentAI.maxContextLength,
     },
     basespace: getSessionPath(id),
-    workspace: getTrueCwd(),
+    workspace: cwd || getTrueCwd(),
     memoryFilePath: userPath.memory,
     userStorePath: userPath.userStore,
     sessionDirPath: getSessionDirPath(id),
     agentRulesPath: userPath.agentRules,
-    maxBlockFileSize: config.maxBlockFileSize, // Max chunk file size in KB; files exceeding this size need to be processed in chunks
-    encoding: config.encoding, // CLI encoding format, can be set to utf-8, gbk, etc., or left empty for auto-detection
-    maxSubAgentCount: config.maxSubAgentCount, // Maximum parallel sub-agent execution count, -1 means unlimited
+    maxBlockFileSize: config.maxBlockFileSize,
+    encoding: config.encoding,
+    maxSubAgentCount: config.maxSubAgentCount,
     externalSkills: skills,
-    isPrintThinking: config.isPrintThinking, // Whether to print intermediate information during AI thinking, default is true
+    isPrintThinking: config.isPrintThinking,
   });
   await agent.init();
   return agent;
@@ -97,50 +98,50 @@ export function connectAgentRoom(agent: AIAgent): Promise<ConnectAgentRoomResult
  * Logic:
  * 1. Try to request http://localhost:{port}/ping
  * 2. Receive "pong" → Service already running, return directly
- * 3. Check if PM2 has a service running, try to start via PM2
- * 4. Connection refused (ECONNREFUSED) → Port is free, start service via PM2
- * 5. Connection succeeded but non-"pong" response → Port occupied by other process, error and exit
+ * 3. Connection refused (ECONNREFUSED) → Port is free, start service
+ * 4. Connection succeeded but non-"pong" response → Port occupied by other process, error and exit
  */
 export async function testServer(): Promise<boolean> {
   const port = getServePort();
   const url = `http://localhost:${port}/ping`;
 
+  // 先检查服务是否已在运行
   try {
     const res = await fetch(url, { method: 'GET' });
     const text = await res.text();
     if (text === 'pong') {
       return true;
     }
-    // Port is occupied but the response is not from our service
     logError(`Port ${port} is occupied but /ping did not return expected result (received: ${text}), please check for port conflict`);
     return false;
   } catch {
-    // Fetch error → Check PM2 and start service
-    logInfo(`Port ${port} is free, starting service via PM2...`);
-    try {
-      await handleServeStart();
-      // Wait and verify after starting
-      let retries = 10;
-      while (retries > 0) {
-        try {
-          const res = await fetch(url, { method: 'GET' });
-          const text = await res.text();
-          if (text === 'pong') {
-            logSuccess(`Service started: http://localhost:${port}`);
-            return true;
-          }
-        } catch {
-          // Wait for service to start
-          await new Promise((resolve) => setTimeout(resolve, 500));
+    // 服务未运行，尝试启动
+  }
+
+  logInfo(`Port ${port} is free, starting service...`);
+  try {
+    await handleServeStart();
+    // 等待服务就绪
+    let retries = 10;
+    while (retries > 0) {
+      await sleep(500);
+      try {
+        const res = await fetch(url, { method: 'GET' });
+        const text = await res.text();
+        if (text === 'pong') {
+          logSuccess(`Service started: http://localhost:${port}`);
+          return true;
         }
-        retries--;
+      } catch {
+        // 继续等待
       }
-      logError('Service start timeout');
-      return false;
-    } catch (startErr) {
-      logError(`Failed to start service: ${startErr instanceof Error ? startErr.message : String(startErr)}`);
-      return false;
+      retries--;
     }
+    logError('Service start timeout');
+    return false;
+  } catch (startErr) {
+    logError(`Failed to start service: ${startErr instanceof Error ? startErr.message : String(startErr)}`);
+    return false;
   }
 }
 

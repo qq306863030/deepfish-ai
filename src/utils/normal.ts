@@ -47,3 +47,7 @@ export function openDirectory(dirPath: string) {
 export function getTrueCwd() {
   return process.cwd();
 }
+
+export function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

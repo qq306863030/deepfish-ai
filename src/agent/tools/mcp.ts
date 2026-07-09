@@ -36,6 +36,7 @@ function wrapMcpTool(mcpTool: DynamicStructuredTool): DynamicStructuredTool {
   return wrapped as unknown as DynamicStructuredTool;
 }
 
+const mcpToolsCache = new Map<string, DynamicStructuredTool[]>();
 async function loadMcpToolsFromConfigPath(mcpFilePath: string, excludeMCP: string[]): Promise<DynamicStructuredTool[]> {
   const jsonContent = fs.readJSONSync(mcpFilePath);
   let mcpServers = jsonContent.mcpServers;
@@ -68,9 +69,22 @@ async function loadMcpToolsFromConfigPath(mcpFilePath: string, excludeMCP: strin
     if (Object.keys(mcpServers).length === 0) {
       return [];
     }
+    
+
     logInfo(`Loading MCP tools from config path: ${mcpFilePath}`);
-    const client = new MultiServerMCPClient(jsonContent.mcpServers);
-    const tools = await client.getTools();
+    const tools = []
+    for (const key of Object.keys(mcpServers)) {
+      if (mcpToolsCache.has(key)) {
+        const serverTools = mcpToolsCache.get(key) || [];
+        tools.push(...serverTools);
+        continue;
+      }
+      const client = new MultiServerMCPClient({
+        key: mcpServers[key]
+      });
+      const serverTools = await client.getTools();
+      tools.push(...serverTools);
+    }
     logInfo(`Loaded ${tools.length} tools from MCP config.`);
     return tools.map(wrapMcpTool);
   } catch (error) {

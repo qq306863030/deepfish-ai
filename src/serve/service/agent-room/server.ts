@@ -1,17 +1,85 @@
 ﻿import { WebSocketServer, WebSocket } from 'ws';
 import { logInfo, logSuccess, logWarning, logError } from '../../../utils/print';
 import { getSessionList, getServePort } from '@/cli/cli-utils/getGlobalData';
-import { removeSessionById } from '@/cli/cli-utils/init-agent';
-import type { ClientType, RegisterMessage, RoomMessage, ServerMessage, ClientRecord, StartOptions } from './types';
+import { getConfig } from '@/cli/cli-utils/init-config';
+import { initAgent, removeSessionById } from '@/cli/cli-utils/init-agent';
+import { AgentEvent } from '../../../@types/AgentEvent';
+import { globalEventBus } from '../../../agent/eventBus';
+import { sendStreamOutput, sendStreamEnd, sendLogInfo, sendLogSuccess, sendLogError } from './sendLog';
+import type { ClientType, RegisterMessage, RoomMessage, ServerMessage, ClientRecord, StartOptions, AgentInstance } from './types';
 
 // ─── 内部状态 ────────────────────────────────────────
 
 const agents = new Map<string, ClientRecord>();
 const webs = new Map<string, ClientRecord>();
 
+/** Agent 实例池，以 agent id 为 key */
+const agentInstanceMap = new Map<string, AgentInstance>();
+
+/** 等待中的交互问答 */
+const pendingQuestions = new Map<string, { resolve: (val: string) => void }>();
+
+/** Agent 空闲超时（毫秒） */
+const AGENT_IDLE_TIMEOUT = 5 * 60 * 1000;
+
+/** 空闲定时器 */
+const idleTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
 let wss: WebSocketServer | null = null;
 
 const PORT = getServePort();
+
+// ─── EventBus 监听 ───────────────────────────────────
+
+/** 初始化全局 EventBus 监听，将 Agent 事件转发给对应的 CLI 客户端 */
+function setupEventBusListeners() {
+  globalEventBus.on(AgentEvent.STREAM_CONTENT_OUTPUT, (agentId: string, content: string, color?: string) => {
+    const web = webs.get(agentId);
+    if (web) sendStreamOutput(web.socket, content, color);
+  });
+
+  globalEventBus.on(AgentEvent.THINKING_START, (agentId: string) => {
+    const web = webs.get(agentId);
+    if (web) send(web.socket, { type: 'thinking', payload: 'start' });
+  });
+
+  globalEventBus.on(AgentEvent.THINKING_STOP, (agentId: string) => {
+    const web = webs.get(agentId);
+    if (web) send(web.socket, { type: 'thinking', payload: 'stop' });
+  });
+
+  globalEventBus.on(AgentEvent.TASK_AFTER, (agentId: string, msg: string, color?: string) => {
+    const web = webs.get(agentId);
+    if (web) sendLogSuccess(web.socket, msg, color);
+  });
+
+  globalEventBus.on(AgentEvent.MODEL_AFTER, (agentId: string) => {
+    const web = webs.get(agentId);
+    if (web) sendStreamEnd(web.socket);
+  });
+
+  globalEventBus.on(AgentEvent.MODEL_ERROR, (agentId: string, msg: string, color?: string) => {
+    const web = webs.get(agentId);
+    if (web) sendLogError(web.socket, msg, color);
+  });
+
+  globalEventBus.on(AgentEvent.USE_TOOL_BEFORE, (agentId: string, msg: string, color?: string) => {
+    const web = webs.get(agentId);
+    if (web) sendLogInfo(web.socket, msg, color);
+  });
+
+  globalEventBus.on(AgentEvent.USE_TOOL_RETURN, (agentId: string, msg: string) => {
+    const web = webs.get(agentId);
+    if (web) sendLogInfo(web.socket, msg);
+  });
+
+  globalEventBus.on(AgentEvent.USE_TOOL_ERROR, (agentId: string, msg: string) => {
+    const web = webs.get(agentId);
+    if (web) sendLogError(web.socket, msg);
+  });
+
+  logInfo('[agent-room] EventBus listeners initialized');
+}
 
 // ─── 工具函数 ────────────────────────────────────────
 
@@ -51,6 +119,124 @@ function removeClient(client: ClientRecord) {
     if (client.clientType === 'agent') {
       pushSessionsToWeb();
     }
+  }
+}
+
+// ─── Agent 实例池管理 ────────────────────────────────
+
+/**
+ * 获取或创建 Agent 实例。以 agent id 为 key，首次请求时懒创建。
+ */
+async function getOrCreateAgent(agentId: string, cwd: string, skills?: string[]) {
+  // 取消空闲销毁定时器
+  const timer = idleTimers.get(agentId);
+  if (timer) {
+    clearTimeout(timer);
+    idleTimers.delete(agentId);
+  }
+
+  const existing = agentInstanceMap.get(agentId);
+  if (existing) {
+    existing.lastActive = Date.now();
+    return existing.agent;
+  }
+
+  const config = getConfig();
+  if (!config) throw new Error('Config not found');
+
+  logInfo(`[agent-room] Creating agent instance: ${agentId}, cwd: ${cwd}`);
+  const agent = await initAgent(config, skills, cwd, agentId);
+  const instance: AgentInstance = { agent, cwd, lastActive: Date.now() };
+  agentInstanceMap.set(agentId, instance);
+  logSuccess(`[agent-room] Agent instance created: ${agentId}`);
+  return agent;
+}
+
+/**
+ * 销毁 Agent 实例，释放 MCP 连接、内存等资源。
+ */
+function destroyAgent(agentId: string) {
+  const instance = agentInstanceMap.get(agentId);
+  if (!instance) return;
+
+  try {
+    instance.agent.destory?.();
+  } catch {
+    // ignore cleanup errors
+  }
+  agentInstanceMap.delete(agentId);
+  logInfo(`[agent-room] Agent instance destroyed: ${agentId}`);
+}
+
+/**
+ * 重置空闲定时器，超时后自动销毁 Agent 实例。
+ */
+function resetIdleTimer(agentId: string) {
+  const timer = idleTimers.get(agentId);
+  if (timer) clearTimeout(timer);
+
+  idleTimers.set(
+    agentId,
+    setTimeout(() => {
+      destroyAgent(agentId);
+      idleTimers.delete(agentId);
+    }, AGENT_IDLE_TIMEOUT),
+  );
+}
+
+// ─── 执行 / 交互路由 ─────────────────────────────────
+
+/**
+ * 处理 web 端发来的 execute 请求：查找或创建 Agent，执行任务，流式转发输出。
+ */
+async function handleExecute(from: ClientRecord, msg: RoomMessage) {
+  const { input, cwd, skills } = (msg.payload || {}) as { input: string; cwd?: string; skills?: string[] };
+  if (!input) {
+    send(from.socket, { type: 'error', code: 'MISSING_INPUT', message: 'execute 必须提供 input' });
+    return;
+  }
+
+  let agent: any;
+  try {
+    logInfo(`[agent-room] Getting/creating agent for ${from.id}...`);
+    agent = await getOrCreateAgent(from.id, cwd || process.cwd(), skills);
+    logInfo(`[agent-room] Agent ready, executing input (${input.length} chars)...`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logError(`[agent-room] Failed to create agent: ${message}`);
+    send(from.socket, { type: 'execute-error', payload: `Agent 创建失败: ${message}` });
+    return;
+  }
+
+  try {
+    logInfo(`[agent-room] Calling agent.execute()...`);
+    // 服务端超时保护：6 分钟（比 agent 的 5 分钟多 1 分钟作为缓冲）
+    const SERVER_TIMEOUT_MS = 6 * 60 * 1000;
+    await Promise.race([
+      agent.execute(input).then(() => logInfo(`[agent-room] agent.execute() completed`)),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Server execute timeout')), SERVER_TIMEOUT_MS);
+      }),
+    ]);
+    send(from.socket, { type: 'execute-done' });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logError(`[agent-room] Execute error for ${from.id}: ${message}`);
+    send(from.socket, { type: 'execute-error', payload: message });
+  } finally {
+    resetIdleTimer(from.id);
+  }
+}
+
+/**
+ * 处理 web 端发来的 question-answer：resolve 挂起的 Promise。
+ */
+function resolvePendingQuestion(msg: RoomMessage) {
+  const { questionId, answer } = (msg.payload || {}) as { questionId: string; answer: string };
+  const pending = pendingQuestions.get(questionId);
+  if (pending) {
+    pending.resolve(answer);
+    pendingQuestions.delete(questionId);
   }
 }
 
@@ -130,6 +316,18 @@ function routeMessage(from: ClientRecord, msg: RoomMessage) {
     return;
   }
 
+  // web 端发起的 execute 指令：交给 resident agent 执行
+  if (from.clientType === 'web' && msg.type === 'execute') {
+    handleExecute(from, msg);
+    return;
+  }
+
+  // web 端回复交互问题
+  if (from.clientType === 'web' && msg.type === 'question-answer') {
+    resolvePendingQuestion(msg);
+    return;
+  }
+
   // 默认路由策略：agent ↔ web 互发；同类型之间不直接转发。
   const targetPool = from.clientType === 'agent' ? webs : agents;
 
@@ -195,6 +393,28 @@ function handleConnection(socket: WebSocket) {
     }
   }, 10_000);
 
+  // WebSocket 保活：每 25s 发送 ping，防止空闲连接被操作系统/代理断开
+  const pingInterval = setInterval(() => {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.ping();
+    }
+  }, 25_000);
+
+  let alive = true;
+  socket.on('pong', () => { alive = true; });
+
+  // 检测 pong 响应，30s 无响应则断开
+  const aliveCheck = setInterval(() => {
+    if (!alive) {
+      socket.terminate();
+      return;
+    }
+    alive = false;
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.ping();
+    }
+  }, 30_000);
+
   socket.on('message', (data) => {
     let parsed: RegisterMessage | RoomMessage;
     try {
@@ -219,6 +439,8 @@ function handleConnection(socket: WebSocket) {
 
   socket.on('close', () => {
     clearTimeout(registerTimer);
+    clearInterval(pingInterval);
+    clearInterval(aliveCheck);
     if (registered) removeClient(registered);
   });
 
@@ -238,7 +460,6 @@ export function startAgentRoomServer(opts: StartOptions = {}) {
   }
 
   const path = opts.path ?? '/agent-room';
-
   if (opts.httpServer) {
     wss = new WebSocketServer({ server: opts.httpServer, path });
     logSuccess(`[agent-room] started, path=${path}`);
@@ -247,8 +468,8 @@ export function startAgentRoomServer(opts: StartOptions = {}) {
     wss = new WebSocketServer({ port, path });
     logSuccess(`[agent-room] started: ws://localhost:${port}${path}`);
   }
-
   wss.on('connection', handleConnection);
+  setupEventBusListeners();
   return wss;
 }
 
@@ -272,5 +493,35 @@ export function getAgentRoomStats() {
   return {
     agents: Array.from(agents.keys()),
     webs: Array.from(webs.keys()),
+    agentInstances: Array.from(agentInstanceMap.keys()),
   };
+}
+
+/**
+ * 通过 agent-room 向指定 web 客户端发送交互问题，等待用户回答。
+ * 供 question tool 在远程模式下调用。
+ */
+export async function askUserViaWebSocket(
+  webClientId: string,
+  question: string,
+  type: string,
+  choices: string[],
+): Promise<string> {
+  const webClient = webs.get(webClientId);
+  if (!webClient) throw new Error('Web client disconnected');
+
+  const questionId = `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  send(webClient.socket, {
+    type: 'ask-question',
+    payload: { questionId, question, type, choices },
+  });
+
+  return new Promise((resolve) => {
+    pendingQuestions.set(questionId, { resolve });
+  });
+}
+
+/** 获取当前所有在线 web 客户端 id 列表 */
+export function getOnlineWebClientIds(): string[] {
+  return Array.from(webs.keys());
 }
