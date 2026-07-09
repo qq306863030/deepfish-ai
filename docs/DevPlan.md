@@ -133,10 +133,3 @@ mcp
       -main-msg-queue.json // 主agent的消息队列
 ```
 
-# 计划完成
-
-1. 流式输出的bug
-2. 工具后缀的问题
-3. mcp工具缓存
-4. 消除<think></think>
-5. skill不能disable
