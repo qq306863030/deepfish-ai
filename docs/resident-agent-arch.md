@@ -22,11 +22,11 @@ CLI 不再自己创建 Agent，只通过 WebSocket 向常驻的 PM2 Serve 发送
 ┌─────────────────┐   WebSocket (agent-room)    ┌──────────────────────────────┐
 │  CLI 进程         │◄─────────────────────────►│  PM2 Serve 常驻进程           │
 │  (快速启动/退出)   │                            │                              │
-│  不再创建 Agent   │  → {type:"execute",        │  AgentPool (Map<cwd, Agent>)  │
+│  不再创建 Agent   │  → {type:"execute",        │  AgentPool (Map<id, Agent>)    │
 │  只做输入/输出转发 │     payload:{input, cwd}}  │                              │
-│                   │                            │  cwd=projectA → Agent 实例 A  │
+│                   │                            │  id=cli-pid1234 → Agent A    │
 │  process.stdout   │  ← {type:"stream",         │  cwd=projectB → Agent 实例 B  │
-│  实时流式输出      │      payload:content}       │  cwd 不存在 → 懒创建新实例    │
+│  实时流式输出      │      payload:content}       │  id 不存在 → 懒创建新实例    │
 │                   │                            │  空闲超时 → 销毁释放资源       │
 │  inquirer 交互    │  ← {type:"ask-question",   │                              │
 │  展示问题/发送答案 │      payload:{...}}         │  ask_question 通过 WS 回传   │
@@ -35,18 +35,27 @@ CLI 不再自己创建 Agent，只通过 WebSocket 向常驻的 PM2 Serve 发送
 
 ## 关键设计
 
-### Agent 池（AgentPool）
+### Agent 池（AgentInstanceMap）
 
-Serve 端维护一个 `Map<string, { agent: AIAgent, lastActive: number }>`，以工作目录为 key。
+Serve 端已有 `agents`（WebSocket 连接映射），新增 `agentInstanceMap`（Agent 实例映射），均以 agent id 为 key。
+
+```
+agents:          Map<id, ClientRecord>     — WS 连接
+agentInstanceMap: Map<id, AgentInstance>    — Agent 实例
+```
+
+`AgentInstance` 结构：`{ agent: AIAgent, cwd: string, lastActive: number }`
+
+两个 Map 通过 id 关联：CLI 连接时由 CLI 端（或 Serve 端）生成唯一 id，该 id 同时用于 WS 注册和 Agent 实例查找。
 
 **生命周期**：
-- **懒创建**：CLI 首次发送某个 cwd 的请求时，Serve 调用 `initAgent()` 创建 Agent 并放入池中
-- **复用**：同一 cwd 的后续请求直接从池中取，跳过初始化
-- **销毁**：任务执行完毕后启动空闲定时器，超时未使用则销毁 Agent（释放 MCP 连接、内存等）
+- **懒创建**：CLI 首次发送 `execute` 请求时，Serve 以该 id 查找 agentInstanceMap，不存在则调用 `initAgent()` 创建 Agent 并放入池中
+- **复用**：同一 id 的后续请求直接从池中取，跳过初始化
+- **销毁**：任务执行完毕后启动空闲定时器，超时未使用则销毁 Agent（释放 MCP 连接、内存等），同时从 agentInstanceMap 中移除
 
 ### 消息协议
 
-CLI 发送的 `execute` 消息需要携带 `cwd`（当前工作目录），Serve 根据 cwd 查找或创建对应的 Agent。
+CLI 连接时携带 id（与 agent-room 注册的 id 一致），发送 `execute` 消息时携带 `cwd`（当前工作目录），Serve 根据 id 查找 agentInstanceMap，不存在则用 cwd + config 创建对应 Agent。
 
 ### 流式输出
 
