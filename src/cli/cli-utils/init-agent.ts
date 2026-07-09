@@ -183,7 +183,7 @@ export function openSessionDir() {
     return;
   }
   const sessionDir = getSessionPath(agentId);
-  console.log(`Session directory path: ${sessionDir}`);
+  logSuccess(`Session directory path: ${sessionDir}`);
   openDirectory(sessionDir);
 }
 

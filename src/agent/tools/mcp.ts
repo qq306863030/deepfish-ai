@@ -1,5 +1,5 @@
 import { getScanDirPaths } from '@/cli/cli-utils/getGlobalPath';
-import { logInfo, logWarning } from '@/utils/print';
+import { logError, logInfo, logWarning } from '@/utils/print';
 import { MultiServerMCPClient } from '@langchain/mcp-adapters';
 import fs from 'fs-extra';
 import { tool, type DynamicStructuredTool } from 'langchain';
@@ -74,7 +74,7 @@ async function loadMcpToolsFromConfigPath(mcpFilePath: string, excludeMCP: strin
     logInfo(`Loaded ${tools.length} tools from MCP config.`);
     return tools.map(wrapMcpTool);
   } catch (error) {
-    console.log('Error loading MCP tools:', error);
+    logError('Error loading MCP tools:' + error);
     return [];
   }
 }

@@ -205,7 +205,6 @@ export default class AIAgent extends EventEmitterSuper {
   async subExecute(systemPrompt: string, prompt: string) {
     const subAgent = await this.createSubAgent(systemPrompt);
     const result = await subAgent.execute(prompt);
-    console.log('Sub-agent execution result:', systemPrompt, prompt, result);
     return result;
   }
 

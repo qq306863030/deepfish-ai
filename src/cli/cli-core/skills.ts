@@ -136,9 +136,12 @@ export function handleSkillsEnable(index: string) {
   skill.isEnabled = true;
   const skillDir = skill.skillDir;
   const registerPath = _getRegisterPath(skillDir!);
+  // 获取当前扫描路径的所有skills
+  const scanDir = path.join(skillDir!, 'skills');
+  const currentScanSkills = _getSkillList(scanDir);
   fs.writeJSONSync(
     registerPath,
-    skills.filter((item) => item.skillDir === skillDir),
+    currentScanSkills.map(item => item.skillPath === skill.skillPath ? skill : item),
     { spaces: 2 },
   );
   logSuccess(`Skillenabled: ${skill.name}`);
@@ -155,9 +158,12 @@ export function handleSkillsDisable(index: string) {
   skill.isEnabled = false;
   const skillDir = skill.skillDir;
   const registerPath = _getRegisterPath(skillDir!);
+  // 获取当前扫描路径的所有skills
+  const scanDir = path.join(skillDir!, 'skills');
+  const currentScanSkills = _getSkillList(scanDir);
   fs.writeJSONSync(
     registerPath,
-    skills.filter((item) => item.skillDir === skillDir),
+    currentScanSkills.map(item => item.skillPath === skill.skillPath ? skill : item),
     { spaces: 2 },
   );
   logSuccess(`Skilldisabled: ${skill.name}`);
@@ -263,15 +269,11 @@ function _updateRegister(skillsDir: string) {
     const skillName = path.basename(skillPath);
     const existItem = register.find((item) => item.skillPath === skillPath);
     if (!existItem) {
-      let skillFilePath = skillPath
-      if (fs.statSync(skillPath).isDirectory()) {
-        skillFilePath = path.join(skillFilePath, 'SKILL.md')
-      }
       newRegister.push({
         id: randomUUID(),
         name: skillName,
         isEnabled: true,
-        skillPath: skillFilePath,
+        skillPath: skillPath,
       });
     }
   });
