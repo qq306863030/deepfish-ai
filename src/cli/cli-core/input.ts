@@ -147,7 +147,6 @@ export async function handleInput(args: string[], skills?: string[]) {
         const msg = JSON.parse(data.toString());
 
         if (msg.type === 'stream') {
-          thinking.start();
           if (msg.color) {
             process.stdout.write(chalk.hex(msg.color)(msg.payload));
           } else {

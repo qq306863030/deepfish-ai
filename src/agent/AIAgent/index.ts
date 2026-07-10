@@ -181,46 +181,36 @@ export default class AIAgent extends EventEmitterSuper {
   }
 
   initEvents() {
-    const thinking = new Thinking();
     const bus = globalEventBus;
-    const rid = () => this.rootAgentId;
 
     this.on(AgentEvent.TASK_BEFORE, () => {});
     this.on(AgentEvent.TASK_AFTER, (_msg) => {
-      logSuccess(_msg);
-      bus.emit(AgentEvent.TASK_AFTER, rid(), _msg, '#9bed7f');
+      bus.emit(AgentEvent.TASK_AFTER, this.rootAgentId, _msg, '#9bed7f');
     });
     this.on(AgentEvent.MODEL_BEFORE, () => {});
     this.on(AgentEvent.MODEL_AFTER, () => {
       if (this.isPrintThinking) {
-        thinking.stop();
-        bus.emit(AgentEvent.THINKING_STOP, rid());
+        bus.emit(AgentEvent.THINKING_STOP, this.rootAgentId);
       }
-      streamOutput('\n');
-      bus.emit(AgentEvent.MODEL_AFTER, rid());
+      bus.emit(AgentEvent.MODEL_AFTER, this.rootAgentId);
     });
     this.on(AgentEvent.MODEL_ERROR, (error) => {
       if (this.isPrintThinking) {
-        thinking.stop();
-        bus.emit(AgentEvent.THINKING_STOP, rid());
+        bus.emit(AgentEvent.THINKING_STOP, this.rootAgentId);
       }
       const msg = error?.message + '\n' + error?.stack;
-      logError(msg);
-      bus.emit(AgentEvent.MODEL_ERROR, rid(), msg, '#ed7f7f');
+      bus.emit(AgentEvent.MODEL_ERROR, this.rootAgentId, msg, '#ed7f7f');
     });
     this.on(AgentEvent.STREAM_CONTENT_OUTPUT, (content) => {
       if (this.isPrintThinking) {
         if (content && typeof content === 'string') {
-          streamOutput(content, '#f2c97d');
-          bus.emit(AgentEvent.STREAM_CONTENT_OUTPUT, rid(), content, '#f2c97d');
+          bus.emit(AgentEvent.STREAM_CONTENT_OUTPUT, this.rootAgentId, content, '#f2c97d');
         }
       } else {
         if (content && typeof content === 'string') {
-          thinking.start();
-          bus.emit(AgentEvent.THINKING_START, rid());
+          bus.emit(AgentEvent.THINKING_START, this.rootAgentId);
         } else {
-          thinking.stop();
-          bus.emit(AgentEvent.THINKING_STOP, rid());
+          bus.emit(AgentEvent.THINKING_STOP, this.rootAgentId);
         }
       }
     });
@@ -229,18 +219,15 @@ export default class AIAgent extends EventEmitterSuper {
     this.on(AgentEvent.NEW_MESSAGE, (_msg) => {});
     this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, _funcName, _funcArgs) => {
       const msg = `[Tool Call] ${_funcName}`;
-      log(msg, '#c2a654');
-      bus.emit(AgentEvent.USE_TOOL_BEFORE, rid(), msg, '#c2a654');
+      bus.emit(AgentEvent.USE_TOOL_BEFORE, this.rootAgentId, msg, '#c2a654');
     });
     this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent = '') => {
       const msg = `[Tool Return] ${_funcName} returned: ${_toolContent.length > 200 ? _toolContent.slice(0, 200) + '...' : _toolContent}`;
-      logInfo(msg);
-      bus.emit(AgentEvent.USE_TOOL_RETURN, rid(), msg);
+      bus.emit(AgentEvent.USE_TOOL_RETURN, this.rootAgentId, msg);
     });
     this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {
       const msg = `Error in tool ${_funcName}: ${_error instanceof Error ? _error.message : String(_error)}`;
-      logError(msg);
-      bus.emit(AgentEvent.USE_TOOL_ERROR, rid(), msg);
+      bus.emit(AgentEvent.USE_TOOL_ERROR, this.rootAgentId, msg);
     });
     this.on(AgentEvent.USE_TOOL_AFTER, (_toolId, _funcName, _funcArgs) => {});
   }
