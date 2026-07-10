@@ -10,7 +10,7 @@ function copySrcMarkdownFiles(): Plugin {
     async closeBundle() {
       const srcDir = path.resolve(process.cwd(), 'src');
       const distDir = path.resolve(process.cwd(), 'dist');
-      const skillsDir = path.join(srcDir, 'agent/skills');
+      const skillsDir = path.join(srcDir, 'server/agent/skills');
       const targetSkillsDir = path.join(distDir, 'skills');
 
       // 复制 agent/skills 到 dist/skills
@@ -28,10 +28,10 @@ function copySrcMarkdownFiles(): Plugin {
 }
 
 export default defineConfig({
-  root: 'src/serve/ui',
+  root: 'src/server/ui',
   plugins: [solid(), copySrcMarkdownFiles()],
   build: {
-    outDir: '../../../dist/serve/client',
+    outDir: '../../../dist/server/web-ui',
     emptyOutDir: true,
   },
 });

@@ -1,3 +1,3 @@
-import main from './cli/index';
+import main from './client/index';
 
 main();

@@ -27,9 +27,9 @@
     "dist/"
   ],
   "scripts": {
-    "build": "tsup && node -e \"const fs=require('fs-extra'),p=require('path');const src=p.join(process.cwd(),'src/agent/skills'),dst=p.join(process.cwd(),'dist/skills');fs.ensureDirSync(dst);fs.readdirSync(src).filter(f=>f.endsWith('.md')).forEach(f=>fs.copySync(p.join(src,f),p.join(dst,f)))\" && npm run build:ui",
+    "build": "tsup && node -e \"const fs=require('fs-extra'),p=require('path');const src=p.join(process.cwd(),'src/server/agent/skills'),dst=p.join(process.cwd(),'dist/skills');fs.ensureDirSync(dst);fs.readdirSync(src).filter(f=>f.endsWith('.md')).forEach(f=>fs.copySync(p.join(src,f),p.join(dst,f)))\" && npm run build:ui",
     "build:ui": "vite build && vite build --config vite.server.config.ts",
-    "dev": "tsx src/cli/index.ts",
+    "dev": "tsx src/client/index.ts",
     "format": "prettier --write \"src/**/*.{ts,js,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json,css,md}\"",
     "typecheck": "tsc --noEmit",

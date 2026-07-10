@@ -24,5 +24,5 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["src/agent/AIAgent/utils/langgraph-checkpoint-filesystem"]
+  "exclude": ["src/server/agent/AIAgent/utils/langgraph-checkpoint-filesystem"]
 }
