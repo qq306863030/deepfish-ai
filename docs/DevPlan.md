@@ -89,11 +89,11 @@ ai mcp ls
 ai mcp enable <index|name>
 ai mcp disable <index|name>
 
-ai serve # 启动服务，并打开页面
-ai serve start # 启动服务
-ai serve open # 打开页面
-ai serve stop # 停止服务
-ai serve restart # 重启服务
+ai server                            # 前台直接运行服务（日志实时输出，Ctrl+C 停止）
+ai server open                       # 前台直接运行服务（同 ai server）
+ai server start                      # 启动服务（后台运行）
+ai server stop                       # 停止服务
+ai server restart                    # 重启服务
 
 ai cache ls # 显示[index] [id] [description前20个字,超过20字用...代替]
 ai cache edit <index|id>

@@ -86,7 +86,39 @@ module.exports = { functions, descriptions };
 2. 在当前工作目录下创建 `deepfish-tool-{功能名}/` 目录
 3. 编写 `index.js`，导出 `functions` 和 `descriptions`
 4. 对于需要Agent参与的复杂任务，可以直接使用 `this.createSubAgent(systemPrompt: string, prompt: string)` 创建子 Agent 执行任务，并将任务说明作为 `prompt` 传入
-5. 需要引入第三方模块时，需要将该tool创建成NodeJs项目，在tool中引入模块
+5. 需要与用户交互时，使用 `this.remotePrompt(questions)` 进行交互式输入，参数格式与 inquirer.prompt 一致，支持 input/select/confirm/password 等类型，支持 when/validate/filter 条件判断。在远程模式下自动通过 WebSocket 发送到客户端终端展示，无远程客户端时回退到本地 inquirer
+6. 需要引入第三方模块时，需要将该tool创建成NodeJs项目，在tool中引入模块
+
+### remotePrompt 调用示例
+
+```js
+// 1. 简单文本输入
+const answers = await this.remotePrompt([{ type: 'input', name: 'host', message: '请输入服务器地址：' }])
+
+// 2. 列表选择
+const { action } = await this.remotePrompt([{
+  type: 'list',
+  name: 'action',
+  message: '请选择操作：',
+  choices: ['创建连接', '删除连接', '查看连接']
+}])
+
+// 3. 多步骤交互（带 when 条件）
+const answers = await this.remotePrompt([
+  { type: 'input', name: 'host', message: '服务器地址：' },
+  { type: 'list', name: 'authType', message: '认证方式：', choices: ['password', 'privateKey'] },
+  { type: 'password', name: 'password', message: '密码：', when: (ans) => ans.authType === 'password' },
+  { type: 'input', name: 'privateKey', message: '私钥路径：', when: (ans) => ans.authType === 'privateKey' },
+  {
+    type: 'input', name: 'port', message: '端口号：', default: '22',
+    validate: (input) => /^\d+$/.test(input) ? true : '端口必须为数字',
+    filter: (input) => Number(input)
+  }
+])
+
+// 4. 确认操作
+const { confirm } = await this.remotePrompt([{ type: 'confirm', name: 'confirm', message: '确认执行此操作？' }])
+```
 
 ## 生成说明文档
 

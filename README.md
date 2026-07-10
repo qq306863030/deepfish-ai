@@ -204,10 +204,11 @@ ai "我刚问了一个什么问题"
 
 | 命令               | 说明     |
 | ------------------ | -------- |
-| `ai serve`         | 启动服务 |
-| `ai serve start`   | 启动服务 |
-| `ai serve stop`    | 停止服务 |
-| `ai serve restart` | 重启服务 |
+| `ai server`         | 启动服务（前台运行） |
+| `ai server open`    | 前台直接运行服务（日志实时输出，Ctrl+C 停止） |
+| `ai server start`   | 启动后台服务 |
+| `ai server stop`    | 停止服务 |
+| `ai server restart` | 重启服务 |
 
 ### 缓存管理（AI自我学习的缓存）
 

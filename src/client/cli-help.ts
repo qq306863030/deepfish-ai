@@ -55,11 +55,12 @@ Commands:
   ai mcp enable <name|index>        启用指定名称或序号的 MCP 服务器
   ai mcp disable <name|index>       禁用指定名称或序号的 MCP 服务器
   
-  # Serve commands
-  ai serve                          启动服务或进入服务管理入口
-  ai serve start                    启动后台服务
-  ai serve stop                     停止后台服务
-  ai serve restart                  重启后台服务
+  # Server commands
+  ai server                          启动服务（前台运行）
+  ai server open                     前台直接运行服务（日志实时输出，Ctrl+C 停止）
+  ai server start                    启动后台服务
+  ai server stop                     停止后台服务
+  ai server restart                  重启后台服务
   
   # Cache commands
   ai cache ls                       查看已缓存的学习内容列表

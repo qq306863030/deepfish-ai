@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/server/pm2-server.ts'],
+  entry: ['src/index.ts', 'src/server/server.ts'],
   format: ['cjs'],
   outDir: 'dist',
   clean: true,

@@ -1,39 +1,49 @@
-﻿import type { Command } from 'commander';
+import type { Command } from 'commander';
 import { handleServeStart, handleServeStop, handleServeRestart } from './cli-core/serve';
-import { logInfo, logError, logWarning, logSuccess } from '@/client/cli-utils/print';
-import { getServePort } from './cli-utils/getGlobalData';
-import { openDirectory } from '@/client/cli-utils/normal';
+import { logInfo, logError, logSuccess } from '@/client/cli-utils/print';
+import { getServePort } from '@/client/cli-utils/getGlobalData';
+import path from 'path';
+import { spawn } from 'child_process';
+import { getCodePath } from '@/client/cli-utils/getGlobalPath';
+
+/**
+ * ai server open：前台直接运行服务（不走子进程），日志实时打印到终端，Ctrl+C 停止。
+ */
+function handleServeOpen() {
+  const port = getServePort();
+  const script = path.join(getCodePath(), 'dist', 'server', 'server.js');
+
+  logInfo(`Starting service in foreground (port: ${port})...`);
+  logInfo('Press Ctrl+C to stop\n');
+
+  const child = spawn(process.execPath, [script], {
+    cwd: getCodePath(),
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_ENV: 'production',
+      PORT: String(port),
+    },
+  });
+
+  child.on('error', (err) => {
+    logError(`Failed to start service: ${err.message}`);
+  });
+
+  child.on('exit', (code) => {
+    if (code !== 0 && code !== null) {
+      logError(`Service exited with code ${code}`);
+    }
+  });
+}
 
 export function registerServeCommands(program: Command) {
-  const serve = program.command('serve');
-  serve.command('start').description('启动服务').action(handleServeStart);
-  serve.command('stop').description('停止服务').action(handleServeStop);
-  serve.command('restart').description('重启服务').action(handleServeRestart);
+  const server = program.command('server');
+  server.command('start').description('启动服务（后台运行）').action(handleServeStart);
+  server.command('stop').description('停止服务').action(handleServeStop);
+  server.command('restart').description('重启服务').action(handleServeRestart);
+  server.command('open').description('前台直接运行服务（日志实时输出，Ctrl+C 停止）').action(handleServeOpen);
 
-  // 新增：打开服务页面（检测服务状态）
-  serve
-    .command('open')
-    .description('打开服务页面（检测服务是否已启动）')
-    .action(async () => {
-      const port = getServePort();
-      const url = `http://localhost:${port}`;
-      logInfo(`Checking service: ${url}`);
-      try {
-        const res = await fetch(`${url}/ping`, { method: 'GET' });
-        const text = await res.text();
-        if (text === 'pong') {
-          logSuccess(`Service running, opening: ${url}`);
-          openDirectory(url);
-          return;
-        }
-        // 返回了非 pong，说明Port被其他服务占用
-        logError(`Port ${port} is occupied but did not respond with expected content (received: ${text})`);
-      } catch (err) {
-        // fetch 抛错 → 连接失败，服务未running
-        logWarning('Service not started, please run `ai serve start`');
-      }
-    });
-
-  // 输入 ai serve 时不带子命令也触发启动
-  serve.action(handleServeStart);
+  // 输入 ai server 时不带子命令也触发前台启动
+  server.action(handleServeOpen);
 }

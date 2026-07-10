@@ -50,36 +50,55 @@ function connectAsWebClient(agentId: string): Promise<WebSocket> {
 }
 
 /**
- * 处理远程 ask-question 消息：在本地终端展示问题，收集用户输入后回传。
+ * 远程交互问题队列：确保多个 ask-question 串行执行，不会同时弹出多个 prompt。
+ */
+let questionQueueTail: Promise<void> = Promise.resolve();
+
+function enqueueQuestion(fn: () => Promise<void>): void {
+  questionQueueTail = questionQueueTail.then(fn).catch(() => {});
+}
+
+/**
+ * 处理远程 ask-question 消息：加入队列，确保串行展示。
  */
 function handleRemoteQuestion(
   ws: WebSocket,
-  payload: { questionId: string; question: string; type: string; choices: string[] },
+  payload: { questionId: string; question: string; type: string; choices: string[]; error?: string },
 ) {
-  const { questionId, question, type, choices } = payload;
+  const { questionId, question, type, choices, error } = payload;
 
-  const showPrompt = async () => {
+  enqueueQuestion(() => showRemotePrompt(ws, questionId, question, type, choices, error));
+}
+
+async function showRemotePrompt(
+  ws: WebSocket,
+  questionId: string,
+  question: string,
+  type: string,
+  choices: string[],
+  error?: string,
+) {
+  try {
+    const msg = error ? `[\u274c ${error}] ${question}` : question;
     if (type === 'confirm') {
-      const { confirm } = await inquirer.prompt([{ type: 'confirm', name: 'confirm', message: question }]);
+      const { confirm } = await inquirer.prompt([{ type: 'confirm', name: 'confirm', message: msg }]);
       ws.send(JSON.stringify({ type: 'question-answer', payload: { questionId, answer: confirm ? 'yes' : 'no' } }));
       return;
     }
     if (type === 'select') {
-      const { value } = await inquirer.prompt([{ type: 'list', name: 'value', message: question, choices }]);
+      const { value } = await inquirer.prompt([{ type: 'list', name: 'value', message: msg, choices }]);
       ws.send(JSON.stringify({ type: 'question-answer', payload: { questionId, answer: value } }));
       return;
     }
     // input / password
     const { value } = await inquirer.prompt([
-      { type: type as any, name: 'value', message: question, mask: type === 'password' ? '*' : undefined },
+      { type: type as any, name: 'value', message: msg, mask: type === 'password' ? '*' : undefined },
     ]);
     ws.send(JSON.stringify({ type: 'question-answer', payload: { questionId, answer: value } }));
-  };
-
-  showPrompt().catch((err) => {
+  } catch (err: any) {
     logError(`Question handling error: ${err.message}`);
     ws.send(JSON.stringify({ type: 'question-answer', payload: { questionId, answer: '' } }));
-  });
+  }
 }
 
 /** 处理服务端转发的日志消息 */
@@ -280,7 +299,6 @@ function startReadlineLoop(ws: WebSocket, thinking?: Thinking): readline.Interfa
       const msg = JSON.parse(data.toString());
 
       if (msg.type === 'stream') {
-        thinking!.start();
         if (msg.color) {
           process.stdout.write(chalk.hex(msg.color)(msg.payload));
         } else {

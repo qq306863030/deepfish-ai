@@ -3,10 +3,10 @@ import { DynamicStructuredTool, tool } from 'langchain';
 import { z } from 'zod';
 import path from 'path';
 import fs from 'fs-extra';
-import { randomUUID } from 'crypto';
 import type { Description, ErrorResult, SuccsessResult } from '@/@types/Tools';
 import { logWarning } from '../../utils/print';
 import { truncateOutput } from './fileTools';
+import { remotePrompt } from './question';
 
 export type ToolResult = SuccsessResult | ErrorResult;
 
@@ -113,6 +113,7 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
         createSubAgent: async (systemPrompt: string, prompt: string) => {
           return runtime.context.curAgent.subExecute(systemPrompt, prompt)
         },
+        remotePrompt: remotePrompt,
         curAgent: runtime.context.curAgent,
       });
       const result = await boundFunc(...Object.values(args));

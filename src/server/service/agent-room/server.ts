@@ -96,6 +96,15 @@ async function getOrCreateAgent(agentId: string, cwd: string, skills?: string[])
 
   console.log(`[agent-room] Creating agent instance: ${agentId}, cwd: ${cwd}`);
   const agent = await initAgent(config, skills, cwd, agentId);
+
+  // 连接 agent-room，使 agent 可通过 WebSocket 向 web 客户端发送交互提问
+  const { connectAgentRoom } = await import('@/client/cli-utils/init-agent');
+  try {
+    await connectAgentRoom(agent);
+  } catch (err: unknown) {
+    console.error(`[agent-room] Failed to connect agent ${agentId} to room: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   const instance: AgentInstance = { agent, cwd, lastActive: Date.now() };
   agentInstanceMap.set(agentId, instance);
   console.log(`[agent-room] Agent instance created: ${agentId}`);
@@ -114,6 +123,15 @@ function destroyAgent(agentId: string) {
   } catch {
     // ignore cleanup errors
   }
+
+  // 断开 agent-room 连接
+  try {
+    instance.agent.roomClient?.disconnect();
+  } catch {
+    // ignore cleanup errors
+  }
+  instance.agent.roomClient = null;
+
   agentInstanceMap.delete(agentId);
   console.log(`[agent-room] Agent instance destroyed: ${agentId}`);
 }
@@ -255,7 +273,7 @@ function registerClient(socket: WebSocket, raw: RegisterMessage): ClientRecord |
   }
 
   send(socket, { type: 'registered', clientType, id });
-  console.log(`[agent-room] ${clientType}  online: ${id}`);
+  console.log(`[agent-room] ${clientType} online: ${id}`);
   broadcastPeer(clientType, 'peer-online', id);
 
   // agent 上线 → sessions 状态可能由 0 变 1；web 上线 → 首次同步
@@ -464,6 +482,7 @@ export async function askUserViaWebSocket(
   question: string,
   type: string,
   choices: string[],
+  error?: string,
 ): Promise<string> {
   const webClient = webs.get(webClientId);
   if (!webClient) throw new Error('Web client disconnected');
@@ -471,7 +490,7 @@ export async function askUserViaWebSocket(
   const questionId = `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   send(webClient.socket, {
     type: 'ask-question',
-    payload: { questionId, question, type, choices },
+    payload: { questionId, question, type, choices, error },
   });
 
   return new Promise((resolve) => {

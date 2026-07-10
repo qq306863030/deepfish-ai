@@ -1,105 +1,108 @@
 ﻿import path from 'path';
-import pm2 from 'pm2';
+import fs from 'fs-extra';
+import { spawn, execSync } from 'child_process';
 import { logInfo, logSuccess, logError, logWarning } from '@/client/cli-utils/print';
 import { getServePort } from '../cli-utils/getGlobalData';
 import { getCodePath } from '../cli-utils/getGlobalPath';
 
-const PM2_APP_NAME = 'deepfish-ai-server';
+const PID_FILE = path.join(getCodePath(), 'logs', 'serve.pid');
 
-function getPm2Config() {
-  const port = getServePort();
-  const serverScript = path.join(getCodePath(), 'dist', 'server', 'pm2-server');
-  return {
-    name: PM2_APP_NAME,
-    script: serverScript,
-    cwd: getCodePath(),
-    node_args: '--no-warnings',
-    env: {
-      NODE_ENV: 'production',
-      PORT: String(port),
-      NODE_OPTIONS: '--no-warnings',
-    },
-    autorestart: true,
-    watch: false,
-    max_memory_restart: '1G',
-    error_file: path.join(getCodePath(), 'logs', 'pm2-error.log'),
-    out_file: path.join(getCodePath(), 'logs', 'pm2-out.log'),
-    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-  };
+function readPid(): number | null {
+  try {
+    if (fs.existsSync(PID_FILE)) {
+      const pid = parseInt(fs.readFileSync(PID_FILE, 'utf-8').trim(), 10);
+      return Number.isFinite(pid) ? pid : null;
+    }
+  } catch { /* ignore */ }
+  return null;
 }
 
-function pm2Connect(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    pm2.connect((err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+function writePid(pid: number) {
+  fs.ensureDirSync(path.dirname(PID_FILE));
+  fs.writeFileSync(PID_FILE, String(pid));
 }
 
-function pm2Start(config: any): Promise<void> {
-  return new Promise((resolve, reject) => {
-    pm2.start(config, (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+function removePid() {
+  try { fs.removeSync(PID_FILE); } catch { /* ignore */ }
 }
 
-function pm2Delete(name: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    pm2.delete(name, (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+function isRunning(pid: number): boolean {
+  try { process.kill(pid, 0); return true; } catch { return false; }
 }
 
-function pm2Restart(name: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    pm2.restart(name, (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+/** 通过端口查找进程 PID（跨平台） */
+function findPidByPort(port: number): number | null {
+  try {
+    if (process.platform === 'win32') {
+      const stdout = execSync(`netstat -ano | findstr :${port}`, {
+        encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      for (const line of stdout.split('\n')) {
+        // 匹配 LISTENING 状态的 PID（行末数字）
+        const match = line.trim().match(/LISTENING\s+(\d+)/);
+        if (match) return parseInt(match[1], 10);
+      }
+    } else {
+      const stdout = execSync(`lsof -ti :${port} 2>/dev/null`, {
+        encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      const pid = parseInt(stdout.trim(), 10);
+      if (Number.isFinite(pid)) return pid;
+    }
+  } catch { /* 没有进程占用该端口或命令不存在 */ }
+  return null;
 }
 
-function pm2Describe(name: string): Promise<any[]> {
-  return new Promise((resolve, reject) => {
-    pm2.describe(name, (err, processList) => {
-      if (err) reject(err);
-      else resolve(processList);
-    });
-  });
-}
-
-function pm2Disconnect() {
-  pm2.disconnect();
+/** 强制杀掉进程（跨平台） */
+function forceKill(pid: number): boolean {
+  try {
+    if (process.platform === 'win32') {
+      execSync(`taskkill /PID ${pid} /F`, { stdio: 'ignore' });
+    } else {
+      process.kill(pid, 'SIGKILL');
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function handleServeStart() {
   try {
-    logInfo('Checking service status...');
-    await pm2Connect();
-
-    const processList = await pm2Describe(PM2_APP_NAME);
-    const isRunning = processList.length > 0 && processList[0].pm2_env?.status === 'online';
-
-    if (isRunning) {
-      logWarning(`Service already running - http://localhost:${getServePort()}`);
-      pm2Disconnect();
+    const existingPid = readPid();
+    if (existingPid && isRunning(existingPid)) {
+      logWarning(`Service already running (PID: ${existingPid}) - http://localhost:${getServePort()}`);
       return;
     }
+    if (existingPid) removePid();
 
-    if (processList.length > 0) {
-      logInfo('Cleaning up old process...');
-      await pm2Delete(PM2_APP_NAME);
-    }
+    const port = getServePort();
+    const script = path.join(getCodePath(), 'dist', 'server', 'pm2-server.js');
 
     logInfo('Starting service...');
-    await pm2Start(getPm2Config());
-    pm2Disconnect();
-    logSuccess(`Service started: http://localhost:${getServePort()}`);
+
+    const child = spawn(process.execPath, [script], {
+      cwd: getCodePath(),
+      env: {
+        ...process.env,
+        NODE_ENV: 'production',
+        PORT: String(port),
+        NODE_OPTIONS: '--no-warnings',
+      },
+      stdio: 'ignore',
+      detached: true,
+    });
+
+    child.unref();
+
+    if (child.pid) {
+      writePid(child.pid);
+      logSuccess(`Service started (PID: ${child.pid}) - http://localhost:${port}`);
+    } else {
+      logError('Failed to start service: no PID assigned');
+    }
   } catch (err) {
     logError(`Failed to start service: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -107,33 +110,55 @@ export async function handleServeStart() {
 
 export async function handleServeStop() {
   try {
-    await pm2Connect();
-    await pm2Delete(PM2_APP_NAME);
-    pm2Disconnect();
-    logSuccess('Service stopped');
+    let pid: number | null = null;
+
+    // 1) 优先尝试 PID 文件
+    const pidFromFile = readPid();
+    if (pidFromFile && isRunning(pidFromFile)) {
+      pid = pidFromFile;
+    }
+
+    // 2) 如果 PID 文件无效，尝试通过端口查找
+    if (!pid) {
+      const pidByPort = findPidByPort(getServePort());
+      if (pidByPort) {
+        logInfo(`Found process by port ${getServePort()} (PID: ${pidByPort})`);
+        pid = pidByPort;
+      }
+    }
+
+    if (!pid) {
+      logWarning('No service PID found, service may not be running');
+      return;
+    }
+
+    // 3) 强制杀掉进程
+    logInfo(`Stopping service (PID: ${pid})...`);
+    if (forceKill(pid)) {
+      removePid();
+      logSuccess('Service stopped');
+    } else {
+      logError('Failed to stop service');
+    }
   } catch (err) {
     logError(`Failed to stop service: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
 export async function handleServeRestart() {
-  try {
-    await pm2Connect();
-    await pm2Restart(PM2_APP_NAME);
-    pm2Disconnect();
-    logSuccess('Service restarted');
-  } catch (err) {
-    logError(`Failed to restart service: ${err instanceof Error ? err.message : String(err)}`);
-  }
+  await handleServeStop();
+  // 等待端口释放
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  await handleServeStart();
 }
 
 export async function handleServeOpen() {
   const port = getServePort();
   const url = `http://localhost:${port}`;
-  const start = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+  const startCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
   try {
     const { execSync } = await import('child_process');
-    execSync(`${start} ${url}`, { stdio: 'ignore' });
+    execSync(`${startCmd} ${url}`, { stdio: 'ignore' });
     logSuccess(`Opened ${url}`);
   } catch {
     logWarning(`Could not auto-open browser, please visit: ${url}`);

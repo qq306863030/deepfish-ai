@@ -7,6 +7,7 @@ import fs from 'fs-extra';
 import { executeCommand } from './executeCommand';
 import { safeTool } from './utils';
 import { subAgentExec } from './subAgent';
+import { remotePrompt } from './question';
 
 declare const require: any;
 // CJS 模式下 require 直接可用
@@ -27,7 +28,7 @@ export async function executeJSCode(code: string, runtime: any) {
         const result = await __main()
         return result || "Code executed successfully, but __main() did not return anything."
     })()`;
-    const fn = new Function('require', 'agentExec', wrapped);
+    const fn = new Function('require', 'agentExec', 'remotePrompt',  wrapped);
     const _require: any = require;
     const newRequire = (modulePath:string) => {
       if (modulePath.startsWith('./')) {
@@ -36,10 +37,10 @@ export async function executeJSCode(code: string, runtime: any) {
       }
       return _require(modulePath)
     }
-    const agentExec = async (prompt: string) => {
-      return subAgentExec(prompt, runtime)
+    const agentExec = async (systemPrompt: string, prompt: string) => {
+      return subAgentExec(systemPrompt, prompt, runtime)
     }
-    const result = await fn(newRequire, agentExec);
+    const result = await fn(newRequire, agentExec, remotePrompt);
     return result;
   } catch (error: any) {
     logError(`Error executing code: ${error.stack}`);
@@ -102,12 +103,14 @@ const executeJSCodeTool = tool(async ({ code }, runtime) => safeTool(() => execu
   name: 'execute_js_code',
   description: `执行一段Node.js代码并返回执行结果。注意：1.如果代码中使用第三方依赖必须先使用check_package_installed工具检查包是否安装，如果未安装需要执行install_package工具安装指定的npm包;2.代码必须包含一个__main()函数作为执行入口，__main()函数内必须是一个使用async前缀的函数。
         可用内置函数：
-        - agentExec(prompt: string): Promise<string>，创建一个通用子 agent 执行指定任务并返回结果，适合将复杂任务拆分给子 agent 完成。
+        - agentExec(systemPrompt: string, prompt: string): Promise<string>，创建一个专用子 agent 执行指定任务。第一个参数为系统提示词（定义角色和规则），第二个参数为用户指令。适合将复杂任务拆分给子 agent 完成。
+        - remotePrompt(questions): Promise<answers>，替代 inquirer.prompt 进行交互式输入。参数格式与 inquirer.prompt 一致，支持 input/select/confirm/password 等类型，支持 when/validate/filter 条件。在远程模式下自动通过 WebSocket 发送到客户端终端展示，无远程客户端时回退到本地 inquirer。
         示例代码：
         async function __main() {
           const data = await fs.readFile("data.txt", "utf-8")
-          const analysis = await agentExec("请分析这段文件内容并总结重点：" + data)
-          return analysis
+          const analysis = await agentExec("你是一个数据分析师", "请分析这段文件内容并总结重点：" + data)
+          const { name } = await remotePrompt([{ type: 'input', name: 'name', message: '请输入名称：' }])
+          return { analysis, name }
         }
         `,
   schema: z.object({

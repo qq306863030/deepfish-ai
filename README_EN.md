@@ -209,10 +209,11 @@ On the second question, AI answers based on the same session context in the curr
 
 | Command            | Description         |
 | ------------------ | ------------------- |
-| `ai serve`         | Start the service   |
-| `ai serve start`   | Start the service   |
-| `ai serve stop`    | Stop the service    |
-| `ai serve restart` | Restart the service |
+| `ai server`         | Start the service (foreground) |
+| `ai server open`    | Run service in foreground (logs in terminal, Ctrl+C to stop) |
+| `ai server start`   | Start the service (background) |
+| `ai server stop`    | Stop the service    |
+| `ai server restart` | Restart the service |
 
 ### Cache Management (AI Self-Learning Cache)
 
