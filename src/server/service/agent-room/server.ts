@@ -1,5 +1,5 @@
 ﻿import { WebSocketServer, WebSocket } from 'ws';
-import { setOutputClient, clearOutputClient } from '@/server/utils/print';
+import { setOutputClient, clearOutputClient, setDisconnectClient, disconnectClient } from '@/server/utils/print';
 import { getSessionList, getServePort } from '@/client/cli-utils/getGlobalData';
 import { getConfig } from '@/client/cli-utils/init-config';
 import { initAgent, removeSessionById } from '@/client/cli-utils/init-agent';
@@ -187,6 +187,8 @@ async function handleExecute(from: ClientRecord, msg: RoomMessage) {
       }),
     ]);
     send(from.socket, { type: 'execute-done' });
+    // agent 执行完毕后主动断开 WebSocket 连接
+    disconnectClient();
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[agent-room] Execute error for ${from.id}: ${message}`);
@@ -270,6 +272,11 @@ function registerClient(socket: WebSocket, raw: RegisterMessage): ClientRecord |
       (message, color) => sendWriteLine(socket, message, color),
       (content, color) => sendStreamOutput(socket, content, color),
     );
+    setDisconnectClient(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.close(1000, 'agent execution completed');
+      }
+    });
   }
 
   send(socket, { type: 'registered', clientType, id });

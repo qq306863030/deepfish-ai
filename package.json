@@ -29,8 +29,8 @@
   "scripts": {
     "start": "node dist/index.js serve start",
     "open": "node dist/server/server.js",
-    "reload": "node dist/index.js serve restart",
-    "stop": "node dist/index.js serve stop",
+    "reload": "node dist/index.js server restart",
+    "stop": "node dist/index.js server stop",
     "build": "tsup && node -e \"const fs=require('fs-extra'),p=require('path');const src=p.join(process.cwd(),'src/server/agent/skills'),dst=p.join(process.cwd(),'dist/skills');fs.ensureDirSync(dst);fs.readdirSync(src).filter(f=>f.endsWith('.md')).forEach(f=>fs.copySync(p.join(src,f),p.join(dst,f)))\" && npm run build:ui",
     "build:ui": "vite build && vite build --config vite.server.config.ts",
     "format": "prettier --write \"src/**/*.{ts,js,json,css,md}\"",

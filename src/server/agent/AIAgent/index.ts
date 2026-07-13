@@ -6,7 +6,7 @@ import { z } from 'zod';
 import type { AgentMessage, AgentOpt } from '../../../@types/AgentOpt';
 import { EventEmitterSuper } from 'eventemitter-super';
 import { AgentEvent } from '../../../@types/AgentEvent';
-import { log, logError, logInfo, logSuccess, streamOutput } from '@/server/utils/print';
+import { log, logError, logInfo, logSuccess, streamOutput, disconnectClient } from '@/server/utils/print';
 import { createAgentEventMiddleware } from './middleware/eventEmitMiddleware';
 import { getSystemPrompt } from './system-prompt';
 import { getTools } from '../tools';
@@ -177,6 +177,9 @@ export default class AIAgent extends EventEmitterSuper {
       log(`[Task Queue] New task found, executing: ${newTask.taskStr}`, '#7fded1');
       await this.execute(newTask.taskStr);
     }
+
+    // 服务端主动断开socket
+    disconnectClient();
   }
 
   initEvents() {

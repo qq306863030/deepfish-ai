@@ -79,7 +79,7 @@ export async function handleServeStart() {
     if (existingPid) removePid();
 
     const port = getServePort();
-    const script = path.join(getCodePath(), 'dist', 'server', 'pm2-server.js');
+    const script = path.join(getCodePath(), 'dist', 'server', 'server.js');
 
     logInfo('Starting service...');
 

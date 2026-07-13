@@ -7,6 +7,7 @@ import chalk from 'chalk';
 let _sendToClient: ((message: string, color?: string) => void) | null = null;
 let _sendWriteLine: ((message: string, color?: string) => void) | null = null;
 let _sendStream: ((content: string, color?: string) => void) | null = null;
+let _disconnectClient: (() => void) | null = null;
 
 /** 设置 WebSocket 发送回调（serve 端调用） */
 export function setOutputClient(
@@ -19,11 +20,25 @@ export function setOutputClient(
   _sendStream = onStream;
 }
 
+/** 设置 WebSocket 断开回调（serve 端调用） */
+export function setDisconnectClient(onDisconnect: () => void) {
+  _disconnectClient = onDisconnect;
+}
+
 /** 清除 WebSocket 发送回调（serve 端调用） */
 export function clearOutputClient() {
   _sendToClient = null;
   _sendWriteLine = null;
   _sendStream = null;
+  _disconnectClient = null;
+}
+
+/** 主动断开当前 WebSocket 客户端连接（agent 执行完毕后调用） */
+export function disconnectClient() {
+  if (_disconnectClient) {
+    _disconnectClient();
+    _disconnectClient = null;
+  }
 }
 
 function log(msg: string, color?: string) {
