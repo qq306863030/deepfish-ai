@@ -39,6 +39,14 @@ export async function safeTool<T>(handler: () => T | Promise<T>): Promise<string
     const data = await handler();
     return serializeToolResult(successResult(data));
   } catch (error) {
+    // 提供更友好的错误信息
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('Received tool input did not match expected schema') || 
+        message.includes('expected string, received undefined')) {
+      return serializeToolResult(errorResult(new Error(
+        '工具调用参数错误：请确保提供了所有必填参数。例如 write_file 工具需要 filePath 和 content 两个必填参数。'
+      )));
+    }
     return serializeToolResult(errorResult(error));
   }
 }

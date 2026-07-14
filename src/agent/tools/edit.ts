@@ -5,6 +5,17 @@ import { resolveWorkspacePath } from './fileTools';
 import { safeTool } from './utils';
 
 export async function editFileByReplace(filePath: string, oldString: string, newString: string, replaceAll = false): Promise<string> {
+  // 参数验证
+  if (!filePath || typeof filePath !== 'string') {
+    throw new Error('filePath 参数必须是非空字符串');
+  }
+  if (!oldString || typeof oldString !== 'string') {
+    throw new Error('oldString 参数必须是非空字符串');
+  }
+  if (newString === undefined || newString === null) {
+    throw new Error('newString 参数必须提供');
+  }
+  
   const absPath = resolveWorkspacePath(filePath);
   if (!(await fs.pathExists(absPath))) {
     throw new Error(`文件不存在 ${absPath}`);
@@ -29,11 +40,11 @@ export const editFileTool = tool(
   async ({ filePath, oldString, newString, replaceAll }) => safeTool(() => editFileByReplace(filePath, oldString, newString, replaceAll)),
   {
     name: 'edit_file',
-    description: '编辑已有文本文件：使用精确 oldString 替换为 newString。默认要求 oldString 在文件中唯一，以避免误改。',
+    description: '编辑已有文本文件：使用精确 oldString 替换为 newString。必须提供 filePath、oldString、newString 三个必填参数。默认要求 oldString 在文件中唯一，以避免误改。',
     schema: z.object({
-      filePath: z.string().describe('要编辑的文件路径，支持绝对路径或相对当前工作目录的路径'),
-      oldString: z.string().describe('要替换的原始文本，必须与文件内容完全一致；建议包含足够上下文保证唯一'),
-      newString: z.string().describe('替换后的新文本'),
+      filePath: z.string().min(1).describe('要编辑的文件路径，支持绝对路径或相对当前工作目录的路径。必须提供非空字符串。'),
+      oldString: z.string().min(1).describe('要替换的原始文本，必须与文件内容完全一致；建议包含足够上下文保证唯一。必须提供非空字符串。'),
+      newString: z.string().describe('替换后的新文本。必须提供。'),
       replaceAll: z.boolean().default(false).describe('是否替换全部匹配项；默认 false，仅允许唯一匹配'),
     }),
   },

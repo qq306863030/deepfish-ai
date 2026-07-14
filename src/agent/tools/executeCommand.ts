@@ -10,6 +10,11 @@ import { getEncoding } from '@/cli/cli-utils/getGlobalData';
 import { safeTool } from './utils';
 
 export function executeCommand(command: string, timeout = -1, cwd?: string): string {
+  // 参数验证
+  if (!command || typeof command !== 'string') {
+    throw new Error('command 参数必须是非空字符串');
+  }
+  
   logSuccess(`Executing system command: ${command}; ${timeout > 0 ? `Timeout: ${timeout}ms` : 'No timeout limit'}`);
   try {
     const result = spawnSync(command, {
@@ -55,9 +60,9 @@ function detectEncoding(buffer: any): string {
 
 export const executeCommandTool = tool(({ command, timeout }) => safeTool(() => executeCommand(command, timeout)), {
   name: 'execute_command',
-  description: `在本地系统(${os.platform()})上执行一条 shell 命令并返回输出结果。适用于running脚本、操作文件系统、启动进程等场景。必须注意操作系统的兼容性，当前操作系统为 ${os.platform()}。`,
+  description: `在本地系统(${os.platform()})上执行一条 shell 命令并返回输出结果。必须提供 command 参数。适用于running脚本、操作文件系统、启动进程等场景。必须注意操作系统的兼容性，当前操作系统为 ${os.platform()}。`,
   schema: z.object({
-    command: z.string().describe('要执行的 shell 命令'),
+    command: z.string().min(1).describe('要执行的 shell 命令。必须提供非空字符串。'),
     timeout: z.number().default(-1).describe('超时时间（毫秒），-1 表示不限制'),
   }),
 });
