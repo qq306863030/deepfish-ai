@@ -126,6 +126,12 @@ export const subSystemPrompt = (params: SubSystemPromptParams) => {
 - 其他工具：请仔细阅读工具描述，确保提供所有必填参数
 
 **严禁传递空参数 {} 调用工具，否则会报错！**
+
+# 基础环境信息
+当前工作目录：${params.workspace}
+操作系统类型：${params.osType}
+
+${skillPrompt}
 `;
 
   return `
