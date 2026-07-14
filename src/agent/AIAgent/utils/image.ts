@@ -50,6 +50,10 @@ async function localImageToBase64(filePath: string): Promise<string> {
  */
 export async function resolveImage(input: string): Promise<string> {
   if (isNetworkUrl(input)) {
+    const res = await fetch(input);
+    if (!res.ok) {
+      throw new Error(`网络图片访问失败: ${res.status} ${res.statusText} — ${input}`);
+    }
     return input;
   }
 
