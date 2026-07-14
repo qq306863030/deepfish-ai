@@ -149,14 +149,14 @@ export default class SubAIAgent extends EventEmitterSuper {
             },
           },
         );
-        for await (const [_namespace, mode, data] of stream) {
-          if (mode === 'messages') {
-            const message = data?.[0] as unknown as AgentMessage | undefined;
-            const reasoning_content = message?.additional_kwargs?.reasoning_content;
-            const toolcall_content = message?.tool_call_chunks?.[0]?.args;
-            this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, reasoning_content || toolcall_content || '');
-          }
-        }
+        // for await (const [_namespace, mode, data] of stream) {
+        //   if (mode === 'messages') {
+        //     const message = data?.[0] as unknown as AgentMessage | undefined;
+        //     const reasoning_content = message?.additional_kwargs?.reasoning_content;
+        //     const toolcall_content = message?.tool_call_chunks?.[0]?.args;
+        //     this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, this.id, reasoning_content || toolcall_content || '');
+        //   }
+        // }
       } catch (error) {
         logError(error instanceof Error ? error.message : String(error));
         reject(error);
@@ -182,7 +182,10 @@ export default class SubAIAgent extends EventEmitterSuper {
       }
       logError(error?.message + '\n' + error?.stack);
     });
-    this.on(AgentEvent.STREAM_CONTENT_OUTPUT, (content) => {
+    this.on(AgentEvent.STREAM_CONTENT_OUTPUT, (agentId, content) => {
+      if (!content || agentId !== this.id) {
+        return;
+      }
       if (this.isPrintThinking) {
         if (content && typeof content === 'string') {
           streamOutput(content, '#f2c97d');

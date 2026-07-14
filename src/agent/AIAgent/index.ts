@@ -91,7 +91,7 @@ export default class AIAgent extends EventEmitterSuper {
         summarizationMiddleware({
           model: model,
           trigger: { tokens: this.opt.modelOpt.maxContextLength || 100000 },
-          keep: { messages: 50 },
+          keep: { messages: 50 }
         }),
         todoListMiddleware(),
         createPatchToolCallsMiddleware(),
@@ -138,7 +138,7 @@ export default class AIAgent extends EventEmitterSuper {
         // const content = message?.content;
         const reasoning_content = message?.additional_kwargs?.reasoning_content;
         const toolcall_content = message?.tool_call_chunks?.[0]?.args;
-        this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, reasoning_content || toolcall_content || '');
+        this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, this.id, reasoning_content || toolcall_content || '');
       }
     }
     const newTask = this.taskQueue.getTask();
@@ -167,7 +167,10 @@ export default class AIAgent extends EventEmitterSuper {
       }
       logError(error?.message + '\n' + error?.stack);
     });
-    this.on(AgentEvent.STREAM_CONTENT_OUTPUT, (content) => {
+    this.on(AgentEvent.STREAM_CONTENT_OUTPUT, (agentId, content) => {
+      if (!content || agentId !== this.id) {
+        return
+      }
       if (this.isPrintThinking) {
         if (content && typeof content === 'string') {
           streamOutput(content, '#f2c97d');
@@ -184,10 +187,10 @@ export default class AIAgent extends EventEmitterSuper {
     this.on(AgentEvent.COMPRESS_MESSAGES_AFTER, (_currentLength) => {});
     this.on(AgentEvent.NEW_MESSAGE, (_msg) => {});
     this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, funcName, _funcArgs) => {
-      log(`[Tool Call] ${funcName}`, '#c2a654');
+      log(`\n[Tool Call] ${funcName}`, '#c2a654');
     });
     this.on(AgentEvent.USE_TOOL_RETURN, (_toolId, _funcName, _toolContent = '') => {
-      logInfo(`[Tool Return] ${_funcName} returned: ${_toolContent.length > 200 ? _toolContent.slice(0, 200) + '...' : _toolContent}`);
+      logInfo(`\n[Tool Return] ${_funcName} returned: ${_toolContent.length > 200 ? _toolContent.slice(0, 200) + '...' : _toolContent}`);
     });
     this.on(AgentEvent.USE_TOOL_ERROR, (_toolId, _funcName, _error) => {
       logError(`Error in tool ${_funcName}: ${_error instanceof Error ? _error.message : String(_error)}`);
