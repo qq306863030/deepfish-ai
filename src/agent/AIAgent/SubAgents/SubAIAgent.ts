@@ -72,6 +72,7 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.skills = clone(this.parentAgent.skills) || [...getSkills(), ...(this.opt.externalSkills || [])];
     if (this.subLevel > 2) {
       this.excludeTools.push('subAgent_exec');
+      this.excludeTools.push('subAgent_image');
     }
     this.tools = this.tools.filter((tool) => !this.excludeTools.some((excludeTool) => tool.name.startsWith(excludeTool)));
 
