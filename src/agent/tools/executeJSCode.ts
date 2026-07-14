@@ -36,8 +36,8 @@ export async function executeJSCode(code: string, runtime: any) {
       }
       return _require(modulePath)
     }
-    const agentExec = async (prompt: string) => {
-      return subAgentExec(prompt, runtime)
+    const agentExec = async (systemPrompt: string, prompt: string) => {
+      return subAgentExec(systemPrompt, prompt, runtime)
     }
     const result = await fn(newRequire, agentExec);
     return result;
@@ -57,7 +57,7 @@ const getInstalledPackagesTool = tool(
     }),
   {
     name: 'get_installed_packages',
-    description: '获取 deepfish-ai CLI 工具自身已安装的 npm 依赖包列表',
+    description: '使用execute_js_code工具前获取 deepfish-ai CLI 工具自身已安装的 npm 依赖包列表',
     schema: z.object({}),
   },
 );
@@ -72,7 +72,7 @@ const checkPackageInstalledTool = tool(
     }),
   {
     name: 'check_package_installed',
-    description: '检查指定的 npm 包是否已在 deepfish-ai CLI 工具中安装',
+    description: '使用execute_js_code工具前检查指定的 npm 包是否已在 deepfish-ai CLI 工具中安装',
     schema: z.object({
       packageName: z.string().describe('要检查的 npm 包名称'),
     }),
@@ -91,7 +91,7 @@ const installPackageTool = tool(
     }),
   {
     name: 'install_package',
-    description: '在 deepfish-ai CLI 工具中安装指定的 npm 包，使 execute_js_code 可以 require 该包',
+    description: '使用execute_js_code工具前在 deepfish-ai CLI 工具中安装指定的 npm 包，使 execute_js_code 可以 require 该包',
     schema: z.object({
       packageName: z.string().describe('要安装的 npm 包名称'),
     }),
@@ -100,13 +100,13 @@ const installPackageTool = tool(
 
 const executeJSCodeTool = tool(async ({ code }, runtime) => safeTool(() => executeJSCode(code, runtime)), {
   name: 'execute_js_code',
-  description: `执行一段Node.js代码并返回执行结果。注意：1.如果代码中使用第三方依赖必须先使用check_package_installed工具检查包是否安装，如果未安装需要执行install_package工具安装指定的npm包;2.代码必须包含一个__main()函数作为执行入口，__main()函数内必须是一个使用async前缀的函数。
+  description: `执行一段Node.js代码并返回执行结果。注意：1.如果代码中使用第三方依赖必须先使用check_package_installed工具检查包是否安装，如果未安装需要执行install_package工具安装指定的npm包;2.代码必须包含一个__main()函数作为执行入口，__main()函数内必须是一个使用async前缀的函数;3.不支持执行ESM模块。
         可用内置函数：
-        - agentExec(prompt: string): Promise<string>，创建一个通用子 agent 执行指定任务并返回结果，适合将复杂任务拆分给子 agent 完成。
+        - agentExec(systemPrompt: string, prompt: string): Promise<string>，创建一个通用子 agent 执行指定任务并返回结果，systemPrompt 用于设定子 agent 的行为和角色，prompt 为具体任务指令，适合将复杂任务拆分给子 agent 完成。
         示例代码：
         async function __main() {
           const data = await fs.readFile("data.txt", "utf-8")
-          const analysis = await agentExec("请分析这段文件内容并总结重点：" + data)
+          const analysis = await agentExec("你是一个数据分析助手", "请分析这段文件内容并总结重点：" + data)
           return analysis
         }
         `,
