@@ -261,7 +261,7 @@ export default class SubAIAgent extends EventEmitterSuper {
 
   async imageRecognition(prompt: string, fileUrl: string) {
     // fileUrl转Base64
-    fileUrl = resolveImage(fileUrl);
+    fileUrl = await resolveImage(fileUrl);
     return this.executeImage(prompt, fileUrl);
   }
 
