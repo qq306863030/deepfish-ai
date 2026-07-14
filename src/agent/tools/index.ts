@@ -9,7 +9,7 @@ import { grepTool } from './grep';
 import { questionTool } from './question';
 import { readFileTool } from './read';
 import { semanticMemoryTools } from './semanticMemory';
-import { subAgentTool } from './subAgent';
+import { subAgentTool, subAgentImageTool } from './subAgent';
 import { taskTool } from './task';
 import { webFetchTool } from './webfetch';
 import { writeFileTool } from './write';
@@ -18,6 +18,7 @@ import { fishInfoTools } from './getFishInfo';
 const builtinTools = [
   taskTool,
   subAgentTool,
+  subAgentImageTool,
   executeCommandTool,
   readFileTool,
   editFileTool,

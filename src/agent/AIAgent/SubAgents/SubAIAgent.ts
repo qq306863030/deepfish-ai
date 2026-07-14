@@ -16,6 +16,7 @@ import { randomUUID } from 'crypto';
 import { clone, cloneDeep } from 'lodash';
 import { MemorySaver } from '@langchain/langgraph';
 import type AIAgent from '../index';
+import { resolveImage } from '../utils/image';
 
 // 通用子agent
 export default class SubAIAgent extends EventEmitterSuper {
@@ -67,7 +68,7 @@ export default class SubAIAgent extends EventEmitterSuper {
   }
 
   async init() {
-    this.tools = clone(this.parentAgent.tools) || await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
+    this.tools = clone(this.parentAgent.tools) || (await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools));
     this.skills = clone(this.parentAgent.skills) || [...getSkills(), ...(this.opt.externalSkills || [])];
     if (this.subLevel > 2) {
       this.excludeTools.push('subAgent_exec');
@@ -130,9 +131,8 @@ export default class SubAIAgent extends EventEmitterSuper {
       this.once(AgentEvent.TASK_AFTER, (msg) => {
         resolve(msg);
       });
-      let stream: any;
       try {
-        stream = await this.agent.stream(
+        await this.agent.stream(
           { messages: this.messages },
           {
             streamMode: ['messages'],
@@ -149,14 +149,48 @@ export default class SubAIAgent extends EventEmitterSuper {
             },
           },
         );
-        // for await (const [_namespace, mode, data] of stream) {
-        //   if (mode === 'messages') {
-        //     const message = data?.[0] as unknown as AgentMessage | undefined;
-        //     const reasoning_content = message?.additional_kwargs?.reasoning_content;
-        //     const toolcall_content = message?.tool_call_chunks?.[0]?.args;
-        //     this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, this.id, reasoning_content || toolcall_content || '');
-        //   }
-        // }
+      } catch (error) {
+        logError(error instanceof Error ? error.message : String(error));
+        reject(error);
+      }
+    });
+  }
+
+  async executeImage(input: string, imageUrl: string) {
+    const humanMessage = new HumanMessage({
+      content: [
+        { type: 'text', text: input },
+        {
+          type: 'image_url',
+          image_url: {
+            url: imageUrl,
+          },
+        },
+      ],
+    });
+    this.messages.push(humanMessage);
+    return new Promise<void>(async (resolve, reject) => {
+      this.once(AgentEvent.TASK_AFTER, (msg) => {
+        resolve(msg);
+      });
+      try {
+        await this.agent.stream(
+          { messages: this.messages },
+          {
+            streamMode: ['messages'],
+            recursionLimit: 2000,
+            subgraphs: true,
+            configurable: { thread_id: this.id },
+            context: {
+              agent_name: 'deepfish',
+              encoding: this.opt.encoding,
+              skills: this.skills,
+              memoryFilePath: this.memoryFilePath,
+              agentId: this.id,
+              curAgent: this,
+            },
+          },
+        );
       } catch (error) {
         logError(error instanceof Error ? error.message : String(error));
         reject(error);
@@ -223,6 +257,12 @@ export default class SubAIAgent extends EventEmitterSuper {
   async subExecute(systemPrompt: string, prompt: string) {
     const subAgent = await this.createSubAgent(systemPrompt);
     return subAgent.execute(prompt);
+  }
+
+  async imageRecognition(prompt: string, fileUrl: string) {
+    // fileUrl转Base64
+    fileUrl = resolveImage(fileUrl);
+    return this.executeImage(prompt, fileUrl);
   }
 
   destory() {
