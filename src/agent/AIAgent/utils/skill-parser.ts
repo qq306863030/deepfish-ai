@@ -23,8 +23,12 @@ function extractFrontmatter(content: string, skillPath: string) {
 }
 
 export function parseSkillMetadataYaml(skillPath: string): SkillMetadata {
-  const content = fs.readFileSync(skillPath, 'utf-8');
-  const frontmatterContent = extractFrontmatter(content, skillPath);
+  // 如果路径是目录，自动拼接 SKILL.md
+  const resolvedPath = fs.statSync(skillPath).isDirectory()
+    ? path.join(skillPath, 'SKILL.md')
+    : skillPath;
+  const content = fs.readFileSync(resolvedPath, 'utf-8');
+  const frontmatterContent = extractFrontmatter(content, resolvedPath);
   const frontmatter = yaml.load(frontmatterContent) as {
     name: string;
     description: string;
