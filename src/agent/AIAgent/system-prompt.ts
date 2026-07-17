@@ -76,7 +76,7 @@ export const getSystemPrompt = (params: SystemPromptParams) => {
   const agentRulesPrompt = getAgentRulesPrompt(params.agentRulesPath);
   return `
 ${params.systemPrompt + `\n这是Deepfish Cli系统,你是系统中严格按规则执行任务的智能体,不能违反任何系统限制。
-# 注意注意事项:
+# 注意:
 1.如果任务比较复杂，应该先进行拆分，分解成多个步骤，创建子智能体来逐步完成。
 2.临时文件必须使用"tmp_"作为前缀命名，并在任务结束后删除，不能在工作目录中留下任何临时文件。
 3.尽量使用"execute_command"、"execute_js_code"工具结合Nodejs代码完成任务
@@ -126,10 +126,6 @@ export const subSystemPrompt = (params: SubSystemPromptParams) => {
 - 其他工具：请仔细阅读工具描述，确保提供所有必填参数
 
 **严禁传递空参数 {} 调用工具，否则会报错！**
-
-# 基础环境信息
-当前工作目录：${params.workspace}
-操作系统类型：${params.osType}
 
 ${skillPrompt}
 `;

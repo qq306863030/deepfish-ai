@@ -6,7 +6,7 @@ import { safeTool } from './utils';
 const userCache = new UserCache();
 
 /**
- * 自我学习工具：解决复杂问题后，将解决方案缓存到本地知识库。
+ * 自我学习工具：解决复杂问题后，将解决方案缓存到本地。
  */
 export const learnSelfTool = tool(
   ({ description, content }) =>
@@ -17,7 +17,7 @@ export const learnSelfTool = tool(
   {
     name: 'learn_self',
     description:
-      '将解决复杂问题的方案缓存到本地知识库。当你成功解决了一个复杂问题后，调用此工具保存解决方案，以便将来遇到类似问题时可以复用。description 必须简洁，不超过50字；content 必须使用 Markdown 格式编写，包含完整的解决步骤和关键信息。',
+      '解决方案记录本：将解决复杂问题的方案缓存。当你成功解决了一个复杂问题后，调用此工具保存解决方案，以便将来遇到类似问题时可以复用。description 必须简洁，不超过50字；content 必须使用 Markdown 格式编写，包含完整的解决步骤和关键信息。',
     schema: z.object({
       description: z.string().describe('解决方案的简要描述，不超过50字，简洁概括问题及方案'),
       content: z.string().describe('解决方案的完整内容，使用 Markdown 格式，包含详细步骤、关键代码和注意事项'),
@@ -52,7 +52,7 @@ export const getLearnedDetailTool = tool(
     }),
   {
     name: 'get_learned_detail',
-    description: '读取指定缓存方案的完整详细信息。传入索引号（数字）或 id（uuid 字符串）来获取方案的完整内容。',
+    description: '解决方案记录本：读取指定缓存方案的完整详细信息。传入索引号（数字）或 id（uuid 字符串）来获取方案的完整内容。',
     schema: z.object({
       indexOrId: z.string().describe('缓存项的索引（数字）或 id（uuid 字符串）'),
     }),
@@ -74,7 +74,7 @@ export const updateLearnContentTool = tool(
     }),
   {
     name: 'update_learned_content',
-    description: '更新已有缓存方案的内容。传入缓存项的 id（uuid 字符串）和新的 Markdown 内容，覆盖原有文件。适用于补充更多细节或修正之前的方案。',
+    description: '解决方案记录本：更新已有缓存方案的内容。传入缓存项的 id（uuid 字符串）和新的 Markdown 内容，覆盖原有文件。适用于补充更多细节或修正之前的方案。',
     schema: z.object({
       id: z.string().describe('要更新的缓存项 id（uuid 字符串），可通过读取 catalog.json 获取'),
       content: z.string().describe('更新后的完整内容，使用 Markdown 格式'),
@@ -89,7 +89,7 @@ export const updateLearnContentTool = tool(
 export const getCatalogFilePathTool = tool(() => safeTool(() => userCache.getCatalogFilePath()), {
   name: 'get_catalog_file_path',
   description:
-    '获取缓存索引文件 catalog.json 的绝对路径。该文件包含所有已缓存方案的 id 和 description 列表。获取路径后，使用 read_file 工具读取该文件即可查看所有缓存项。',
+    '解决方案记录本：获取记录本目录，获取缓存索引文件 catalog.json 的绝对路径。该文件包含所有已缓存方案的 id 和 description 列表。获取路径后，使用 read_file 工具读取该文件即可查看所有缓存项。',
   schema: z.object({}),
 });
 
