@@ -2,7 +2,7 @@ import { BaseMessage, createAgent, DynamicStructuredTool, HumanMessage, ReactAge
 import { createPatchToolCallsMiddleware } from 'deepagents';
 import { getModel } from '../../models';
 import { z } from 'zod';
-import type { AgentMessage, AgentOpt } from '../../../@types/AgentOpt';
+import type { AgentOpt } from '../../../@types/AgentOpt';
 import { EventEmitterSuper } from 'eventemitter-super';
 import { AgentEvent } from '../../../@types/AgentEvent';
 import { streamOutput, logError, log, logInfo } from '@/utils/print';
@@ -13,7 +13,6 @@ import { getTools } from '../../tools';
 import { getSkills } from '../../skills';
 import os from 'os';
 import { randomUUID } from 'crypto';
-import { clone, cloneDeep } from 'lodash';
 import { MemorySaver } from '@langchain/langgraph';
 import type AIAgent from '../index';
 import { resolveImage } from '../utils/image';
@@ -24,7 +23,6 @@ export default class SubAIAgent extends EventEmitterSuper {
   opt: AgentOpt = {} as AgentOpt;
 
   tools: DynamicStructuredTool[] = [];
-  dynamicTools: string[] = [];
   skills: string[] = [];
   mcp: string[] = [];
   subLevel: number = 1;
@@ -49,7 +47,7 @@ export default class SubAIAgent extends EventEmitterSuper {
 
   constructor(opt: AgentOpt, parentAgent: AIAgent | SubAIAgent) {
     super();
-    this.opt = cloneDeep(opt);
+    this.opt = structuredClone(opt);
     this.id = `child-agent-${randomUUID()}`;
     this.basespace = opt.basespace;
     this.workspace = opt.workspace;
@@ -68,8 +66,8 @@ export default class SubAIAgent extends EventEmitterSuper {
   }
 
   async init() {
-    this.tools = clone(this.parentAgent.tools) || (await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools));
-    this.skills = clone(this.parentAgent.skills) || [...getSkills(), ...(this.opt.externalSkills || [])];
+    this.tools = this.parentAgent.tools?.length ? [...this.parentAgent.tools] : (await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools));
+    this.skills = this.parentAgent.skills?.length ? [...this.parentAgent.skills] : [...getSkills(), ...(this.opt.externalSkills || [])];
     if (this.subLevel > 2) {
       this.excludeTools.push('subAgent_exec');
       this.excludeTools.push('subAgent_image');
@@ -203,22 +201,28 @@ export default class SubAIAgent extends EventEmitterSuper {
     const thinking = new Thinking();
     this.on(AgentEvent.TASK_BEFORE, () => {});
     this.on(AgentEvent.TASK_AFTER, (msg) => {
+      if (!this.isPrintThinking) {
+        thinking.stop();
+      }
       logInfo(msg);
     });
     this.on(AgentEvent.MODEL_BEFORE, () => {});
     this.on(AgentEvent.MODEL_AFTER, () => {
-      if (this.isPrintThinking) {
+      if (!this.isPrintThinking) {
         thinking.stop();
       }
     });
     this.on(AgentEvent.MODEL_ERROR, (error) => {
-      if (this.isPrintThinking) {
+      if (!this.isPrintThinking) {
         thinking.stop();
       }
       logError(error?.message + '\n' + error?.stack);
     });
     this.on(AgentEvent.STREAM_CONTENT_OUTPUT, (agentId, content) => {
       if (!content || agentId !== this.id) {
+        if (!this.isPrintThinking) {
+          thinking.start();
+        }
         return;
       }
       if (this.isPrintThinking) {
@@ -233,9 +237,6 @@ export default class SubAIAgent extends EventEmitterSuper {
         }
       }
     });
-    this.on(AgentEvent.COMPRESS_MESSAGES_BEFORE, (_currentLength) => {});
-    this.on(AgentEvent.COMPRESS_MESSAGES_AFTER, (_currentLength) => {});
-    this.on(AgentEvent.NEW_MESSAGE, (_msg) => {});
     this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, funcName, _funcArgs) => {
       log(`\n[Tool Call] ${funcName}`, '#c2a654');
     });

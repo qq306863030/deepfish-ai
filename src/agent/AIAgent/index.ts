@@ -16,7 +16,6 @@ import type { AgentRoomClient } from '@/serve/service/agent-room/agent-client';
 import TaskQueue from '@/cli/cli-utils/TaskQueue';
 import os from 'os';
 import SubAIAgent from './SubAgents/SubAIAgent';
-import { cloneDeep } from 'lodash';
 
 export default class AIAgent extends EventEmitterSuper {
   id: string = '';
@@ -24,7 +23,6 @@ export default class AIAgent extends EventEmitterSuper {
   opt: AgentOpt = {} as AgentOpt;
 
   tools: DynamicStructuredTool[] = [];
-  dynamicTools: string[] = [];
   skills: string[] = [];
   mcp: string[] = [];
   subLevel: number = 0;
@@ -49,7 +47,7 @@ export default class AIAgent extends EventEmitterSuper {
 
   constructor(opt: AgentOpt) {
     super();
-    this.opt = cloneDeep(opt);
+    this.opt = structuredClone(opt);
     this.id = opt.id || `agent-${Date.now()}`;
     this.basespace = opt.basespace;
     this.workspace = opt.workspace;
@@ -152,23 +150,29 @@ export default class AIAgent extends EventEmitterSuper {
     const thinking = new Thinking();
     this.on(AgentEvent.TASK_BEFORE, () => {});
     this.on(AgentEvent.TASK_AFTER, (_msg) => {
+      if (!this.isPrintThinking) {
+        thinking.stop();
+      }
       logSuccess(_msg);
     });
     this.on(AgentEvent.MODEL_BEFORE, () => {});
     this.on(AgentEvent.MODEL_AFTER, () => {
-      if (this.isPrintThinking) {
+      if (!this.isPrintThinking) {
         thinking.stop();
       }
       streamOutput('\n');
     });
     this.on(AgentEvent.MODEL_ERROR, (error) => {
-      if (this.isPrintThinking) {
+      if (!this.isPrintThinking) {
         thinking.stop();
       }
       logError(error?.message + '\n' + error?.stack);
     });
     this.on(AgentEvent.STREAM_CONTENT_OUTPUT, (agentId, content) => {
       if (!content || agentId !== this.id) {
+        if (!this.isPrintThinking) {
+          thinking.start();
+        }
         return
       }
       if (this.isPrintThinking) {
@@ -183,9 +187,6 @@ export default class AIAgent extends EventEmitterSuper {
         }
       }
     });
-    this.on(AgentEvent.COMPRESS_MESSAGES_BEFORE, (_currentLength) => {});
-    this.on(AgentEvent.COMPRESS_MESSAGES_AFTER, (_currentLength) => {});
-    this.on(AgentEvent.NEW_MESSAGE, (_msg) => {});
     this.on(AgentEvent.USE_TOOL_BEFORE, (_toolId, funcName, _funcArgs) => {
       log(`\n[Tool Call] ${funcName}`, '#c2a654');
     });

@@ -40,50 +40,41 @@ export function handleMcpLs() {
   logInfo('='.repeat(50));
 }
 
-export function handleMcpEnable(nameOrIndex: string) {
+function _resolveMcpTarget(nameOrIndex: string, entries: string[]): number {
+  const index = parseInt(nameOrIndex, 10);
+  if (!isNaN(index) && index >= 0 && index < entries.length) {
+    return index;
+  }
+  return entries.findIndex((name) => name === nameOrIndex);
+}
+
+function _toggleMcp(nameOrIndexStr: string, enabled: boolean) {
   const config = readMcpConfig();
   const servers = config.mcpServers || {};
   const entries = Object.keys(servers);
 
-  let targetIndex = -1;
-  const index = parseInt(nameOrIndex, 10);
-  if (!isNaN(index) && index >= 0 && index < entries.length) {
-    targetIndex = index;
-  } else {
-    targetIndex = entries.findIndex((name) => name === nameOrIndex);
+  const tokens = nameOrIndexStr.split(',').map(s => s.trim()).filter(Boolean);
+  let hasError = false;
+  for (const token of tokens) {
+    const targetIndex = _resolveMcpTarget(token, entries);
+    if (targetIndex === -1) {
+      logError(`MCP server not found: ${token}`);
+      hasError = true;
+      continue;
+    }
+    const serverName = entries[targetIndex];
+    servers[serverName].disabled = !enabled;
+    const action = enabled ? 'enabled' : 'disabled';
+    logSuccess(`MCP server "${serverName}" ${action}`);
   }
-
-  if (targetIndex === -1) {
-    logError(`MCP server not found: ${nameOrIndex}`);
-    return;
-  }
-
-  const serverName = entries[targetIndex];
-  servers[serverName].disabled = false;
   writeMcpConfig(config);
-  logSuccess(`MCP server "${serverName}" enabled`);
+  return hasError;
+}
+
+export function handleMcpEnable(nameOrIndex: string) {
+  _toggleMcp(nameOrIndex, true);
 }
 
 export function handleMcpDisable(nameOrIndex: string) {
-  const config = readMcpConfig();
-  const servers = config.mcpServers || {};
-  const entries = Object.keys(servers);
-
-  let targetIndex = -1;
-  const index = parseInt(nameOrIndex, 10);
-  if (!isNaN(index) && index >= 0 && index < entries.length) {
-    targetIndex = index;
-  } else {
-    targetIndex = entries.findIndex((name) => name === nameOrIndex);
-  }
-
-  if (targetIndex === -1) {
-    logError(`MCP server not found: ${nameOrIndex}`);
-    return;
-  }
-
-  const serverName = entries[targetIndex];
-  servers[serverName].disabled = true;
-  writeMcpConfig(config);
-  logSuccess(`MCP server "${serverName}" disabled`);
+  _toggleMcp(nameOrIndex, false);
 }

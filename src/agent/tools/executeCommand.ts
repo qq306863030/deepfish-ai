@@ -1,12 +1,11 @@
 ﻿import { logError, logSuccess } from '@/utils/print';
 import { spawnSync } from 'child_process';
-import chardet from 'chardet';
 import os from 'os';
-import iconv from 'iconv-lite';
 import { tool } from 'langchain';
 import { z } from 'zod';
 import { getTrueCwd } from '@/utils/normal';
 import { getEncoding } from '@/cli/cli-utils/getGlobalData';
+import { detectEncoding, decodeBuffer } from '@/utils/encoding';
 import { safeTool } from './utils';
 
 export function executeCommand(command: string, timeout = -1, cwd?: string): string {
@@ -29,8 +28,8 @@ export function executeCommand(command: string, timeout = -1, cwd?: string): str
     if (!targetEncoding || targetEncoding === 'auto') {
       targetEncoding = detectEncoding(result.stdout || result.stderr);
     }
-    const stdout = iconv.decode(result.stdout, targetEncoding);
-    const stderr = iconv.decode(result.stderr, targetEncoding);
+    const stdout = decodeBuffer(result.stdout, targetEncoding);
+    const stderr = decodeBuffer(result.stderr, targetEncoding);
     const code = result.status;
     if (stderr && !stderr.trim().startsWith('WARNING')) {
       throw new Error(`Command failed (code ${code}): ${stderr.trim()}`);
@@ -43,20 +42,7 @@ export function executeCommand(command: string, timeout = -1, cwd?: string): str
   }
 }
 
-function detectEncoding(buffer: any): string {
-  if (!buffer) {
-    return os.platform() === 'win32' ? 'gbk' : 'utf-8';
-  }
-  const detected = chardet.detect(buffer);
-  const encoding = detected?.toLowerCase();
-  if (encoding === 'utf-8') {
-    return 'utf-8';
-  }
-  if (encoding && ['gbk', 'gb2312', 'gb18030'].includes(encoding)) {
-    return 'gbk';
-  }
-  return os.platform() === 'win32' ? 'gbk' : 'utf-8';
-}
+
 
 export const executeCommandTool = tool(({ command, timeout }) => safeTool(() => executeCommand(command, timeout)), {
   name: 'execute_command',

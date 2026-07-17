@@ -1,6 +1,6 @@
-const fs = require('fs-extra');
-const path = require('path');
-const yaml = require('js-yaml');
+import fs from 'fs-extra';
+import path from 'path';
+import { parse as parseYaml } from 'yaml';
 
 export type SkillMetadata = {
   name: string;
@@ -29,7 +29,7 @@ export function parseSkillMetadataYaml(skillPath: string): SkillMetadata {
     : skillPath;
   const content = fs.readFileSync(resolvedPath, 'utf-8');
   const frontmatterContent = extractFrontmatter(content, resolvedPath);
-  const frontmatter = yaml.load(frontmatterContent) as {
+  const frontmatter = parseYaml(frontmatterContent) as {
     name: string;
     description: string;
     homepage: string;

@@ -1,6 +1,6 @@
 {
   "name": "deepfish-ai",
-  "version": "2.0.20",
+  "version": "2.0.21",
   "private": false,
   "description": "An efficient AI-driven command-line tool designed to bridge the gap between natural language and operating system commands, file operations, and more. It enables non-developers to quickly generate executable instructions through simple natural language descriptions, significantly improving terminal operation efficiency.",
   "repository": {
@@ -36,14 +36,21 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "pm2": "^7.0.1",
+    "sharp": "^0.35.3",
+    "solid-js": "^1.9.13"
+  },
+  "devDependencies": {
     "@langchain/anthropic": "^1.4.0",
     "@langchain/core": "^1.1.48",
     "@langchain/deepseek": "^1.0.27",
     "@langchain/langgraph": "^1.4.1",
     "@langchain/mcp-adapters": "^1.1.3",
     "@langchain/openai": "^1.4.7",
-    "@langchain/tavily": "^1.2.0",
-    "adm-zip": "^0.5.17",
+    "@types/express": "^5.0.6",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
     "axios": "^1.17.0",
     "chalk": "^5.6.2",
     "commander": "^11.0.0",
@@ -55,26 +62,14 @@
     "inquirer": "^14.0.2",
     "json5": "^2.2.3",
     "langchain": "^1.4.4",
-    "lodash": "^4.18.1",
-    "pm2": "^7.0.1",
-    "sharp": "^0.35.3",
-    "solid-js": "^1.9.13",
-    "tsx": "^4.19.0",
-    "ws": "^8.21.0"
-  },
-  "devDependencies": {
-    "@types/adm-zip": "^0.5.8",
-    "@types/express": "^5.0.6",
-    "@types/fs-extra": "^11.0.4",
-    "@types/lodash": "^4.17.24",
-    "@types/node": "^22.0.0",
-    "@types/ws": "^8.18.1",
     "less": "^4.6.6",
     "prettier": "^3.8.3",
     "tsup": "^8.4.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.0.0",
     "vite": "^8.0.16",
     "vite-plugin-solid": "^2.11.12",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "ws": "^8.21.0"
   }
 }

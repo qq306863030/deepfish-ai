@@ -15,6 +15,10 @@ export function registerMcpCommands(program: Command) {
     .description('启用 MCP 服务器')
     .action(handleMcpEnable);
   mcp
+    .command('use <nameOrIndex>')
+    .description('启用 MCP 服务器（同 enable）')
+    .action(handleMcpEnable);
+  mcp
     .command('disable <nameOrIndex>')
     .description('禁用 MCP 服务器')
     .action(handleMcpDisable);

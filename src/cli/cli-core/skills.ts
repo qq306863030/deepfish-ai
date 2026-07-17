@@ -125,49 +125,43 @@ export function handleSkillsInstall(url: string) {
   logInfo(`Installing skill: ${url}`);
 }
 
-export function handleSkillsEnable(index: string) {
+function _toggleSkill(indexStr: string, enabled: boolean) {
   const skills = _getAllSkills();
-  const skillIndex = parseInt(index, 10);
-  if (isNaN(skillIndex) || skillIndex < 0 || skillIndex >= skills.length) {
-    logError('Invalid skill index');
-    return;
+  const indices = indexStr.split(',').map(s => s.trim()).filter(Boolean);
+  let hasError = false;
+  for (const part of indices) {
+    const skillIndex = parseInt(part, 10);
+    if (isNaN(skillIndex) || skillIndex < 0 || skillIndex >= skills.length) {
+      logError(`Invalid skill index: ${part}`);
+      hasError = true;
+      continue;
+    }
+    const skill = skills[skillIndex];
+    skill.isEnabled = enabled;
+    const skillDir = skill.skillDir;
+    const registerPath = _getRegisterPath(skillDir!);
+    const scanDir = path.join(skillDir!, 'skills');
+    const currentScanSkills = _getSkillList(scanDir);
+    fs.writeJSONSync(
+      registerPath,
+      currentScanSkills.map(item => item.skillPath === skill.skillPath ? skill : item),
+      { spaces: 2 },
+    );
+    const action = enabled ? 'enabled' : 'disabled';
+    logSuccess(`Skill ${action}: ${skill.name}`);
   }
-  const skill = skills[skillIndex];
-  skill.isEnabled = true;
-  const skillDir = skill.skillDir;
-  const registerPath = _getRegisterPath(skillDir!);
-  // 获取当前扫描路径的所有skills
-  const scanDir = path.join(skillDir!, 'skills');
-  const currentScanSkills = _getSkillList(scanDir);
-  fs.writeJSONSync(
-    registerPath,
-    currentScanSkills.map(item => item.skillPath === skill.skillPath ? skill : item),
-    { spaces: 2 },
-  );
-  logSuccess(`Skillenabled: ${skill.name}`);
+  return hasError;
+}
+
+export function handleSkillsEnable(index: string) {
+  _toggleSkill(index, true);
 }
 
 export function handleSkillsDisable(index: string) {
-  const skills = _getAllSkills();
-  const skillIndex = parseInt(index, 10);
-  if (isNaN(skillIndex) || skillIndex < 0 || skillIndex >= skills.length) {
-    logError('Invalid skill index');
-    return;
-  }
-  const skill = skills[skillIndex];
-  skill.isEnabled = false;
-  const skillDir = skill.skillDir;
-  const registerPath = _getRegisterPath(skillDir!);
-  // 获取当前扫描路径的所有skills
-  const scanDir = path.join(skillDir!, 'skills');
-  const currentScanSkills = _getSkillList(scanDir);
-  fs.writeJSONSync(
-    registerPath,
-    currentScanSkills.map(item => item.skillPath === skill.skillPath ? skill : item),
-    { spaces: 2 },
-  );
-  logSuccess(`Skilldisabled: ${skill.name}`);
+  _toggleSkill(index, false);
 }
+
+
 
 export function handleSkillsDir() {
   logInfo('Opening skills directory');

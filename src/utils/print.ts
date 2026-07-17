@@ -56,7 +56,7 @@ function loading(label = 'Thinking...') {
   return (endLabel: string | undefined, isError = false) => {
     clearInterval(animationInterval);
     if (endLabel) {
-      writeLine(endLabel, '', isError ? 'red' : 'green');
+      writeLine(endLabel, '', isError ? 'red' : 'blue');
     }
     process.stdout.write('\r\n');
   };

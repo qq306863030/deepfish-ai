@@ -1,8 +1,8 @@
 import fs from 'fs-extra';
-import iconv from 'iconv-lite';
 import { tool } from 'langchain';
 import { z } from 'zod';
 import { getEncoding } from '@/cli/cli-utils/getGlobalData';
+import { decodeBuffer } from '@/utils/encoding';
 import { formatJson, resolveWorkspacePath, truncateOutput } from './fileTools';
 import { safeTool } from './utils';
 
@@ -23,7 +23,7 @@ export async function readFile(filePath: string, startLine = 1, endLine = -1, en
 
   const buffer = await fs.readFile(absPath);
   const targetEncoding = encoding || getEncoding() || 'utf-8';
-  const content = iconv.decode(buffer, targetEncoding === 'auto' ? 'utf-8' : targetEncoding);
+  const content = decodeBuffer(buffer, targetEncoding === 'auto' ? 'utf-8' : targetEncoding);
   const lines = content.split(/\r?\n/);
   const safeStart = Math.max(1, startLine || 1);
   const safeEnd = endLine && endLine > 0 ? Math.min(endLine, lines.length) : lines.length;

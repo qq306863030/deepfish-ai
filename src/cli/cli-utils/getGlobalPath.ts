@@ -95,7 +95,8 @@ export function getScanDirPaths(): string[] {
 export function getScanSkillDirPaths() {
   const workspacePath = getWorkspacePath();
   const paths = getScanDirPaths();
-  return [...paths, path.join(os.homedir(), '.agents'), path.join(workspacePath, '.agents')]
+  const res = new Set([...paths, path.join(os.homedir(), '.agents'), path.join(workspacePath, '.agents')])
+  return Array.from(res)
 }
 
 export function getMCPFilePath() {

@@ -3,7 +3,6 @@ import { DynamicStructuredTool, tool } from 'langchain';
 import { z } from 'zod';
 import path from 'path';
 import fs from 'fs-extra';
-import { randomUUID } from 'crypto';
 import type { Description, ErrorResult, SuccsessResult } from '@/@types/Tools';
 import { logWarning } from '@/utils/print';
 import { truncateOutput } from './fileTools';
