@@ -54,12 +54,14 @@
 - [6. Tool 与 Skill 扩展说明](#6-tool-与-skill-扩展说明)
   - [当前目录扩展](#当前目录扩展)
   - [全局扩展](#全局扩展)
-- [7. 系统配置文件说明](#7-系统配置文件说明)
+- [7. 插件说明](#7-插件说明)
+  - [SSH 远程控制插件](#ssh-远程控制插件)
+- [8. 系统配置文件说明](#8-系统配置文件说明)
   - [配置文件字段](#配置文件字段)
   - [AI 模型配置字段](#ai-模型配置字段)
-- [8. 贡献](#8-贡献)
-- [9. 许可证](#9-许可证)
-- [10. 支持](#10-支持)
+- [9. 贡献](#9-贡献)
+- [10. 许可证](#10-许可证)
+- [11. 支持](#11-支持)
 
 ## 1. 介绍
 
@@ -289,7 +291,28 @@ ai config dir
 - Skill 扩展放入 `全局配置目录/.deepfish-ai/skills/`。
 - 这种方式对全局有效，适合通用工具或长期复用的工作流能力。
 
-## 7. 系统配置文件说明
+## 7. 插件说明
+
+DeepFish 支持通过 npm 全局安装插件来扩展能力。
+
+### SSH 远程控制插件
+
+[@deepfish-ai/deepfish-ssh-remote-control](https://www.npmjs.com/package/@deepfish-ai/deepfish-ssh-remote-control) 是一款 SSH 远程控制插件，让 AI 能够通过 SSH 连接到远程服务器并执行命令，轻松管理远程主机。
+
+安装：
+
+```bash
+npm install -g @deepfish-ai/deepfish-ssh-remote-control
+```
+
+使用：安装后重启 DeepFish，AI 会自动加载远程控制工具。你可以在对话中直接让 AI 连接到远程服务器执行操作，例如：
+
+```bash
+a “连接到 192.168.1.100，帮我查看服务器状态”
+```
+
+
+## 8. 系统配置文件说明
 
 DeepFish 的系统配置文件位于用户目录下的 `.deepfish-ai/config.json5`，可通过以下命令打开或查看：
 
@@ -327,14 +350,14 @@ ai config view
 | `temperature`      | `number` | 生成随机性参数，数值越高输出越发散，数值越低输出越稳定。        |
 | `maxContextLength` | `number` | 模型最大上下文长度，单位为 tokens。                             |
 
-## 8. 贡献
+## 9. 贡献
 
 欢迎贡献！请随时提交Pull Request。
 
-## 9. 许可证
+## 10. 许可证
 
 本项目采用MIT许可证 - 详见[LICENSE](LICENSE)文件。
 
-## 10. 支持
+## 11. 支持
 
 如有问题和疑问，请在GitHub仓库上提交issue。

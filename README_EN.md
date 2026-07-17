@@ -54,12 +54,14 @@
 - [6. Tool and Skill Extensions](#6-tool-and-skill-extensions)
   - [Current Directory Extensions](#current-directory-extensions)
   - [Global Extensions](#global-extensions)
-- [7. System Configuration File](#7-system-configuration-file)
+- [7. Plugin](#7-plugin)
+  - [SSH Remote Control Plugin](#ssh-remote-control-plugin)
+- [8. System Configuration File](#8-system-configuration-file)
   - [Configuration Fields](#configuration-fields)
   - [AI Model Configuration Fields](#ai-model-configuration-fields)
-- [8. Contributing](#8-contributing)
-- [9. License](#9-license)
-- [10. Support](#10-support)
+- [9. Contributing](#9-contributing)
+- [10. License](#10-license)
+- [11. Support](#11-support)
 
 ## 1. Introduction
 
@@ -294,7 +296,28 @@ global-config-directory/
 - Place Skill extensions under `global-config-directory/.deepfish-ai/skills/`.
 - This approach is globally effective and is suitable for common tools or reusable workflow capabilities.
 
-## 7. System Configuration File
+## 7. Plugin
+
+DeepFish supports extending its capabilities via globally installed npm plugins.
+
+### SSH Remote Control Plugin
+
+[@deepfish-ai/deepfish-ssh-remote-control](https://www.npmjs.com/package/@deepfish-ai/deepfish-ssh-remote-control) is an SSH remote control plugin that enables AI to connect to remote servers via SSH and execute commands, making remote host management effortless.
+
+Installation:
+
+```bash
+npm install -g @deepfish-ai/deepfish-ssh-remote-control
+```
+
+Usage: After installation, restart DeepFish and AI will automatically load the remote control tools. You can instruct AI to connect to remote servers and perform operations directly in conversations, for example:
+
+```bash
+a "Connect to 192.168.1.100 and show me the server status"
+```
+
+
+## 8. System Configuration File
 
 DeepFish stores its system configuration file at `.deepfish-ai/config.json5` under the user directory. You can open or view it with the following commands:
 
@@ -332,14 +355,14 @@ Each item in `aiList` represents one AI model configuration. Common fields are l
 | `temperature`      | `number` | Randomness parameter for generation. Higher values produce more diverse output; lower values produce more stable output. |
 | `maxContextLength` | `number` | Maximum context length of the model, in tokens.                                                                          |
 
-## 8. Contributing
+## 9. Contributing
 
 Contributions are welcome! Feel free to submit Pull Requests at any time.
 
-## 9. License
+## 10. License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 10. Support
+## 11. Support
 
 For questions and inquiries, please submit an issue on the GitHub repository.
