@@ -15,6 +15,7 @@ const DEFAULT_CONFIG_JSON5 = `{
   encoding: 'auto', // 命令行编码格式，可设置为 utf-8、gbk 等，也可以设置成 auto 或空值自动判断
   maxSubAgentCount: 2, // "最大子agent并行执行数量", -1 表示无限制
   isPrintThinking: true, // 是否打印 AI 思考过程中的中间信息，默认为 true
+  isUseMemory: true, // 是否使用记忆功能，默认为 true
   serve: {
       port: 8866,
   }

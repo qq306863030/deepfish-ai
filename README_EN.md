@@ -339,6 +339,7 @@ ai config view
 | `encoding`            | `string`  | `'auto'` | Command-line output encoding, such as `utf-8` or `gbk`. `auto` or an empty value enables automatic detection.            |
 | `maxSubAgentCount`    | `number`  | `2`      | Maximum number of parallel sub-agents. `-1` means unlimited.                                                             |
 | `isPrintThinking`     | `boolean` | `true`   | Whether to print intermediate AI thinking information.                                                                   |
+| `isUseMemory`         | `boolean` | `true`   | Whether to enable memory. AI learns from historical conversations and optimizes responses.                               |
 | `serve.port`          | `number`  | `8866`   | Local service port used by DeepFish.                                                                                     |
 
 ### AI Model Configuration Fields

@@ -334,6 +334,7 @@ ai config view
 | `encoding`            | `string`  | `'auto'` | 命令行输出编码，可设置为 `utf-8`、`gbk` 等；`auto` 或空值表示自动判断。 |
 | `maxSubAgentCount`    | `number`  | `2`      | 最大并行子 Agent 数量，`-1` 表示不限制。                                |
 | `isPrintThinking`     | `boolean` | `true`   | 是否打印 AI 思考过程中的中间信息。                                      |
+| `isUseMemory`         | `boolean` | `true`   | 是否使用记忆功能，AI 会从历史对话中学习并优化回答。                     |
 | `serve.port`          | `number`  | `8866`   | DeepFish 本地服务端口。                                                 |
 
 ### AI 模型配置字段
