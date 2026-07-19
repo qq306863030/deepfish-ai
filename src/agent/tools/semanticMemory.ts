@@ -61,7 +61,7 @@ export const updateSemanticMemoryTool = tool(
   {
     name: 'update_user_semantic_memory',
     description:
-      '记住这件事:覆盖更新当前我的记忆 Markdown 文件。content 必须是完整的 Markdown 文件内容，而不是片段。仅记录明确、稳定、可长期复用的信息，例如用户称呼、操作习惯、编码习惯、个人偏好等；不要记录一次性任务信息、临时上下文、推测内容、密码、密钥、令牌、隐私敏感信息。更新前应先调用 read_user_semantic_memory 读取现有内容，然后在保留已有有效记忆的基础上合并新信息，按 Markdown 标题和列表整理，并自行去重。',
+      '记住这件事:覆盖更新当前我的记忆 Markdown 文件。content 必须是完整的 Markdown 文件内容，而不是片段。仅记录明确、稳定、可长期复用的信息，必须将内容放在不同的分类中，目前的分类有用户称呼、操作习惯、编码习惯、个人偏好、其他长期记忆；不要记录一次性任务信息、临时上下文、推测内容或密码、密钥、令牌、隐私敏感信息。更新前应先调用 read_user_semantic_memory 读取现有内容，然后合并新信息，按 Markdown 标题和列表整理，并自行去重。',
     schema: z.object({
       content: z.string().describe('完整的我的记忆 Markdown 内容，需保留并合并已有有效记忆，按分类标题和列表项组织'),
     }),
