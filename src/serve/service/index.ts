@@ -39,6 +39,7 @@ function loadClientHtml(): string {
 type SsrRender = () => { html: string };
 
 import { pathToFileURL } from 'url';
+import AIAgent from '@/agent/AIAgent';
 
 async function loadSsrRender(): Promise<SsrRender> {
   // Windows absolute paths must be file:// URLs for ESM import()
@@ -81,6 +82,10 @@ function createApp() {
 export interface StartServerOptions {
   /** HTTP server 启动后的回调，参数为底层 http.Server 实例，可用于附着 WebSocket 等。 */
   onReady?: (httpServer: Server) => void;
+}
+
+async function initFakeAgent() {
+  new AIAgent({} as any)
 }
 
 export async function startServer(options: StartServerOptions = {}) {
@@ -130,6 +135,7 @@ export async function startServer(options: StartServerOptions = {}) {
     }
     logInfo('');
     options.onReady?.(server as Server);
+    initFakeAgent() // 初始化一个Agent，为了加速下次启动
   });
 }
 
