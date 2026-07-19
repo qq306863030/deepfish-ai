@@ -74,12 +74,13 @@ export function connectAgentRoom(agent: AIAgent): Promise<ConnectAgentRoomResult
       },
       onError: (_c, code) => {
         if (code === 'AGENT_ALREADY_CONNECTED') {
-          logWarning(`[agent-room] agent "${id}" already online`);
           done({ ok: false, reason: 'duplicate-id' });
         }
       },
       onClose: () => {
-        logInfo(`[agent-room] agent offline: ${id}`);
+        if (!settled) {
+          logInfo(`[agent-room] agent offline: ${id}`);
+        }
         done({ ok: false, reason: 'offline' });
       },
     });

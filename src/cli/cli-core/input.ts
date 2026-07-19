@@ -40,7 +40,7 @@ export async function handleInput(args: string[], skills?: string[]) {
         logWarning(`[agent-room] agent "${agent.id}" is already running, task added to queue`);
         const taskQueue = new TaskQueue(agent);
         taskQueue.pushTask(input);
-        return null;
+        process.exit(0);
       } else {
         logWarning('[agent-room] agent-room service not detected, running in offline mode');
       }
