@@ -20,6 +20,7 @@ export type AgentOpt = {
   excludeMCP?: string[]; // 排除的多轮对话技能列表，技能ID数组
   systemPrompt?: string; // 系统提示词，覆盖默认系统提示词
   subLevel?: number; // 子智能体层级，默认为 0，表示主智能体；1 表示子智能体；2 表示孙智能体，以此类推
+  isUseMemory?: boolean // 是否使用记忆，默认是true
 };
 
 export type AgentMessage = {

@@ -66,12 +66,15 @@ export default class SubAIAgent extends EventEmitterSuper {
   }
 
   async init() {
-    this.tools = this.parentAgent.tools?.length ? [...this.parentAgent.tools] : (await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools));
+    this.tools = this.parentAgent.tools?.length
+      ? [...this.parentAgent.tools]
+      : await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
     this.skills = this.parentAgent.skills?.length ? [...this.parentAgent.skills] : [...getSkills(), ...(this.opt.externalSkills || [])];
     if (this.subLevel > 2) {
       this.excludeTools.push('subAgent_exec');
       this.excludeTools.push('subAgent_image');
     }
+    this.excludeTools.push('read_user_semantic_memory', 'update_user_semantic_memory')
     this.tools = this.tools.filter((tool) => !this.excludeTools.some((excludeTool) => tool.name.startsWith(excludeTool)));
 
     const model = getModel(this.opt.modelOpt);
@@ -94,6 +97,7 @@ export default class SubAIAgent extends EventEmitterSuper {
             memoryFilePath: this.memoryFilePath,
             agentRulesPath: this.agentRulesPath,
             excludeSkills: this.excludeSkills,
+            isUseMemory: false,
           })
         : subSystemPrompt({
             systemPrompt: this.systemPrompt,

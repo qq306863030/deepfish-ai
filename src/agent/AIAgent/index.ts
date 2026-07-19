@@ -44,6 +44,7 @@ export default class AIAgent extends EventEmitterSuper {
   excludeSkills: string[] = [];
   excludeMCP: string[] = [];
   systemPrompt: string = '';
+  isUseMemory: boolean = true
 
   constructor(opt: AgentOpt) {
     super();
@@ -62,11 +63,17 @@ export default class AIAgent extends EventEmitterSuper {
     this.systemPrompt = opt.systemPrompt || '';
     this.subLevel = 0;
     this.maxSubAgentCount = opt.maxSubAgentCount || 2;
+    this.isUseMemory = opt.isUseMemory ?? true
   }
 
   async init() {
     this.tools = await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
     this.skills = [...getSkills(), ...(this.opt.externalSkills || [])];
+    if (!this.isUseMemory) {
+      this.tools = this.tools.filter(tool => {
+        return !(['read_user_semantic_memory', 'update_user_semantic_memory'].includes(tool.name))
+      })
+    }
     const model = getModel(this.opt.modelOpt);
     const checkpointer = new FileSystemSaver({
       rootFolder: this.sessionDirPath,
@@ -102,6 +109,7 @@ export default class AIAgent extends EventEmitterSuper {
         memoryFilePath: this.memoryFilePath,
         agentRulesPath: this.agentRulesPath,
         excludeSkills: this.excludeSkills,
+        isUseMemory: this.isUseMemory
       }),
     });
     await checkpointer.init(this.threadId, agent);

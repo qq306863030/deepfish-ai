@@ -62,6 +62,7 @@ type SystemPromptParams = {
   memoryFilePath: string;
   agentRulesPath: string;
   excludeSkills: string[];
+  isUseMemory: boolean;
 }
 
 type SubSystemPromptParams = {
@@ -74,7 +75,7 @@ type SubSystemPromptParams = {
 
 export const getSystemPrompt = (params: SystemPromptParams) => {
   const skillPrompt = getSkillPrompt(params.skills, params.excludeSkills);
-  const memoryPrompt = getUserMemoryPrompt(params.memoryFilePath);
+  const memoryPrompt = params.isUseMemory ? getUserMemoryPrompt(params.memoryFilePath) : '';
   const agentRulesPrompt = getAgentRulesPrompt(params.agentRulesPath);
   return `
 ${params.systemPrompt + `\n这是Deepfish Cli系统,你是系统中严格按规则执行任务的智能体,不能违反任何系统限制。

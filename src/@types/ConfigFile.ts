@@ -34,6 +34,7 @@ export type ConfigFile = {
   maxSubAgentCount: number; // "最大子agent并行执行数量", -1 表示无限制
   serve: ServeConfig;
   isPrintThinking: boolean; // 是否打印 AI 思考过程中的中间信息，默认为 true
+  isUseMemory: boolean; // 是否使用记忆
 };
 
 export type TaskQueueItem = {
