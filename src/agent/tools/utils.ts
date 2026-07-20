@@ -16,6 +16,7 @@ type ToolFile = {
 
 type ToolOpt = {
   name: string;
+  toolNameList: string[];
   path: string;
   dir: string | null;
 };
@@ -40,11 +41,10 @@ export async function safeTool<T>(handler: () => T | Promise<T>): Promise<string
   } catch (error) {
     // 提供更友好的错误信息
     const message = error instanceof Error ? error.message : String(error);
-    if (message.includes('Received tool input did not match expected schema') || 
-        message.includes('expected string, received undefined')) {
-      return serializeToolResult(errorResult(new Error(
-        '工具调用参数错误：请确保提供了所有必填参数。例如 write_file 工具需要 filePath 和 content 两个必填参数。'
-      )));
+    if (message.includes('Received tool input did not match expected schema') || message.includes('expected string, received undefined')) {
+      return serializeToolResult(
+        errorResult(new Error('工具调用参数错误：请确保提供了所有必填参数。例如 write_file 工具需要 filePath 和 content 两个必填参数。')),
+      );
     }
     return serializeToolResult(errorResult(error));
   }
@@ -101,7 +101,11 @@ function jsonSchemaToZod(node: any): z.ZodTypeAny {
 }
 
 // 将一个普通函数转换为 LangChain 的工具函数
-function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult | string, description: Description, index: number): DynamicStructuredTool {
+function toLangChainTool(
+  func: (...args: any[]) => SuccsessResult | ErrorResult | string,
+  description: Description,
+  index: number,
+): DynamicStructuredTool {
   const { name, description: desc, parameters } = description.function;
   const { properties } = parameters;
 
@@ -118,7 +122,7 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
     try {
       const boundFunc = func.bind({
         createSubAgent: async (systemPrompt: string, prompt: string) => {
-          return runtime.context.curAgent.subExecute(systemPrompt, prompt)
+          return runtime.context.curAgent.subExecute(systemPrompt, prompt);
         },
         curAgent: runtime.context.curAgent,
       });
@@ -142,12 +146,12 @@ function toLangChainTool(func: (...args: any[]) => SuccsessResult | ErrorResult 
 // 文件扫描
 function scanUserTools(excludeTools: string[], externalTools: string[]) {
   const files1 = _scanUserToolsFile();
-  const files2 = _scanExternalToolsFile(externalTools)
+  const files2 = _scanExternalToolsFile(externalTools);
   const tools: DynamicStructuredTool[] = [];
   [...files1, ...files2].forEach((toolFile) => {
     _loadToolsFromFile(toolFile.filePath, tools, excludeTools);
   });
-  
+
   return tools;
 }
 
@@ -157,6 +161,16 @@ function getUserToolList() {
   files.forEach((toolFile) => {
     const toolModule = require(toolFile.filePath);
     const { functions, descriptions } = toolModule;
+    let toolMainName: string;
+    const toolNameList: string[] = [];
+    if (!toolFile.dir) {
+      // 使用文件名称
+      toolMainName = path.basename(toolFile.filePath, path.extname(toolFile.filePath));
+    } else {
+      // 使用目录名称
+      toolMainName = path.basename(toolFile.dir);
+    }
+
     descriptions.forEach((desc: Description) => {
       if (!desc.type) {
         desc = {
@@ -168,11 +182,13 @@ function getUserToolList() {
       if (typeof func !== 'function') {
         return;
       }
-      toolOpts.push({
-        name: desc.function.name,
-        path: toolFile.filePath,
-        dir: toolFile.dir,
-      });
+      toolNameList.push(desc.function.name);
+    });
+    toolOpts.push({
+      name: toolMainName,
+      toolNameList,
+      path: toolFile.filePath,
+      dir: toolFile.dir,
     });
   });
   return toolOpts;
@@ -224,7 +240,7 @@ function _scanExternalToolsFile(externalTools: string[]) {
       toolFiles.push(toolFile);
     }
   });
-  return toolFiles
+  return toolFiles;
 }
 
 function _scanUserToolsFile() {
@@ -270,7 +286,7 @@ function _loadToolsFromFile(filePath: string, tools: DynamicStructuredTool[], ex
       return;
     }
 
-    descriptions.forEach((desc: Description, index:number) => {
+    descriptions.forEach((desc: Description, index: number) => {
       if (!desc.type) {
         desc = {
           type: 'function',

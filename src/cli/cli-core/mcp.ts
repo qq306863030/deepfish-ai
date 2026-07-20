@@ -71,10 +71,10 @@ function _toggleMcp(nameOrIndexStr: string, enabled: boolean) {
   return hasError;
 }
 
-export function handleMcpEnable(nameOrIndex: string) {
-  _toggleMcp(nameOrIndex, true);
+export function handleMcpEnable(...nameOrIndices: string[]) {
+  _toggleMcp(nameOrIndices.join(','), true);
 }
 
-export function handleMcpDisable(nameOrIndex: string) {
-  _toggleMcp(nameOrIndex, false);
+export function handleMcpDisable(...nameOrIndices: string[]) {
+  _toggleMcp(nameOrIndices.join(','), false);
 }

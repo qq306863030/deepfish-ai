@@ -9,15 +9,16 @@ import fs from 'fs-extra';
 import path from 'path';
 
 export function handleToolsLs() {
-  const toolNames = getUserToolList().map(tool => {
-    return tool.name
-  });
+  const toolList = getUserToolList();
   logInfo('='.repeat(50));
-  if (toolNames.length === 0) {
+  if (toolList.length === 0) {
     logInfo('No tools registered yet');
   } else {
-    toolNames.forEach((name, index) => {
-      logInfo(`[${index}] ${name}`);
+    toolList.forEach((tool, index) => {
+      logInfo(`[${index}] ${tool.name}`);
+      tool.toolNameList.forEach((toolName) => {
+        logInfo(`  - ${toolName}`);
+      });
     });
   }
   logInfo('='.repeat(50));

@@ -153,12 +153,12 @@ function _toggleSkill(indexStr: string, enabled: boolean) {
   return hasError;
 }
 
-export function handleSkillsEnable(index: string) {
-  _toggleSkill(index, true);
+export function handleSkillsEnable(...indices: string[]) {
+  _toggleSkill(indices.join(','), true);
 }
 
-export function handleSkillsDisable(index: string) {
-  _toggleSkill(index, false);
+export function handleSkillsDisable(...indices: string[]) {
+  _toggleSkill(indices.join(','), false);
 }
 
 
