@@ -313,7 +313,7 @@ npm install -g @deepfish-ai/deepfish-ssh-remote-control
 Usage: After installation, restart DeepFish and AI will automatically load the remote control tools. You can instruct AI to connect to remote servers and perform operations directly in conversations, for example:
 
 ```bash
-a "Connect to 192.168.1.100 and show me the server status"
+ai "Connect to 192.168.1.100 and show me the server status"
 ```
 
 

@@ -308,7 +308,7 @@ npm install -g @deepfish-ai/deepfish-ssh-remote-control
 使用：安装后重启 DeepFish，AI 会自动加载远程控制工具。你可以在对话中直接让 AI 连接到远程服务器执行操作，例如：
 
 ```bash
-a “连接到 192.168.1.100，帮我查看服务器状态”
+ai “连接到 192.168.1.100，帮我查看服务器状态”
 ```
 
 
