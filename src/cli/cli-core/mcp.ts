@@ -71,10 +71,13 @@ function _toggleMcp(nameOrIndexStr: string, enabled: boolean) {
   return hasError;
 }
 
-export function handleMcpEnable(...nameOrIndices: string[]) {
-  _toggleMcp(nameOrIndices.join(','), true);
+export function handleMcpEnable(...args: any[]) {
+  // Commander 会将 options 和 command 对象作为最后两个参数传入，过滤掉非字符串参数
+  const names = args.filter((a): a is string => typeof a === 'string');
+  _toggleMcp(names.join(','), true);
 }
 
-export function handleMcpDisable(...nameOrIndices: string[]) {
-  _toggleMcp(nameOrIndices.join(','), false);
+export function handleMcpDisable(...args: any[]) {
+  const names = args.filter((a): a is string => typeof a === 'string');
+  _toggleMcp(names.join(','), false);
 }

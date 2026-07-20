@@ -153,11 +153,14 @@ function _toggleSkill(indexStr: string, enabled: boolean) {
   return hasError;
 }
 
-export function handleSkillsEnable(...indices: string[]) {
+export function handleSkillsEnable(...args: any[]) {
+  // Commander 会将 options 和 command 对象作为最后两个参数传入，过滤掉非字符串参数
+  const indices = args.filter((a): a is string => typeof a === 'string');
   _toggleSkill(indices.join(','), true);
 }
 
-export function handleSkillsDisable(...indices: string[]) {
+export function handleSkillsDisable(...args: any[]) {
+  const indices = args.filter((a): a is string => typeof a === 'string');
   _toggleSkill(indices.join(','), false);
 }
 
