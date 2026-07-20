@@ -8,7 +8,7 @@ const PM2_APP_NAME = 'deepfish-ai-server';
 
 function getPm2Config() {
   const port = getServePort();
-  const serverScript = path.join(getCodePath(), 'dist/serve/pm2-server');
+  const serverScript = path.join(getCodePath(), 'dist/serve/pm2-server.js');
   return {
     name: PM2_APP_NAME,
     script: serverScript,
