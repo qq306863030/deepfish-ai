@@ -154,13 +154,15 @@ function _toggleSkill(indexStr: string, enabled: boolean) {
 }
 
 export function handleSkillsEnable(...args: any[]) {
-  // Commander 会将 options 和 command 对象作为最后两个参数传入，过滤掉非字符串参数
-  const indices = args.filter((a): a is string => typeof a === 'string');
+  // Commander variadic 可能传递数组或个人参数，flat 统一处理
+  const indices = args.flat().filter((a): a is string => typeof a === 'string');
+  if (indices.length === 0) return;
   _toggleSkill(indices.join(','), true);
 }
 
 export function handleSkillsDisable(...args: any[]) {
-  const indices = args.filter((a): a is string => typeof a === 'string');
+  const indices = args.flat().filter((a): a is string => typeof a === 'string');
+  if (indices.length === 0) return;
   _toggleSkill(indices.join(','), false);
 }
 

@@ -72,12 +72,14 @@ function _toggleMcp(nameOrIndexStr: string, enabled: boolean) {
 }
 
 export function handleMcpEnable(...args: any[]) {
-  // Commander 会将 options 和 command 对象作为最后两个参数传入，过滤掉非字符串参数
-  const names = args.filter((a): a is string => typeof a === 'string');
+  // Commander variadic 可能传递数组或个人参数，flat 统一处理
+  const names = args.flat().filter((a): a is string => typeof a === 'string');
+  if (names.length === 0) return;
   _toggleMcp(names.join(','), true);
 }
 
 export function handleMcpDisable(...args: any[]) {
-  const names = args.filter((a): a is string => typeof a === 'string');
+  const names = args.flat().filter((a): a is string => typeof a === 'string');
+  if (names.length === 0) return;
   _toggleMcp(names.join(','), false);
 }
