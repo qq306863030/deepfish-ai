@@ -85,6 +85,12 @@ export async function handleModelAdd() {
         when: (answers: ModelAnswers) => !!answers.Type,
         default: (answers: ModelAnswers) => aiCliConfig[answers.Type as keyof typeof aiCliConfig]?.maxContextLength || 1000000,
       },
+      {
+        type: 'confirm',
+        name: 'isVision',
+        message: 'Does this model support image recognition?',
+        default: false,
+      },
     ];
 
     const answers = (await inquirer.prompt(questions)) as ModelAnswers;
@@ -98,6 +104,7 @@ export async function handleModelAdd() {
       apiKey: answers.apiKey || aiCliConfig[selectedType].apiKey,
       temperature: answers.temperature,
       maxContextLength: answers.maxContextLength,
+      isVision: answers.isVision,
     };
 
     const config = readConfig();

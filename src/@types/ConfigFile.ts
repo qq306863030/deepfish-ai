@@ -21,6 +21,7 @@ export type AIConfig = {
   apiKey: string; // API 密钥
   temperature: number; // 温度参数
   maxContextLength: number; // 单位KB，最大上下文长度
+  isVision?: boolean; // 是否支持图像识别，默认false
 };
 
 export type ConfigFile = {

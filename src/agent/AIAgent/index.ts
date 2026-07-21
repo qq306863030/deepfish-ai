@@ -46,6 +46,7 @@ export default class AIAgent extends EventEmitterSuper {
   excludeMCP: string[] = [];
   systemPrompt: string = '';
   isUseMemory: boolean = true
+  isVision: boolean = false
 
   constructor(opt: AgentOpt) {
     super();
@@ -65,14 +66,22 @@ export default class AIAgent extends EventEmitterSuper {
     this.subLevel = 0;
     this.maxSubAgentCount = opt.maxSubAgentCount || 2;
     this.isUseMemory = opt.isUseMemory ?? true
+    this.isVision = opt.isVision ?? false
   }
 
   async init() {
     this.tools = await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
     this.skills = [...getSkills(), ...(this.opt.externalSkills || [])];
+    const excludeInnerTools:string[] = []
     if (!this.isUseMemory) {
+      excludeInnerTools.push('read_user_semantic_memory', 'update_user_semantic_memory')
+    }
+    if (!this.isVision) {
+      excludeInnerTools.push('subAgent_image')
+    }
+    if (excludeInnerTools.length) {
       this.tools = this.tools.filter(tool => {
-        return !(['read_user_semantic_memory', 'update_user_semantic_memory'].includes(tool.name))
+        return !(excludeInnerTools.includes(tool.name))
       })
     }
     const model = getModel(this.opt.modelOpt);

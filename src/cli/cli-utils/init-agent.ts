@@ -35,7 +35,8 @@ export async function initAgent(config: ConfigFile, skills?: string[]): Promise<
     maxSubAgentCount: config.maxSubAgentCount, // Maximum parallel sub-agent execution count, -1 means unlimited
     externalSkills: skills,
     isPrintThinking: config.isPrintThinking, // Whether to print intermediate information during AI thinking, default is true
-    isUseMemory: config.isUseMemory
+    isUseMemory: config.isUseMemory,
+    isVision: currentAI.isVision
   });
   await agent.init();
   return agent;

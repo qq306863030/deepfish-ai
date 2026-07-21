@@ -65,7 +65,7 @@
 
 ## 1. Introduction
 
-An efficient AI-driven command-line tool designed to bridge the gap between natural language and operating system commands, file operations, and more. It enables non-developers to quickly generate executable instructions through simple natural language descriptions, significantly improving terminal operation efficiency.
+An efficient AI-driven command-line tool designed to bridge the gap between natural language and operating system commands, file operations, and more. Through simple natural language descriptions, it can perform complex tasks that would otherwise be tedious, greatly improving work efficiency — such as batch translating documents, remote deployment, installing software, summarizing content, and more.
 
 Core Features:
 
@@ -123,7 +123,7 @@ ai "Write an article about future technology in the current directory, output in
 ai "your question or instruction"
 ```
 
-Enter natural language directly, and AI will automatically parse and execute the corresponding operations. DeepFish keeps only one Agent session per directory, so multiple `ai` commands in the same directory reuse the same context.
+Enter natural language directly, and AI will automatically parse and execute the corresponding operations. DeepFish keeps only one Agent session per directory. If an Agent for this directory is already running, new messages will be automatically queued and executed in order.
 
 Example:
 
@@ -355,6 +355,7 @@ Each item in `aiList` represents one AI model configuration. Common fields are l
 | `apiKey`           | `string` | API key for the model provider.                                                                                          |
 | `temperature`      | `number` | Randomness parameter for generation. Higher values produce more diverse output; lower values produce more stable output. |
 | `maxContextLength` | `number` | Maximum context length of the model, in tokens.                                                                          |
+| `isVision`         | `boolean` | Whether image recognition is supported, defaults to `false`.                                                             |
 
 ## 9. Contributing
 
