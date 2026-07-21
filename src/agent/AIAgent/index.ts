@@ -9,6 +9,7 @@ import { AgentEvent } from '../../@types/AgentEvent';
 import { streamOutput, logError, log, logInfo, logSuccess } from '@/utils/print';
 import { createAgentEventMiddleware } from './middleware/eventEmitMiddleware';
 import Thinking from './utils/Thinking';
+import TimeRecord from './utils/TimeRecord';
 import { getSystemPrompt } from './system-prompt';
 import { getTools } from '../tools';
 import { getSkills } from '../skills';
@@ -156,12 +157,16 @@ export default class AIAgent extends EventEmitterSuper {
 
   initEvents() {
     const thinking = new Thinking();
-    this.on(AgentEvent.TASK_BEFORE, () => {});
+    const timeRecord = new TimeRecord();
+    this.on(AgentEvent.TASK_BEFORE, () => {
+      timeRecord.start()
+    });
     this.on(AgentEvent.TASK_AFTER, (_msg) => {
       if (!this.isPrintThinking) {
         thinking.stop();
       }
       logSuccess(_msg);
+      logSuccess(timeRecord.end())
     });
     this.on(AgentEvent.MODEL_BEFORE, () => {});
     this.on(AgentEvent.MODEL_AFTER, () => {

@@ -106,7 +106,7 @@ npm link
 
 ```bash
 ai models add # 输入名称, 输入你的模型配置
-ai config use 你输入的名称
+ai models use 你输入的名称
 ai "帮我在当前目录写一篇关于未来科技的文章，用markdown格式输出"
 ```
 
@@ -232,7 +232,7 @@ MCP（Model Context Protocol）允许 AI 连接外部工具和服务。通过 `a
   "mcpServers": {
     "chrome-devtools": {
       "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest"]
+      "args": ["-y", "chrome-devtools-mcp@latest", "--autoConnect"]
     }
   }
 }

@@ -111,7 +111,7 @@ npm link
 
 ```bash
 ai models add # Enter name, then enter your model configuration
-ai config use your-model-name
+ai models use your-model-name
 ai "Write an article about future technology in the current directory, output in markdown format"
 ```
 
@@ -237,7 +237,7 @@ The following example configures a Chrome DevTools MCP Server, enabling AI to pe
   "mcpServers": {
     "chrome-devtools": {
       "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest"]
+      "args": ["-y", "chrome-devtools-mcp@latest", "--autoConnect"]
     }
   }
 }
