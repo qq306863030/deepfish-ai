@@ -65,7 +65,7 @@
 
 ## 1. Introduction
 
-An efficient AI-driven command-line tool designed to bridge the gap between natural language and operating system commands, file operations, and more. Through simple natural language descriptions, it can perform complex tasks that would otherwise be tedious, greatly improving work efficiency — such as batch translating documents, remote deployment, installing software, summarizing content, and more.
+An efficient and convenient AI-driven command-line tool, dedicated to breaking the barriers between natural language and operating system commands as well as file operation instructions. Through simple natural language descriptions, it performs originally complex operations and dramatically improves work efficiency — for example, batch translating documents, remote control, installing programs, summarizing content, and more. Agent tools like Claude, Codex, Copilot, and OpenCode are like ride-hailing services, while this Agent CLI tool is like a shared bike, getting you to the last mile of your operating system quickly.
 
 Core Features:
 

@@ -1,6 +1,6 @@
 {
   "name": "deepfish-ai",
-  "version": "2.0.23",
+  "version": "2.0.24",
   "private": false,
   "description": "An efficient AI-driven command-line tool designed to bridge the gap between natural language and operating system commands, file operations, and more. It enables non-developers to quickly generate executable instructions through simple natural language descriptions, significantly improving terminal operation efficiency.",
   "repository": {
@@ -36,10 +36,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "js-yaml": "^5.2.1",
-    "lighthouse": "^13.4.0",
     "pm2": "^7.0.1",
-    "puppeteer-core": "^25.3.0",
     "sharp": "^0.35.3",
     "solid-js": "^1.9.13"
   },
