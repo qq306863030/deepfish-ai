@@ -175,7 +175,7 @@ export default class AIAgent extends EventEmitterSuper {
         thinking.stop();
       }
       logSuccess(_msg);
-      logSuccess(timeRecord.end())
+      logInfo(timeRecord.end())
     });
     this.on(AgentEvent.MODEL_BEFORE, () => {});
     this.on(AgentEvent.MODEL_AFTER, () => {

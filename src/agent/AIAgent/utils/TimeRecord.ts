@@ -12,16 +12,16 @@ export default class TimeRecord {
     const elapsed = this.endTime - this.startTime;
 
     if (elapsed < 1000) {
-      return `用时 ${elapsed.toFixed(1)}ms`;
+      return `The task completed in ${elapsed.toFixed(1)}ms`;
     }
 
     const seconds = elapsed / 1000;
     if (seconds < 60) {
-      return `用时 ${seconds.toFixed(1)}s`;
+      return `The task completed in ${seconds.toFixed(1)}s`;
     }
 
     const minutes = Math.floor(seconds / 60);
     const remainSeconds = seconds - minutes * 60;
-    return `用时 ${minutes}m ${remainSeconds.toFixed(1)}s`;
+    return `The task completed in ${minutes}m ${remainSeconds.toFixed(1)}s`;
   }
 }
