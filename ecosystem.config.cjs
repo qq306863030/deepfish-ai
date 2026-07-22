@@ -2,7 +2,7 @@ module.exports = {
   apps: [{
     name: 'deepfish-ai-server',
     script: './dist/serve/pm2-server.js',
-    cwd: '../',
+    cwd: './',
     node_args: '--no-warnings',
     env: {
       NODE_ENV: 'production',
