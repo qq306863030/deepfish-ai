@@ -9,7 +9,7 @@ import { grepTool } from './grep';
 import { questionTool } from './question';
 import { readFileTool } from './read';
 import { semanticMemoryTools } from './semanticMemory';
-import { subAgentTool, subAgentImageTool } from './subAgent';
+import { subAgentTool, subAgentImageTool, subAgentBatchTool } from './subAgent';
 import { taskTool } from './task';
 import { webFetchTool } from './webfetch';
 import { writeFileTool } from './write';
@@ -19,6 +19,7 @@ const builtinTools = [
   taskTool,
   subAgentTool,
   subAgentImageTool,
+  subAgentBatchTool,
   executeCommandTool,
   readFileTool,
   editFileTool,

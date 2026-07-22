@@ -38,4 +38,68 @@ export const subAgentImageTool = tool(
   },
 );
 
+/** 带并发限制的异步队列：同时最多执行 limit 个任务，返回结果数组（索引与输入一致） */
+async function asyncPool<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  async function worker(): Promise<void> {
+    while (nextIndex < items.length) {
+      const index = nextIndex++;
+      results[index] = await fn(items[index], index);
+    }
+  }
+
+  const workerCount = Math.min(limit, items.length);
+  if (workerCount === 0) return results;
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return results;
+}
+
+export async function subAgentBatchExec(
+  prompts: { systemPrompt: string; prompt: string }[],
+  parallelCount: number,
+  runtime: any,
+) {
+  const curAgent = runtime.context?.curAgent;
+  if (!curAgent) throw new Error('当前没有可用的 agent');
+
+  return asyncPool(prompts, parallelCount, async ({ systemPrompt, prompt }) => {
+    return curAgent.subExecute(systemPrompt, prompt);
+  });
+}
+
+export const subAgentBatchTool = tool(
+  async ({ prompts, parallelCount }, runtime) =>
+    safeTool(() => subAgentBatchExec(prompts, parallelCount, runtime)),
+  {
+    name: 'subAgent_batch',
+    description:
+      '批量创建多个子 agent 并通过异步队列并行执行任务，返回所有子 agent 的结果数组（索引与输入数组一一对应）。' +
+      '适合需要同时调研多个独立问题、并行处理多项独立任务的场景。',
+    schema: z.object({
+      prompts: z
+        .array(
+          z.object({
+            systemPrompt: z.string().min(1).describe('子 agent 的系统提示词，定义其角色和行为规范'),
+            prompt: z.string().min(1).describe('交给子 agent 执行的完整任务描述'),
+          }),
+        )
+        .min(1)
+        .describe('子 agent 提示词对象数组，每个对象包含 systemPrompt 和 prompt'),
+      parallelCount: z
+        .number()
+        .int()
+        .min(1)
+        .max(5)
+        .default(1)
+        .describe('并行执行数量，最小 1，最大 5，默认 1'),
+    }),
+  },
+);
+
 
