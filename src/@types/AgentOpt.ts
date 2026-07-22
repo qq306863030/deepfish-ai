@@ -22,6 +22,7 @@ export type AgentOpt = {
   subLevel?: number; // 子智能体层级，默认为 0，表示主智能体；1 表示子智能体；2 表示孙智能体，以此类推
   isUseMemory?: boolean // 是否使用记忆，默认是true
   isVision?: boolean // 是否支持图像识别，默认是false
+  isSilence?: boolean // 是否输出大模型返回的内容, 默认是false=输出 true=沉默
 };
 
 export type AgentMessage = {

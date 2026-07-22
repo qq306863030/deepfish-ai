@@ -32,9 +32,10 @@ export async function createSubAgent(workspace?:string) {
         maxSubAgentCount: config.maxSubAgentCount,
         externalSkills: [],
         excludeTools: ['ask_question', 'learn_self', 'get_learned_detail', 'update_learned_content', 'get_catalog_file_path'], // 服务端执行，不能进行交互
-        isPrintThinking: config.isPrintThinking,
+        isPrintThinking: true,
         isUseMemory: config.isUseMemory,
-        isVision: currentAI.isVision
+        isVision: currentAI.isVision,
+        isSilence: true
       });
       await agent.init();
       return agent;

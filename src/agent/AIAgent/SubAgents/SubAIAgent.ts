@@ -47,6 +47,7 @@ export default class SubAIAgent extends EventEmitterSuper {
   parentAgent: AIAgent | SubAIAgent | undefined = {} as AIAgent | SubAIAgent;
   isUseMemory: boolean = true
   isVision: boolean = false
+  isSilence: boolean = false
 
   constructor(opt: AgentOpt, parentAgent?: AIAgent | SubAIAgent) {
     super();
@@ -68,6 +69,7 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.parentAgent = parentAgent;
     this.isUseMemory = false
     this.isVision = opt.isVision ?? false
+    this.isSilence = opt.isSilence ?? false
   }
 
   async init() {
@@ -133,7 +135,7 @@ export default class SubAIAgent extends EventEmitterSuper {
       systemPrompt,
     });
     this.agent = agent;
-    this.initEvents();
+    !this.isSilence && this.initEvents();
   }
 
   async execute(input: string) {

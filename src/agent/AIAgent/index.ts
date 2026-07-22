@@ -46,8 +46,9 @@ export default class AIAgent extends EventEmitterSuper {
   excludeSkills: string[] = [];
   excludeMCP: string[] = [];
   systemPrompt: string = '';
-  isUseMemory: boolean = true
-  isVision: boolean = false
+  isUseMemory: boolean = true;
+  isVision: boolean = false;
+  isSilence: boolean = false;
 
   constructor(opt: AgentOpt) {
     super();
@@ -66,24 +67,25 @@ export default class AIAgent extends EventEmitterSuper {
     this.systemPrompt = opt.systemPrompt || '';
     this.subLevel = 0;
     this.maxSubAgentCount = opt.maxSubAgentCount || 2;
-    this.isUseMemory = opt.isUseMemory ?? true
-    this.isVision = opt.isVision ?? false
+    this.isUseMemory = opt.isUseMemory ?? true;
+    this.isVision = opt.isVision ?? false;
+    this.isSilence = opt.isSilence ?? false;
   }
 
   async init() {
     this.tools = await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
     this.skills = [...getSkills(), ...(this.opt.externalSkills || [])];
-    const excludeInnerTools:string[] = []
+    const excludeInnerTools: string[] = [];
     if (!this.isUseMemory) {
-      excludeInnerTools.push('read_user_semantic_memory', 'update_user_semantic_memory')
+      excludeInnerTools.push('read_user_semantic_memory', 'update_user_semantic_memory');
     }
     if (!this.isVision) {
-      excludeInnerTools.push('subAgent_image')
+      excludeInnerTools.push('subAgent_image');
     }
     if (excludeInnerTools.length) {
-      this.tools = this.tools.filter(tool => {
-        return !(excludeInnerTools.includes(tool.name))
-      })
+      this.tools = this.tools.filter((tool) => {
+        return !excludeInnerTools.includes(tool.name);
+      });
     }
     const model = getModel(this.opt.modelOpt);
     const checkpointer = new FileSystemSaver({
@@ -107,7 +109,7 @@ export default class AIAgent extends EventEmitterSuper {
         summarizationMiddleware({
           model: model,
           trigger: { tokens: this.opt.modelOpt.maxContextLength || 100000 },
-          keep: { messages: 50 }
+          keep: { messages: 50 },
         }),
         todoListMiddleware(),
         createPatchToolCallsMiddleware(),
@@ -120,13 +122,13 @@ export default class AIAgent extends EventEmitterSuper {
         memoryFilePath: this.memoryFilePath,
         agentRulesPath: this.agentRulesPath,
         excludeSkills: this.excludeSkills,
-        isUseMemory: this.isUseMemory
+        isUseMemory: this.isUseMemory,
       }),
     });
     await checkpointer.init(this.threadId, agent);
     this.agent = agent;
     this.taskQueue = new TaskQueue(this.id);
-    this.initEvents();
+    !this.isSilence && this.initEvents();
   }
 
   async execute(input: string) {
@@ -149,13 +151,15 @@ export default class AIAgent extends EventEmitterSuper {
         },
       },
     );
-    for await (const [_namespace, mode, data] of stream) {
-      if (mode === 'messages') {
-        const message = data?.[0] as unknown as AgentMessage | undefined;
-        // const content = message?.content;
-        const reasoning_content = message?.additional_kwargs?.reasoning_content;
-        const toolcall_content = message?.tool_call_chunks?.[0]?.args;
-        this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, this.id, reasoning_content || toolcall_content || '');
+    if (this.isSilence) {
+      for await (const [_namespace, mode, data] of stream) {
+        if (mode === 'messages') {
+          const message = data?.[0] as unknown as AgentMessage | undefined;
+          // const content = message?.content;
+          const reasoning_content = message?.additional_kwargs?.reasoning_content;
+          const toolcall_content = message?.tool_call_chunks?.[0]?.args;
+          this.emit(AgentEvent.STREAM_CONTENT_OUTPUT, this.id, reasoning_content || toolcall_content || '');
+        }
       }
     }
     const newTask = this.taskQueue.getTask();
@@ -169,14 +173,14 @@ export default class AIAgent extends EventEmitterSuper {
     const thinking = new Thinking();
     const timeRecord = new TimeRecord();
     this.on(AgentEvent.TASK_BEFORE, () => {
-      timeRecord.start()
+      timeRecord.start();
     });
     this.on(AgentEvent.TASK_AFTER, (_msg) => {
       if (!this.isPrintThinking) {
         thinking.stop();
       }
       logSuccess(_msg);
-      logInfo(timeRecord.end())
+      logInfo(timeRecord.end());
     });
     this.on(AgentEvent.MODEL_BEFORE, () => {});
     this.on(AgentEvent.MODEL_AFTER, () => {
@@ -196,7 +200,7 @@ export default class AIAgent extends EventEmitterSuper {
         if (!this.isPrintThinking) {
           thinking.start();
         }
-        return
+        return;
       }
       if (this.isPrintThinking) {
         if (content && typeof content === 'string') {
