@@ -16,6 +16,7 @@ import { randomUUID } from 'crypto';
 import { MemorySaver } from '@langchain/langgraph';
 import type AIAgent from '../index';
 import { resolveImage } from '../utils/image';
+import { getDefaultWorkspace } from '@/cli/cli-utils/getGlobalPath';
 
 // 通用子agent
 export default class SubAIAgent extends EventEmitterSuper {
@@ -43,14 +44,16 @@ export default class SubAIAgent extends EventEmitterSuper {
   excludeMCP: string[] = [];
   systemPrompt: string = '';
 
-  parentAgent: AIAgent | SubAIAgent = {} as AIAgent | SubAIAgent;
+  parentAgent: AIAgent | SubAIAgent | undefined = {} as AIAgent | SubAIAgent;
+  isUseMemory: boolean = true
+  isVision: boolean = false
 
-  constructor(opt: AgentOpt, parentAgent: AIAgent | SubAIAgent) {
+  constructor(opt: AgentOpt, parentAgent?: AIAgent | SubAIAgent) {
     super();
     this.opt = structuredClone(opt);
     this.id = `child-agent-${randomUUID()}`;
     this.basespace = opt.basespace;
-    this.workspace = opt.workspace;
+    this.workspace = opt.workspace || getDefaultWorkspace();
     this.memoryFilePath = opt.memoryFilePath; // todo
     this.sessionDirPath = opt.sessionDirPath;
     this.userStorePath = opt.userStorePath;
@@ -63,19 +66,25 @@ export default class SubAIAgent extends EventEmitterSuper {
     this.subLevel = opt.subLevel || 1;
     this.maxSubAgentCount = opt.maxSubAgentCount || 2;
     this.parentAgent = parentAgent;
+    this.isUseMemory = false
+    this.isVision = opt.isVision ?? false
   }
 
   async init() {
-    this.tools = this.parentAgent.tools?.length
-      ? [...this.parentAgent.tools]
+    this.tools = this.parentAgent?.tools?.length
+      ? [...this.parentAgent?.tools]
       : await getTools(this.excludeTools, this.excludeMCP, this.opt.externalTools);
-    this.skills = this.parentAgent.skills?.length ? [...this.parentAgent.skills] : [...getSkills(), ...(this.opt.externalSkills || [])];
+    this.skills = this.parentAgent?.skills?.length ? [...this.parentAgent?.skills] : [...getSkills(), ...(this.opt.externalSkills || [])];
+    const excludeInnerTools:string[] = []
     if (this.subLevel > 2) {
-      this.excludeTools.push('subAgent_exec');
-      this.excludeTools.push('subAgent_image');
+      excludeInnerTools.push('subAgent_exec');
+      excludeInnerTools.push('subAgent_image');
     }
-    this.excludeTools.push('read_user_semantic_memory', 'update_user_semantic_memory')
-    this.tools = this.tools.filter((tool) => !this.excludeTools.some((excludeTool) => tool.name.startsWith(excludeTool)));
+    if (!this.isVision && !excludeInnerTools.includes('subAgent_image')) {
+      excludeInnerTools.push('subAgent_image')
+    }
+    excludeInnerTools.push('read_user_semantic_memory', 'update_user_semantic_memory')
+    this.tools = this.tools.filter((tool) => !excludeInnerTools.some((excludeTool) => tool.name.startsWith(excludeTool)));
 
     const model = getModel(this.opt.modelOpt);
     const checkpointer = new MemorySaver();

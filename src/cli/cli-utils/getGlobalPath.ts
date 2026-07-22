@@ -119,3 +119,18 @@ export function getUserStorePath() {
   fs.ensureDirSync(cachePath);
   return cachePath;
 }
+
+export function getDefaultWorkspace() {
+  const defaultWorkspace = path.join(HOME_DIR, 'default-workspace');
+  fs.ensureDirSync(defaultWorkspace)
+  return defaultWorkspace
+}
+
+export function getScheduledTaskListFile() {
+  const filePath = path.join(HOME_DIR, 'scheduled-task-list.json');
+  if (!fs.existsSync(filePath)) {
+    fs.ensureFileSync(filePath)
+    fs.writeJSONSync(filePath, [])
+  }
+  return filePath
+}

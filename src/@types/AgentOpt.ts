@@ -4,7 +4,7 @@ export type AgentOpt = {
   id?: string;
   modelOpt: ModelOpt;
   basespace: string;
-  workspace: string;
+  workspace?: string;
   memoryFilePath: string;
   sessionDirPath: string;
   userStorePath: string;

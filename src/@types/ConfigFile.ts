@@ -44,7 +44,17 @@ export type TaskQueueItem = {
   createTime: string;
 };
 
+export type ScheduledTask = {
+  id: string; // 唯一标识
+  createTime: string; // 创建时间
+  lastExecTime: string; // 上次执行时间
+  cron: string; // cron 表达式，定义调度周期
+  workspace: string; // 执行任务时的工作目录
+  prompt: string; // 任务提示词
+};
+
 export type Catalog = {
   id: string;
   description: string;
 };
+

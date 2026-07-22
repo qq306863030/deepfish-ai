@@ -17,6 +17,7 @@ import type { AgentRoomClient } from '@/serve/service/agent-room/agent-client';
 import TaskQueue from '@/cli/cli-utils/TaskQueue';
 import os from 'os';
 import SubAIAgent from './SubAgents/SubAIAgent';
+import { getDefaultWorkspace } from '@/cli/cli-utils/getGlobalPath';
 
 export default class AIAgent extends EventEmitterSuper {
   id: string = '';
@@ -53,7 +54,7 @@ export default class AIAgent extends EventEmitterSuper {
     this.opt = structuredClone(opt);
     this.id = opt.id || `agent-${Date.now()}`;
     this.basespace = opt.basespace;
-    this.workspace = opt.workspace;
+    this.workspace = opt.workspace || getDefaultWorkspace();
     this.memoryFilePath = opt.memoryFilePath; // todo
     this.sessionDirPath = opt.sessionDirPath;
     this.userStorePath = opt.userStorePath;

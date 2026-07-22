@@ -10,6 +10,7 @@ import { registerMcpCommands } from './cli-mcp';
 import { registerPlanCommands } from './cli-plan';
 import { registerInputCommand } from './cli-input';
 import { registerCacheCommands } from './cli-cache';
+import { registerTimeTasksCommands } from './cli-time-tasks';
 import { registerCommonFlags } from './cli-common';
 import { initConfig } from './cli-utils/init-config';
 import { registerHelpCommand } from './cli-help';
@@ -29,6 +30,7 @@ export default function main() {
   registerMcpCommands(program);
   registerPlanCommands(program);
   registerCacheCommands(program);
+  registerTimeTasksCommands(program);
   registerHelpCommand(program);
   registerInputCommand(program);
   

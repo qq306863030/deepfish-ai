@@ -45,23 +45,28 @@
   - [Tool Management](#tool-management)
   - [Session Management](#session-management)
   - [Task Management](#task-management)
+  - [Scheduled Task Management](#scheduled-task-management)
   - [Long Task Planning](#long-task-planning)
   - [MCP Management](#mcp-management)
   - [Serve Management](#serve-management)
   - [Cache Management (AI Self-Learning Cache)](#cache-management-ai-self-learning-cache)
-- [5. MCP Extension Configuration](#5-mcp-extension-configuration)
+- [5. Scheduled Task Usage Examples](#5-scheduled-task-usage-examples)
+  - [Configuration File](#configuration-file)
+  - [Manage via AI Chat](#manage-via-ai-chat)
+  - [Cron Expression Reference](#cron-expression-reference)
+- [6. MCP Extension Configuration](#6-mcp-extension-configuration)
   - [Configuration Example](#configuration-example)
-- [6. Tool and Skill Extensions](#6-tool-and-skill-extensions)
+- [7. Tool and Skill Extensions](#7-tool-and-skill-extensions)
   - [Current Directory Extensions](#current-directory-extensions)
   - [Global Extensions](#global-extensions)
-- [7. Plugin](#7-plugin)
+- [8. Plugin](#8-plugin)
   - [SSH Remote Control Plugin](#ssh-remote-control-plugin)
-- [8. System Configuration File](#8-system-configuration-file)
+- [9. System Configuration File](#9-system-configuration-file)
   - [Configuration Fields](#configuration-fields)
   - [AI Model Configuration Fields](#ai-model-configuration-fields)
-- [9. Contributing](#9-contributing)
-- [10. License](#10-license)
-- [11. Support](#11-support)
+- [10. Contributing](#10-contributing)
+- [11. License](#11-license)
+- [12. Support](#12-support)
 
 ## 1. Introduction
 
@@ -191,6 +196,19 @@ On the second question, AI answers based on the same session context in the curr
 | `ai tasks del <index>` | Delete specified task |
 | `ai tasks clear`       | Clear all tasks       |
 
+### Scheduled Task Management
+
+Scheduled tasks allow AI to execute tasks automatically at specified times based on cron expressions in the China timezone (Asia/Shanghai).
+
+| Command                     | Description                         |
+| --------------------------- | ----------------------------------- |
+| `ai time-tasks ls`          | List all scheduled tasks            |
+| `ai time-tasks del <id>`    | Delete a scheduled task by id       |
+| `ai time-tasks clear`       | Clear all scheduled tasks           |
+
+> Scheduled tasks can be added via the AI tool `scheduled_task_add` or the `POST /api/scheduled-task` HTTP API.
+> When running `del` and `clear`, if the service is running they call the HTTP API; otherwise they operate directly on the configuration file.
+
 ### Long Task Planning
 
 | Command                       | Description                                          |
@@ -224,7 +242,72 @@ On the second question, AI answers based on the same session context in the curr
 | `ai cache edit <index\|id>` | Edit cache entry   |
 | `ai cache del <index\|id>`  | Delete cache entry |
 
-## 5. MCP Extension Configuration
+## 5. Scheduled Task Usage Examples
+
+Scheduled tasks allow AI to execute tasks automatically at specified times, based on cron expressions in the China timezone (Asia/Shanghai).
+
+### Configuration File
+
+Scheduled tasks are stored in `~/.deepfish-ai/scheduled-task-list.json` with the following format:
+
+```json
+[
+  {
+    "id": "uuid",
+    "createTime": "2026-07-22T10:00:00+08:00",
+    "lastExecTime": "",
+    "cron": "0 9 * * 1-5",
+    "workspace": "/path/to/project",
+    "prompt": "Execute daily code review"
+  }
+]
+```
+
+### Manage via AI Chat
+
+Describe your needs in the AI conversation and the AI will automatically call the appropriate tools:
+
+**Add a scheduled task**
+```text
+> Run code review on /home/project every morning at 9 AM
+```
+
+**List scheduled tasks**
+```text
+> Show me all scheduled tasks
+> List my scheduled tasks
+```
+
+**Delete a scheduled task**
+```text
+> Delete the scheduled task with id xxx
+> Remove the one that runs every morning at 9
+```
+
+### Cron Expression Reference
+
+A cron expression consists of 5 fields, evaluated in the China timezone:
+
+```
+┌───────── minute (0-59)
+│ ┌───────── hour (0-23)
+│ │ ┌───────── day of month (1-31)
+│ │ │ ┌───────── month (1-12)
+│ │ │ │ ┌───────── day of week (0-7, 0 and 7 both represent Sunday)
+│ │ │ │ │
+* * * * *
+```
+
+Common examples:
+
+| Cron Expression | Description |
+|----------------|-------------|
+| `*/5 * * * *` | Every 5 minutes |
+| `0 9 * * *` | Every day at 9 AM |
+| `0 9,14 * * 1-5` | Weekdays at 9 AM and 2 PM |
+| `0 0 1 * *` | Midnight on the 1st of every month |
+
+## 6. MCP Extension Configuration
 
 MCP (Model Context Protocol) allows AI to connect to external tools and services. Edit the MCP configuration file via `ai mcp edit` command to add the MCP Servers you need.
 
@@ -245,7 +328,7 @@ The following example configures a Chrome DevTools MCP Server, enabling AI to pe
 
 After configuration, AI will automatically load the tools provided by the MCP Server, and you can directly instruct AI to use these capabilities in your conversations.
 
-## 6. Tool and Skill Extensions
+## 7. Tool and Skill Extensions
 
 DeepFish supports Tool and Skill extensions to expand AI capabilities. Extension files can be placed either in the `.deepfish-ai` directory of the current workspace or in the global configuration directory.
 
@@ -296,7 +379,7 @@ global-config-directory/
 - Place Skill extensions under `global-config-directory/.deepfish-ai/skills/`.
 - This approach is globally effective and is suitable for common tools or reusable workflow capabilities.
 
-## 7. Plugin
+## 8. Plugin
 
 DeepFish supports extending its capabilities via globally installed npm plugins.
 
@@ -317,7 +400,7 @@ ai "Connect to 192.168.1.100 and show me the server status"
 ```
 
 
-## 8. System Configuration File
+## 9. System Configuration File
 
 DeepFish stores its system configuration file at `.deepfish-ai/config.json5` under the user directory. You can open or view it with the following commands:
 
@@ -357,14 +440,14 @@ Each item in `aiList` represents one AI model configuration. Common fields are l
 | `maxContextLength` | `number` | Maximum context length of the model, in tokens.                                                                          |
 | `isVision`         | `boolean` | Whether image recognition is supported, defaults to `false`.                                                             |
 
-## 9. Contributing
+## 10. Contributing
 
 Contributions are welcome! Feel free to submit Pull Requests at any time.
 
-## 10. License
+## 11. License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 11. Support
+## 12. Support
 
 For questions and inquiries, please submit an issue on the GitHub repository.

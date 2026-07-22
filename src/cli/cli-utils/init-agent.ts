@@ -10,9 +10,9 @@ import { AgentRoomClient } from '@/serve/service/agent-room/agent-client';
 import { getServePort } from './getGlobalData';
 import { handleServeStart } from '../cli-core/serve';
 
-export async function initAgent(config: ConfigFile, skills?: string[]): Promise<AIAgent> {
+export async function initAgent(config: ConfigFile, skills?: string[], workspace?:string): Promise<AIAgent> {
   const session = initSession();
-  const currentAI = _getCurrentAIConfig(config);
+  const currentAI = getCurrentAIConfig(config);
   const userPath = getUserFilePath();
   const id = session.id;
   const agent = new AIAgent({
@@ -25,7 +25,7 @@ export async function initAgent(config: ConfigFile, skills?: string[]): Promise<
       maxContextLength: currentAI.maxContextLength,
     },
     basespace: getSessionPath(id),
-    workspace: getTrueCwd(),
+    workspace: workspace ?? getTrueCwd(),
     memoryFilePath: userPath.memory,
     userStorePath: userPath.userStore,
     sessionDirPath: getSessionDirPath(id),
@@ -237,7 +237,7 @@ function initSessionDir(agentId: string) {
   fs.ensureFileSync(mainMsgQueuePath);
 }
 
-function _getCurrentAIConfig(config: ConfigFile) {
+export function getCurrentAIConfig(config: ConfigFile) {
   const currentModelName = config.currentModel;
   if (!currentModelName) {
     throw new Error('No AI model configured, please run ai model use <name>');

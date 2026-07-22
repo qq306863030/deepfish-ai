@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import { logWarning, logSuccess, logInfo } from '../../utils/print';
 import { getCodePath } from '@/cli/cli-utils/getGlobalPath';
 import { getServePort } from '@/cli/cli-utils/getGlobalData';
+import { addScheduledTask, removeScheduledTaskById, updateScheduledTaskById, clearScheduledTasks, readScheduledTasks, loadScheduledTasks } from '@/utils/execScheduledTask';
 
 // 定期根据配置清除过期文件
 
@@ -59,10 +60,84 @@ async function renderPage(): Promise<string> {
 function createApp() {
   const app = express();
 
+  // 解析 JSON 请求体
+  app.use(express.json());
+
   // 仅托管 JS/CSS 等资产文件，index.html 由 SSR 控制
   app.use(express.static(clientDir, { index: false }));
   // 健康检查
   app.get('/ping', (_req, res) => res.send('pong'));
+
+  // 添加定时任务
+  app.post('/api/scheduled-task', (req, res) => {
+    const { cron, workspace, prompt } = req.body ?? {};
+
+    if (!cron || !workspace || !prompt) {
+      res.status(400).json({ ok: false, error: '参数不完整，需要提供 cron、workspace、prompt' });
+      return;
+    }
+
+    const error = addScheduledTask(cron, workspace, prompt);
+    if (error) {
+      res.status(400).json({ ok: false, error });
+      return;
+    }
+
+    logInfo(`[scheduled-task] 添加定时任务: ${(prompt as string).slice(0, 40)}...`);
+    res.json({ ok: true });
+  });
+
+  // 删除定时任务（按 id）
+  app.delete('/api/scheduled-task/:id', (req, res) => {
+    const { id } = req.params;
+    if (!id) {
+      res.status(400).json({ ok: false, error: '缺少 id 参数' });
+      return;
+    }
+
+    const removed = removeScheduledTaskById(id);
+    if (!removed) {
+      res.status(404).json({ ok: false, error: `定时任务 ${id} 不存在` });
+      return;
+    }
+
+    logInfo(`[scheduled-task] 删除定时任务: ${id}`);
+    res.json({ ok: true });
+  });
+
+  // 列出所有定时任务
+  app.get('/api/scheduled-task', (_req, res) => {
+    res.json({ ok: true, data: readScheduledTasks() });
+  });
+
+  // 清空所有定时任务
+  app.delete('/api/scheduled-task', (_req, res) => {
+    clearScheduledTasks();
+    logInfo('[scheduled-task] 已清空所有定时任务');
+    res.json({ ok: true });
+  });
+
+  // 修改定时任务
+  app.put('/api/scheduled-task/:id', (req, res) => {
+    const { id } = req.params;
+    const { cron, workspace, prompt } = req.body ?? {};
+
+    if (!id) {
+      res.status(400).json({ ok: false, error: '缺少 id 参数' });
+      return;
+    }
+
+    const error = updateScheduledTaskById(id, { cron, workspace, prompt });
+    if (error) {
+      const status = error === '定时任务不存在' ? 404 : 400;
+      res.status(status).json({ ok: false, error });
+      return;
+    }
+
+    logInfo(`[scheduled-task] 修改定时任务: ${id}`);
+    res.json({ ok: true });
+  });
+
   // 所有页面请求走 SSR 渲染
   app.get('/{*path}', async (_req, res) => {
     try {
@@ -134,6 +209,7 @@ export async function startServer(options: StartServerOptions = {}) {
       }
     }
     logInfo('');
+    loadScheduledTasks();
     options.onReady?.(server as Server);
     initFakeAgent() // 初始化一个Agent，为了加速下次启动
   });

@@ -98,6 +98,10 @@ ai serve restart # 重启服务
 ai cache ls # 显示[index] [id] [description前20个字,超过20字用...代替]
 ai cache edit <index|id>
 ai cache del <index|id>
+
+ai time-tasks ls
+ai time-tasks del <id>
+ai time-tasks clear
 ```
 
 ### 扩展
@@ -111,6 +115,8 @@ mcp
 ```
 -config.json5
 -mcp.json
+-scheduled-task-list.json (createTime, lastExecTime, corn, workspace, prompt)
+-default-workspace // 默认agent的工作路径
 -user
     -memory.md
     -user-info.md

@@ -14,6 +14,7 @@ type ModelAnswers = {
   model: string;
   temperature: number;
   maxContextLength: number;
+  isVision: boolean;
 };
 
 function readConfig() {

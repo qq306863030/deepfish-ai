@@ -14,6 +14,7 @@ import { taskTool } from './task';
 import { webFetchTool } from './webfetch';
 import { writeFileTool } from './write';
 import { fishInfoTools } from './getFishInfo';
+import { scheduledTaskTools } from './scheduledTaskTool';
 
 const builtinTools = [
   taskTool,
@@ -32,6 +33,7 @@ const builtinTools = [
   ...semanticMemoryTools,
   ...learnTools,
   ...fishInfoTools,
+  ...scheduledTaskTools,
 ];
 
 async function getTools(excludeTools: string[], excludeMCP: string[], externalTools: string[] = []) {

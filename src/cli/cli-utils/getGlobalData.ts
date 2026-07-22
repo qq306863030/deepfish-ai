@@ -19,6 +19,10 @@ export function getServePort() {
   return port;
 }
 
+export function getServeUrl() {
+  return `http://localhost:${getServePort()}`;
+}
+
 export function getVersion() {
   const packageJson = fs.readJSONSync(path.join(getCodePath(), 'package.json'));
   return packageJson.version;

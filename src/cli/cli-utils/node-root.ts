@@ -1,4 +1,4 @@
-const { execSync } = require('child_process')
+const { spawnSync } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 
@@ -9,7 +9,13 @@ const fs = require('fs')
  */
 function safeExec(cmd:string) {
   try {
-    return execSync(cmd, { encoding: 'utf8', stdio: 'pipe' }).trim()
+    const result = spawnSync(cmd, [], {
+      encoding: 'utf8',
+      stdio: 'pipe',
+      shell: true,
+      windowsHide: true,
+    });
+    return (result.stdout as string || '').trim()
   } catch (err) {
     return null
   }
@@ -70,7 +76,7 @@ function getNpmGlobalPath() {
   // 1. 执行 npm root -g 获取路径
   const npmPath = safeExec('npm root -g')
   // 2. 解析并验证路径有效性
-  return resolveValidPath(npmPath)
+  return resolveValidPath(npmPath || '')
 }
 
 /**
