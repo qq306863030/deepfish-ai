@@ -36,7 +36,7 @@ export type ConfigFile = {
   serve: ServeConfig;
   isPrintThinking: boolean; // 是否打印 AI 思考过程中的中间信息，默认为 true
   isUseMemory: boolean; // 是否使用记忆
-  isSingleAgent?: boolean; // 全局只有一个Agent，不跟随目录创建会话，所有目录下Agent共享一个会话， 默认是false
+  isSingleAgent?: boolean; // 全局只有一个Agent，不跟随目录创建会话，所有目录下Agent共享一个会话， 默认是false (todo:getGlobalData)
 };
 
 export type TaskQueueItem = {
