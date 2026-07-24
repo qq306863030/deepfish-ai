@@ -4,6 +4,9 @@ import fs from 'fs-extra';
 import type { Session } from '@/@types/ConfigFile';
 import { getConfig } from './init-config';
 
+let isSingleAgent:boolean|null = null
+let singleAgentWorkspace: string = ""
+
 export function getSessionList() {
   const sessionsPath = getSessionsPath();
   const sessionsFilePath = path.join(sessionsPath, 'sessions.json');
@@ -30,4 +33,23 @@ export function getVersion() {
 
 export function getEncoding() {
   return (getConfig()?.encoding || 'auto').toLowerCase();
+}
+
+export function getIsSingleAgent() {
+  if (isSingleAgent === null) {
+    const config = getConfig()
+    if (config) {
+      isSingleAgent = config.isSingleAgent ?? false
+    } 
+    isSingleAgent = false
+  }
+  return isSingleAgent
+}
+
+export function setSingleAgentWorkspace(workspace: string) {
+  singleAgentWorkspace = workspace
+}
+
+export function getSingleAgentWorkspace() {
+  return singleAgentWorkspace
 }
