@@ -45,6 +45,11 @@ Commands:
   ai task del <index>               删除指定序号的任务
   ai task clear                     清空当前任务队列
 
+  # Scheduled Task commands
+  ai time-tasks ls                  查看定时任务列表
+  ai time-tasks del <id>            按 id 删除指定定时任务
+  ai time-tasks clear               清空所有定时任务
+
   # Plan commands
   ai plan-do <任务描述>              将复杂任务拆解为子任务并逐步执行完成
   ai plan-continue                   继续执行被中断的 plan-do 任务
@@ -65,6 +70,9 @@ Commands:
   ai cache ls                       查看已缓存的学习内容列表
   ai cache edit <index|id>          编辑指定序号或 ID 的缓存内容
   ai cache del <index|id>           删除指定序号或 ID 的缓存内容
+
+  # Other commands
+  ai update                         检查并更新 deepfish-ai 到最新版本
 `;
 }
 

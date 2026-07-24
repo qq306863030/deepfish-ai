@@ -11,6 +11,7 @@ import { registerPlanCommands } from './cli-plan';
 import { registerInputCommand } from './cli-input';
 import { registerCacheCommands } from './cli-cache';
 import { registerTimeTasksCommands } from './cli-time-tasks';
+import { registerUpdateCommand } from './cli-update';
 import { registerCommonFlags } from './cli-common';
 import { initConfig } from './cli-utils/init-config';
 import { registerHelpCommand } from './cli-help';
@@ -31,6 +32,7 @@ export default function main() {
   registerPlanCommands(program);
   registerCacheCommands(program);
   registerTimeTasksCommands(program);
+  registerUpdateCommand(program);
   registerHelpCommand(program);
   registerInputCommand(program);
   

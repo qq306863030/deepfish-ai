@@ -120,10 +120,17 @@ export async function handleModelAdd() {
       return;
     }
 
+    const wasEmpty = config.aiList.length === 0;
     config.aiList.push(newModel);
+    if (wasEmpty) {
+      config.currentModel = answers.name;
+    }
     writeConfig(config);
 
     logSuccess(`AI config "${answers.name}" added successfully`);
+    if (wasEmpty) {
+      logInfo(`Model list was empty, automatically set "${answers.name}" as current model`);
+    }
   } catch (e: any) {
     if (e?.name === 'ExitPromptError' || e?.message?.includes('force closed')) {
       logInfo('Cancelled');

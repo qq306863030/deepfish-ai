@@ -242,6 +242,12 @@ Scheduled tasks allow AI to execute tasks automatically at specified times based
 | `ai cache edit <index\|id>` | Edit cache entry   |
 | `ai cache del <index\|id>`  | Delete cache entry |
 
+### Other
+
+| Command       | Description                                              |
+| ------------- | -------------------------------------------------------- |
+| `ai update`   | Check for updates and upgrade deepfish-ai to latest version |
+
 ## 5. Scheduled Task Usage Examples
 
 Scheduled tasks allow AI to execute tasks automatically at specified times, based on cron expressions in the China timezone (Asia/Shanghai).
