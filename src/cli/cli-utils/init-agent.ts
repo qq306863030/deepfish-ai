@@ -123,7 +123,7 @@ export async function testServer(): Promise<boolean> {
     try {
       await handleServeStart();
       // Wait and verify after starting
-      let retries = 10;
+      let retries = 30;
       while (retries > 0) {
         try {
           const res = await fetch(url, { method: 'GET' });
@@ -133,10 +133,12 @@ export async function testServer(): Promise<boolean> {
             return true;
           }
         } catch {
-          // Wait for service to start
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          // Service not ready yet
         }
         retries--;
+        if (retries > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
       }
       logError('Service start timeout');
       return false;

@@ -1,5 +1,8 @@
 import chalk from 'chalk';
 
+// 强制启用至少 256 色模式，避免 CentOS 等环境下 chalk 检测失败导致颜色不显示
+chalk.level = Math.max(chalk.level, 2);
+
 function logInfo(message: string) {
   log(message, '#6dd2ea');
 }
