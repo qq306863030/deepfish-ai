@@ -3,13 +3,18 @@ import { tool } from 'langchain';
 import { z } from 'zod';
 import { safeTool } from './utils';
 
-export async function askQuestion(question: string, type: 'input' | 'confirm' | 'select' | 'password' = 'input', choices: string[] = []): Promise<string> {
+export async function askQuestion(
+  question: string,
+  type: 'input' | 'confirm' | 'select' | 'password' = 'input',
+  choices: any = [],
+): Promise<string> {
+  const normalizedChoices = Array.isArray(choices) ? choices : [];
   const answer = await inquirer.prompt([
     {
       name: 'value',
       type,
       message: question,
-      choices: type === 'select' ? choices : undefined,
+      choices: type === 'select' ? normalizedChoices : undefined,
     },
   ]);
   const value = answer['value'];
@@ -22,11 +27,6 @@ export const questionTool = tool(async ({ question, type, choices }) => safeTool
   schema: z.object({
     question: z.string().describe('要询问用户的问题'),
     type: z.enum(['input', 'confirm', 'select', 'password']).default('input').describe('问题类型：input 文本输入、confirm 确认、select 单选、password 密码输入（内容隐藏）'),
-    choices: z
-      .preprocess((val) => {
-        if (Array.isArray(val)) return val;
-        return [];
-      }, z.array(z.string()).default([]))
-      .describe('select 单选项列表；非 select 类型可为空'),
+    choices: z.union([z.array(z.string()), z.record(z.string(), z.any())]).nullish().default([]).describe('select 单选项列表；非 select 类型可为空'),
   }),
 });
