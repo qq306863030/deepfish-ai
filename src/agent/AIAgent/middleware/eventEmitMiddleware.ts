@@ -1,6 +1,7 @@
 import { createMiddleware, ToolMessage } from 'langchain';
 import { AgentEvent } from '@/@types/AgentEvent';
 import { AIMessage } from '@langchain/core/messages';
+import { serializeToolResult, errorResult } from '@/agent/tools/utils';
 
 type EventEmitter = {
   emit(event: AgentEvent, ...args: any[]): void;
@@ -21,7 +22,7 @@ export function createAgentEventMiddleware(emitter: EventEmitter) {
 
     // After agent completes (once per invocation)
     afterAgent: (_state) => {
-      const lastMessage = _state.messages?.[_state.messages.length - 1].content;
+      const lastMessage = _state.messages?.[_state.messages.length - 1]?.content;
       emitter.emit(AgentEvent.TASK_AFTER, lastMessage);
       return;
     },
@@ -61,7 +62,13 @@ export function createAgentEventMiddleware(emitter: EventEmitter) {
       } catch (err: any) {
         emitter.emit(AgentEvent.USE_TOOL_ERROR, toolCall.id, toolCall.name, err);
         emitter.emit(AgentEvent.USE_TOOL_AFTER, toolCall.id, toolCall.name, toolCall.args);
-        return new ToolMessage(err.message);
+        const errorMessage = err?.message || String(err);
+        return new ToolMessage({
+          content: serializeToolResult(errorResult(errorMessage)),
+          tool_call_id: toolCall.id || '',
+          name: toolCall.name,
+          status: 'error',
+        });
       }
     },
   });
